@@ -1,0 +1,3 @@
+[submodule "sz-sdk-proto"]
+	path = sz-sdk-proto
+	url = https://github.com/senzing-garage/sz-sdk-proto.git
