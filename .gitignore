@@ -15,12 +15,26 @@
 *.war
 *.nar
 *.ear
-*.zip
+# comment out .zip because of javadocs
+#*.zip
 *.tar.gz
 *.rar
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
-replay_pid*
 
 .history
+
+# Maven build artifact directory
+target/*
+
+# IntelliJ project directory info
+.idea/*
+*.iml
+
+# Visual Studio code
+.vscode/*
+!.vscode/cspell.json
+*.code-workspace
+.history
+
