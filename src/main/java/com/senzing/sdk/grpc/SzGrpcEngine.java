@@ -2,6 +2,8 @@ package com.senzing.sdk.grpc;
 
 import java.util.Set;
 
+import io.grpc.Channel;
+
 import com.senzing.sdk.SzBadInputException;
 import com.senzing.sdk.SzEngine;
 import com.senzing.sdk.SzEntityIds;
@@ -11,8 +13,41 @@ import com.senzing.sdk.SzNotFoundException;
 import com.senzing.sdk.SzRecordKey;
 import com.senzing.sdk.SzRecordKeys;
 import com.senzing.sdk.SzUnknownDataSourceException;
+import com.senzing.sdk.grpc.SzEngineGrpc.SzEngineBlockingStub;
 
+/**
+ * The gRPC implementation of {@link SzEngine}.
+ */
 public class SzGrpcEngine implements SzEngine {
+    /**
+     * The {@link SzGrpcEnvironment} that constructed this instance.
+     */
+    private SzGrpcEnvironment env = null;
+
+    /**
+     * The underlying blocking stub.
+     */
+    private SzEngineBlockingStub blockingStub = null;
+
+    /**
+     * Package-access constructor.
+     * 
+     * @param environment the {@link SzGrpcEnvironment} with which to construct.
+     */
+    SzGrpcEngine(SzGrpcEnvironment environment) {
+        this.env = environment;
+        
+        Channel channel = this.env.getChannel();
+
+        this.blockingStub = SzEngineGrpc.newBlockingStub(channel);
+    }
+
+    /**
+     * Gets the underlying {@link SzEngineBlockingStub} for this instance.
+     */
+    SzEngineBlockingStub getBlockingStub() {
+        return this.blockingStub;
+    }
 
     @Override
     public void primeEngine() throws SzException {
@@ -34,7 +69,7 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     @Override
-    public String preprocessRecord(String recordDefinition, Set<SzFlag> flags) throws SzException {
+    public String getRecordPreview(String recordDefinition, Set<SzFlag> flags) throws SzException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'preprocessRecord'");
     }
@@ -194,7 +229,7 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     @Override
-    public void closeExport(long exportHandle) throws SzException {
+    public void closeExportReport(long exportHandle) throws SzException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'closeExport'");
     }

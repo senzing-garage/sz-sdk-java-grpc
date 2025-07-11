@@ -1,12 +1,20 @@
 package com.senzing.sdk.grpc;
 
-import java.util.Objects;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import javax.json.Json;
+import javax.json.JsonException;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+
 import io.grpc.Channel;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 
 import com.senzing.sdk.SzConfigManager;
 import com.senzing.sdk.SzDiagnostic;
@@ -14,17 +22,36 @@ import com.senzing.sdk.SzEngine;
 import com.senzing.sdk.SzEnvironment;
 import com.senzing.sdk.SzException;
 import com.senzing.sdk.SzProduct;
+import com.senzing.sdk.core.SzCoreEnvironment;
+import com.senzing.sdk.grpc.SzEngineGrpc.SzEngineBlockingStub;
+import com.senzing.sdk.grpc.SzEngineProto.GetActiveConfigIdRequest;
+import com.senzing.sdk.grpc.SzEngineProto.GetActiveConfigIdResponse;
+import com.senzing.sdk.grpc.SzEngineProto.ReinitializeRequest;
 
 /**
  * Provides a gRPC implementation of {@link SzEnvironment}.
  */
 public class SzGrpcEnvironment implements SzEnvironment {
+    /**
+     * The "error" JSON property key for the gRPC error messages.
+     */
+    private static final String ERROR_FIELD_KEY = "error";
 
     /**
-     * The number of milliseconds to delay (if not notified) until checking
-     * if we are ready to destroy.
+     * The "reason" JSON property key for the gRPC error messages.
      */
-    private static final long DESTROY_DELAY = 5000L;
+    private static final String REASON_FIELD_KEY = "reason";
+
+    /**
+     * The prefix for the reason string in a Senzing gRPC error.
+     */
+    private static final String REASON_PREFIX = "SENZ";
+
+    /**
+     * The string that splits the error code from the error message
+     * in the gRPC error reason.
+     */
+    private static final String REASON_SPLITTER = "|";
 
     /**
      * Enumerates the possible states for an instance of {@link SzGrpcEnvironment}.
@@ -81,6 +108,12 @@ public class SzGrpcEnvironment implements SzEnvironment {
     private SzGrpcDiagnostic grpcDiagnostic = null;
 
     /**
+     * The underlying GRPC channel to use as provided during construction.
+     * <b>NOTE:</b> This is opened and managed (and closed) externally to this instance.
+     */
+    private Channel grpcChannel = null;
+
+    /**
      * The {@link State} for this instance.
      */
     private State state = null;
@@ -113,30 +146,19 @@ public class SzGrpcEnvironment implements SzEnvironment {
     {
         // set the fields
         this.readWriteLock  = new ReentrantReadWriteLock(true);
-
+        this.grpcChannel    = channel;
     }
 
     /**
-     * Waits until the specified {@link SzGrpcEnvironment} instance has been destroyed.
-     * Use this when obtaining an instance of {@link SzGrpcEnvironment} in the {@link 
-     * State#DESTROYING} and you want to wait until it is fully destroyed.
+     * Package-private method for obtaining the underling GRPC channel.
      * 
-     * @param environment The non-null {@link SzGrpcEnvironment} instance to wait on.
+     * @return The {@link Channel} with which this instance was constructed.
      * 
-     * @throws NullPointerException If the specified parameter is <code>null</code>.
+     * @throws IllegalStateException If this instance has already been destroyed.
      */
-    private static void waitUntilDestroyed(SzGrpcEnvironment environment) 
-    {
-        Objects.requireNonNull(environment, "The specified instance cannot be null");
-        synchronized (environment.monitor) {
-            while (environment.state != State.DESTROYED) {
-                try {
-                    environment.monitor.wait(DESTROY_DELAY);
-                } catch (InterruptedException ignore) {
-                    // ignore the exception
-                }
-            }
-        }
+    Channel getChannel() {
+        this.ensureActive();
+        return this.grpcChannel;
     }
 
     /**
@@ -171,6 +193,9 @@ public class SzGrpcEnvironment implements SzEnvironment {
         
             return task.call();
 
+        } catch (StatusRuntimeException e) {
+            throw createSzException(e.getStatus(), e);
+
         } catch (SzException | RuntimeException e) {
             throw e;
 
@@ -183,6 +208,82 @@ public class SzGrpcEnvironment implements SzEnvironment {
                 this.monitor.notifyAll();
             }
             lock = releaseLock(lock);
+        }
+    }
+
+    /**
+     * Creates an {@link SzException} from the specified {@link Status}
+     * and {@link Exception}.
+     * 
+     * @param status The gRPC {@link Status} describing the failure.
+     * 
+     * @param e The original {@link Exception} describing the cause 
+     *          of the failure (typically an instance of 
+     *          {@link io.grpc.StatusException} or {@link StatusRuntimeException}).
+     * 
+     * @return A new {@link SzException} representing the specified
+     *         {@link StatusRuntimeException}.
+     */
+    public static SzException createSzException(Status status, Exception e) 
+    {
+        String description = status.getDescription();
+
+        try {
+            // try to parse as a JsonObject
+            JsonObject jsonObj = Json.createReader(
+                new StringReader(description)).readObject();
+            
+            // get the top-level "error" sub-object
+            jsonObj = jsonObj.getJsonObject(ERROR_FIELD_KEY);
+            if (jsonObj == null) {
+                // if not present then return a default SzException
+                return new SzException(description, e);
+            } 
+
+            // get the second-level "error" sub-object
+            jsonObj = jsonObj.getJsonObject(ERROR_FIELD_KEY);
+            if (jsonObj == null) {
+                // if not present then return a default SzException
+                return new SzException(description, e);
+            }
+
+            // get the encoded "reason" field
+            String reason = jsonObj.getString(REASON_FIELD_KEY, null);
+            if (reason == null) {
+                return new SzException(description, e);
+            }
+            
+            // check if the reason begins with expected prefix
+            if (!reason.startsWith(REASON_PREFIX)) {
+                return new SzException(description, e);
+            }
+
+            // check for the index of the "|" character
+            int index = reason.indexOf(REASON_SPLITTER);
+            if (index < (REASON_PREFIX.length() + 1)) {
+                return new SzException(description, e);
+            }
+
+            // get the error code text
+            String codeText = reason.substring(REASON_PREFIX.length(), index);
+            int errorCode = 0;
+            try {
+                errorCode = Integer.parseInt(codeText);
+            } catch (Exception e2) {
+                // did not parse as an integer
+                return new SzException(description, e);
+            }
+            
+            // get the error message
+            String message = (index < (reason.length() - 1)) 
+                ? reason.substring(index + 1) : "";
+
+            // now return the SzException for the error code and message
+            return SzCoreEnvironment.createSzException(errorCode, message);
+
+        } catch (JsonException e2) {
+            // the does not appear to be JSON, use it directly
+            return new SzException(description, e);
         }
     }
 
@@ -214,50 +315,145 @@ public class SzGrpcEnvironment implements SzEnvironment {
 
     @Override
     public SzProduct getProduct() throws IllegalStateException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getProduct'");
+        synchronized (this.monitor) {
+            this.ensureActive();
+            if (this.grpcProduct == null) {
+                this.grpcProduct = new SzGrpcProduct(this);
+            }
+            // return the configured instance
+            return this.grpcProduct;
+        }
     }
 
     @Override
     public SzEngine getEngine() throws IllegalStateException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getEngine'");
+        synchronized (this.monitor) {
+            this.ensureActive();
+            if (this.grpcEngine == null) {
+                this.grpcEngine = new SzGrpcEngine(this);
+            }
+            // return the configured instance
+            return this.grpcEngine;
+        }
     }
 
     @Override
     public SzConfigManager getConfigManager() throws IllegalStateException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getConfigManager'");
+        synchronized (this.monitor) {
+            this.ensureActive();
+            if (this.grpcConfigMgr == null) {
+                this.grpcConfigMgr = new SzGrpcConfigManager(this);
+            }
+
+            // return the configured instance
+            return this.grpcConfigMgr;
+        }
     }
 
     @Override
     public SzDiagnostic getDiagnostic() throws IllegalStateException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getDiagnostic'");
+        synchronized (this.monitor) {
+            this.ensureActive();
+            if (this.grpcDiagnostic == null) {
+                this.grpcDiagnostic = new SzGrpcDiagnostic(this);
+            }
+            // return the configured instance
+            return this.grpcDiagnostic;
+        }
     }
 
     @Override
     public long getActiveConfigId() throws IllegalStateException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getActiveConfigId'");
+        Lock lock = null;
+        try {
+            // get a read lock to ensure we remain active while
+            // executing the operation
+            lock = this.acquireReadLock();
+            
+            // ensure we have initialized the engine or diagnostic
+            synchronized (this.monitor) {
+                this.ensureActive();
+
+                // check if the core engine has been initialized
+                if (this.grpcEngine == null) {
+                    // initialize the engine if not yet initialized
+                    this.getEngine();
+                }
+            }
+
+            // get the active config ID from the gRPC server
+             GetActiveConfigIdRequest request = GetActiveConfigIdRequest.newBuilder().build();
+
+            // get the response
+            GetActiveConfigIdResponse response = this.execute(() -> {
+                return this.grpcEngine.getBlockingStub().getActiveConfigId(request);
+            });
+            
+            // return the config ID
+            return response.getResult();
+            
+        } finally {
+            lock = this.releaseLock(lock);
+        }
     }
 
     @Override
     public void reinitialize(long configId) throws IllegalStateException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'reinitialize'");
+        throw new UnsupportedOperationException(
+            "Cannot reinitialize gRPC server from gRPC client");
     }
 
     @Override
     public void destroy() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'destroy'");
+        Lock lock = null;
+        try {
+            synchronized (this.monitor) {
+                // check if this has already been called
+                if (this.state != State.ACTIVE) {
+                    return;
+                }
+
+                // set the flag for destroying
+                this.state = State.DESTROYING;
+                this.monitor.notifyAll();
+            }
+
+            // acquire an exclusive lock for destroying to ensure
+            // all executing tasks have completed
+            lock = this.acquireWriteLock();
+
+            // ensure completion of in-flight executions
+            int exeCount = this.getExecutingCount();
+            if (exeCount > 0) {
+                throw new IllegalStateException(
+                    "Acquired write lock for destroying environment while tasks "
+                    + "still executing: " + exeCount);
+            }
+
+            // once we get here we can really shut things down
+            this.grpcEngine = null;
+            this.grpcDiagnostic = null;
+            this.grpcConfigMgr = null;
+            this.grpcProduct = null;
+            this.grpcChannel = null;
+
+            // set the state
+            synchronized (this.monitor) {
+                this.state = State.DESTROYED;
+                this.monitor.notifyAll();
+            }
+        } finally {
+            if (lock != null) {
+                lock.unlock();
+            }
+        }
     }
 
     @Override
     public boolean isDestroyed() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isDestroyed'");
+        synchronized (this.monitor) {
+            return this.state != State.ACTIVE;
+        }
     }
     
     /**

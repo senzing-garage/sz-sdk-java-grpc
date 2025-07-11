@@ -105,7 +105,6 @@
       <groupId>org.glassfish</groupId>
       <artifactId>javax.json</artifactId>
       <version>1.1.4</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -189,6 +188,59 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.5.1</version>
+        <executions>
+          <execution>
+            <phase>process-test-classes</phase>
+            <goals>
+              <goal>java</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <mainClass>com.senzing.test.GenerateTestJVMScript</mainClass>
+          <classpathScope>test</classpathScope>
+          <arguments>
+            <argument>${project.build.directory}/java-wrapper/bin/java-wrapper.bat</argument>
+          </arguments>
+          <systemProperties>
+            <systemProperty>
+              <key>senzing.path</key>
+              <value>${SENZING_PATH}</value>
+            </systemProperty>
+            <systemProperty>
+              <key>senzing.dev.lib.path</key>
+              <value>${SENZING_DEV_LIBRARY_PATH}</value>
+            </systemProperty>
+          </systemProperties>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.6.1</version>
+        <executions>
+          <execution>
+            <id>add-sdk-tests</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>sz-sdk-java/src/test/java</source>
+              </sources>
+              <excludes>
+                <exclude>sz-sdk-java/src/test/java/com/senzing/sdk/*.java</exclude>
+                <exclude>sz-sdk-java/src/test/java/com/senzing/sdk/core/**</exclude>
+              </excludes>
+            </configuration>  
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>com.google.code.maven-replacer-plugin</groupId>
         <artifactId>maven-replacer-plugin</artifactId>
         <version>1.4.1</version>
@@ -245,6 +297,10 @@
             <arg>-Xlint:unchecked</arg>
             <arg>-Xlint:deprecation</arg>
           </compilerArgs>
+          <testExcludes>
+            <testExclude>com/senzing/sdk/*.java</testExclude>
+            <testExclude>com/senzing/sdk/core/**</testExclude>
+          </testExcludes>
         </configuration>
       </plugin>
       <plugin>
@@ -277,6 +333,12 @@
             <include>**/*Tests.java</include>
             <include>**/*Demo.java</include>
           </includes>
+          <excludes>
+            <exclude>com/senzing/sdk/core/**</exclude>
+            <exclude>com/senzing/sdk/*Demo.java</exclude>
+            <exclude>com/senzing/sdk/*Test.java</exclude>
+            <exclude>com/senzing/sdk/*Tests.java</exclude>
+          </excludes>
           <systemPropertyVariables>
             <project.build.directory>${project.build.directory}</project.build.directory>
           </systemPropertyVariables>
@@ -307,6 +369,11 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <links>
+            <link>https://grpc.github.io/grpc-java/javadoc/</link>
+          </links>
+        </configuration>
         <version>3.11.2</version>
         <executions>
           <execution>
@@ -468,7 +535,7 @@
           <plugin>
             <artifactId>maven-javadoc-plugin</artifactId>
             <configuration>
-              <subpackages>com.senzing.sdk:com.senzing.sdk.core</subpackages>
+              <subpackages>com.senzing.sdk:com.senzing.sdk.grpc</subpackages>
               <additionalOptions>--snippet-path ${project.basedir}/src/demo/java</additionalOptions>
             </configuration>
           </plugin>
