@@ -95,11 +95,11 @@
       <scope>provided</scope> <!-- not needed at runtime -->
     </dependency>
     <dependency>
-        <groupId>com.senzing</groupId>
-        <artifactId>sz-sdk</artifactId>
-        <version>4.0.0-beta.3.1</version>
-        <scope>system</scope>
-        <systemPath>${SENZING_PATH}/er/sdk/java/sz-sdk.jar</systemPath>
+      <groupId>com.senzing</groupId>
+      <artifactId>sz-sdk</artifactId>
+      <version>4.0.0-beta.3.1</version>
+      <scope>system</scope>
+      <systemPath>${SENZING_PATH}/er/sdk/java/sz-sdk.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>org.glassfish</groupId>

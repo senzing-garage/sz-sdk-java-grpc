@@ -1,0 +1,34 @@
+name: bearer
+
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  rule_check_src:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Bearer
+        uses: bearer/bearer-action@v2
+        with:
+          skip-path: "src/demo/**"
+
+  rule_check_demo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Bearer
+        uses: bearer/bearer-action@v2
+        with:
+          path: "src/demo"
+          skip-rule: "java_lang_information_leakage,java_lang_hardcoded_secret"
