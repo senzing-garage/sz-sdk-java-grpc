@@ -18,9 +18,9 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        java-version: ["17", "21"]
         java-distribution: ["temurin"]
-        senzingsdk-version: ["staging-v4"]
+        java-version: ["17", "21"]
+        senzingsdk-version: [production-v4, staging-v4]
 
     steps:
       - name: checkout repository
@@ -36,7 +36,7 @@ jobs:
       - name: install Senzing SDK
         uses: senzing-factory/github-action-install-senzing-sdk@v3
         with:
-          senzingsdk-repository-path: ${{ secrets.SENZING_WIN_BETA_REPOSITORY }}
+          senzingsdk-version: ${{ matrix.senzingsdk-version }}
 
       - name: Add to "Path" environment variable
         run: |
