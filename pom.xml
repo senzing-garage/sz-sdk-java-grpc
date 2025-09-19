@@ -41,7 +41,7 @@
     <gpg.skip>true</gpg.skip> <!-- skip GPG unless release profile -->
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <grpc.version>1.73.0</grpc.version><!-- CURRENT_GRPC_VERSION -->
+    <grpc.version>1.75.0</grpc.version><!-- CURRENT_GRPC_VERSION -->
     <protobuf.version>3.25.5</protobuf.version>
     <protoc.version>3.25.5</protoc.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -110,7 +110,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.12.2</version>
+      <version>5.13.4</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -140,7 +140,7 @@
     <dependency>
       <groupId>org.xerial</groupId>
       <artifactId>sqlite-jdbc</artifactId>
-      <version>3.49.1.0</version>
+      <version>3.50.3.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -221,7 +221,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>3.6.1</version>
         <executions>
           <execution>
             <id>enforce</id>
