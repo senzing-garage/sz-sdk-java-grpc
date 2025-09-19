@@ -18,6 +18,7 @@ jobs:
       status: ${{ job.status }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         java-distribution: ["temurin"]
         java-version: ["17", "21"]

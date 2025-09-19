@@ -17,6 +17,7 @@ jobs:
       status: ${{ job.status }}
     runs-on: macos-latest
     strategy:
+      fail-fast: false
       matrix:
         java-distribution: ["temurin"]
         java-version: ["17", "21"]
