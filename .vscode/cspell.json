@@ -73,7 +73,8 @@
       "reinit",
       "stackoverflow",
       "unresolve",
-      "Senzing"
+      "Senzing",
+      "rawtypes"
     ],
     "ignorePaths": [
       "CHANGELOG.md",

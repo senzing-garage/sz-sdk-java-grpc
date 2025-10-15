@@ -2,6 +2,15 @@ package com.senzing.sdk.grpc;
 
 import java.util.Set;
 
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObjectBuilder;
+
+import java.io.StringWriter;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.LinkedHashMap;
+
 import io.grpc.Channel;
 
 import com.senzing.sdk.SzBadInputException;
@@ -13,12 +22,25 @@ import com.senzing.sdk.SzNotFoundException;
 import com.senzing.sdk.SzRecordKey;
 import com.senzing.sdk.SzRecordKeys;
 import com.senzing.sdk.SzUnknownDataSourceException;
-import com.senzing.sdk.grpc.SzEngineGrpc.SzEngineBlockingStub;
+
+import static com.senzing.sdk.grpc.SzEngineGrpc.*;
+import static com.senzing.sdk.grpc.SzEngineProto.*;
 
 /**
  * The gRPC implementation of {@link SzEngine}.
  */
 public class SzGrpcEngine implements SzEngine {
+    /**
+     * The error code for an invalid export handle.
+     */
+    private static final int INVALID_EXPORT_HANDLE_CODE = 3103;
+
+    /**
+     * The error message format for an invalid export handle.
+     */
+    private static final String INVALID_EXPORT_HANDLE_MESSAGE 
+        = "Invalid Export Handle [{0}]";
+
     /**
      * The {@link SzGrpcEnvironment} that constructed this instance.
      */
@@ -28,6 +50,66 @@ public class SzGrpcEngine implements SzEngine {
      * The underlying blocking stub.
      */
     private SzEngineBlockingStub blockingStub = null;
+
+    /**
+     * The {@link Map} of {@link Long} export handle keys to 
+     * {@link Iterator} values for the streamed export report.
+     */
+    private final Map<Long, Iterator<String>> exportReportMaps;
+
+    /**
+     * The previous export handle value to use.
+     */
+    private long prevExportHandle = 0L;
+
+    /**
+     * The next export handle value to use.
+     */
+    private long nextExportHandle = 1L;
+
+    /**
+     * Provide an {@link Iterator} over {@linK String} values that uses
+     * the {@link StreamExportCsvEntityReportResponse}.
+     */
+    private static class CsvExportIterator implements Iterator<String> {
+        Iterator<StreamExportCsvEntityReportResponse> iter = null;
+
+        private CsvExportIterator(Iterator<StreamExportCsvEntityReportResponse> iter) {
+            this.iter = iter;
+        }
+        @Override
+        public boolean hasNext() {
+            return this.iter.hasNext();
+        }
+
+        @Override
+        public String next() {
+            StreamExportCsvEntityReportResponse response = this.iter.next();
+            return response.getResult();
+        }
+    }
+
+    /**
+     * Provide an {@link Iterator} over {@linK String} values that uses
+     * the {@link StreamExportJsonEntityReportResponse}.
+     */
+    private static class JsonExportIterator implements Iterator<String> {
+        Iterator<StreamExportJsonEntityReportResponse> iter = null;
+
+        private JsonExportIterator(Iterator<StreamExportJsonEntityReportResponse> iter) {
+            this.iter = iter;
+        }
+        @Override
+        public boolean hasNext() {
+            return this.iter.hasNext();
+        }
+
+        @Override
+        public String next() {
+            StreamExportJsonEntityReportResponse response = this.iter.next();
+            return response.getResult();
+        }
+    }
 
     /**
      * Package-access constructor.
@@ -40,10 +122,141 @@ public class SzGrpcEngine implements SzEngine {
         Channel channel = this.env.getChannel();
 
         this.blockingStub = SzEngineGrpc.newBlockingStub(channel);
+
+        this.exportReportMaps = new LinkedHashMap<>();
+    }
+
+    /**
+     * Gets the next export handle to use.
+     * 
+     * @return The next export handle to use.
+     */
+    private long getNextExportHandle() {
+        // use a fibonacci sequence just so they are not sequential
+        synchronized (this.exportReportMaps) {
+            long result = this.nextExportHandle + this.prevExportHandle;
+            this.prevExportHandle = this.nextExportHandle;
+            this.nextExportHandle = result;
+            return result;
+        }
+    }
+
+    /**
+     * Encodes the {@link Set} of {@link Long} entity ID's as JSON.
+     * The JSON is formatted as:
+     * <pre>
+     *   {
+     *     "ENTITIES": [
+     *        { "ENTITY_ID": &lt;entity_id1&gt; },
+     *        { "ENTITY_ID": &lt;entity_id2&gt; },
+     *        . . .
+     *        { "ENTITY_ID": &lt;entity_idN&gt; }
+     *     ]
+     *   }
+     * </pre>
+     * @param entityIds The non-null {@link Set} of non-null {@link Long}
+     *                  entity ID's.
+     * 
+     * @return The encoded JSON string of entity ID's.
+     */
+    protected static String encodeEntityIds(Set<Long> entityIds) {
+        JsonObjectBuilder   job = Json.createObjectBuilder();
+        JsonArrayBuilder    jab = Json.createArrayBuilder();
+
+        for (Long entityId : entityIds) {
+            JsonObjectBuilder job2 = Json.createObjectBuilder();
+            job2.add("ENTITY_ID", entityId);
+            jab.add(job2);
+        }
+
+        job.add("ENTITIES", jab);
+        
+        StringWriter sw = new StringWriter();
+        Json.createWriter(sw).writeObject(job.build());
+        return sw.toString();
+    }
+
+    /**
+     * Encodes the {@link Set} of {@link SzRecordKey} instances as JSON.
+     * The JSON is formatted as:
+     * <pre>
+     *   {
+     *     "RECORDS": [
+     *        {
+     *          "DATA_SOURCE": "&lt;data_source1&gt;",
+     *          "RECORD_ID":  "&lt;record_id1&gt;"
+     *        },
+     *        {
+     *          "DATA_SOURCE": "&lt;data_source2&gt;",
+     *          "RECORD_ID":  "&lt;record_id2&gt;"
+     *        },
+     *        . . .
+     *        {
+     *          "DATA_SOURCE": "&lt;data_sourceN&gt;",
+     *          "RECORD_ID":  "&lt;record_idN&gt;"
+     *        }
+     *     ]
+     *   }
+     * </pre>
+     * @param recordKeys The non-null {@link Set} of non-null
+     *                   {@link SzRecordKey} instances.
+     * 
+     * @return The encoded JSON string of record keys.
+     */
+    protected static String encodeRecordKeys(Set<SzRecordKey> recordKeys) {
+        JsonObjectBuilder   job = Json.createObjectBuilder();
+        JsonArrayBuilder    jab = Json.createArrayBuilder();
+
+        for (SzRecordKey recordKey : recordKeys) {
+            JsonObjectBuilder job2 = Json.createObjectBuilder();
+            job2.add("DATA_SOURCE", recordKey.dataSourceCode());
+            job2.add("RECORD_ID", recordKey.recordId());
+
+            jab.add(job2);
+        }
+
+        job.add("RECORDS", jab);
+
+        StringWriter sw = new StringWriter();
+        Json.createWriter(sw).writeObject(job.build());
+        return sw.toString();
+    }
+
+    /**
+     * Encodes the {@link Set} of {@link String} data source codes
+     * as JSON.  The JSON is formatted as:
+     * <pre>
+     *    { "DATA_SOURCES": [
+     *        "&lt;data_source_code1&gt;",
+     *        "&lt;data_source_code2&gt;",
+     *        . . .
+     *        "&lt;data_source_codeN&gt;"
+     *      ]
+     *    }
+     * </pre>
+     * @param dataSources The {@link Set} of {@link String} data source codes.
+     * 
+     * @return The encoded JSON string of record keys.
+     */
+    protected static String encodeDataSources(Set<String> dataSources) {
+        JsonObjectBuilder   job = Json.createObjectBuilder();
+        JsonArrayBuilder    jab = Json.createArrayBuilder();
+
+        for (String dataSourceCode : dataSources) {
+            jab.add(dataSourceCode);
+        }
+
+        job.add("DATA_SOURCES", jab);
+
+        StringWriter sw = new StringWriter();
+        Json.createWriter(sw).writeObject(job.build());
+        return sw.toString();
     }
 
     /**
      * Gets the underlying {@link SzEngineBlockingStub} for this instance.
+     * 
+     * @return The underlying {@link SzEngineBlockingStub} for this instance.
      */
     SzEngineBlockingStub getBlockingStub() {
         return this.blockingStub;
@@ -51,205 +264,567 @@ public class SzGrpcEngine implements SzEngine {
 
     @Override
     public void primeEngine() throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'primeEngine'");
+        this.env.execute(() -> {
+            PrimeEngineRequest request 
+                = PrimeEngineRequest.newBuilder().build();
+            
+            this.getBlockingStub().primeEngine(request);
+
+            return null;
+        });
     }
 
     @Override
     public String getStats() throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getStats'");
+        return this.env.execute(() -> {
+            GetStatsRequest request 
+                = GetStatsRequest.newBuilder().build();
+            
+            GetStatsResponse response = this.getBlockingStub().getStats(request);
+
+            return response.getResult();
+        });
     }
 
     @Override
     public String addRecord(SzRecordKey recordKey, String recordDefinition, Set<SzFlag> flags)
-            throws SzUnknownDataSourceException, SzBadInputException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'addRecord'");
+            throws SzUnknownDataSourceException, SzBadInputException, SzException 
+    {
+        return this.env.execute(() -> {
+            AddRecordRequest request 
+                = AddRecordRequest.newBuilder()
+                    .setDataSourceCode(recordKey.dataSourceCode())
+                    .setRecordId(recordKey.recordId())
+                    .setRecordDefinition(recordDefinition)
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            AddRecordResponse response = this.getBlockingStub().addRecord(request);
+
+            return response.getResult();
+        });
     }
 
     @Override
     public String getRecordPreview(String recordDefinition, Set<SzFlag> flags) throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'preprocessRecord'");
+        return this.env.execute(() -> {
+            GetRecordPreviewRequest request 
+                = GetRecordPreviewRequest.newBuilder()
+                    .setRecordDefinition(recordDefinition)
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            GetRecordPreviewResponse response 
+                = this.getBlockingStub().getRecordPreview(request);
+
+            return response.getResult();
+        });
     }
 
     @Override
     public String deleteRecord(SzRecordKey recordKey, Set<SzFlag> flags)
-            throws SzUnknownDataSourceException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'deleteRecord'");
+            throws SzUnknownDataSourceException, SzException 
+    {
+        return this.env.execute(() -> {
+            DeleteRecordRequest request 
+                = DeleteRecordRequest.newBuilder()
+                    .setDataSourceCode(recordKey.dataSourceCode())
+                    .setRecordId(recordKey.recordId())
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            DeleteRecordResponse response
+                = this.getBlockingStub().deleteRecord(request);
+
+            return response.getResult();
+        });
     }
 
     @Override
     public String reevaluateRecord(SzRecordKey recordKey, Set<SzFlag> flags)
-            throws SzUnknownDataSourceException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'reevaluateRecord'");
+            throws SzUnknownDataSourceException, SzException 
+    {
+        return this.env.execute(() -> {
+            ReevaluateRecordRequest request 
+                = ReevaluateRecordRequest.newBuilder()
+                    .setDataSourceCode(recordKey.dataSourceCode())
+                    .setRecordId(recordKey.recordId())
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            ReevaluateRecordResponse response
+                = this.getBlockingStub().reevaluateRecord(request);
+
+            return response.getResult();
+        });
     }
 
     @Override
-    public String reevaluateEntity(long entityId, Set<SzFlag> flags) throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'reevaluateEntity'");
+    public String reevaluateEntity(long entityId, Set<SzFlag> flags)
+            throws SzException 
+    {
+        return this.env.execute(() -> {
+            ReevaluateEntityRequest request 
+                = ReevaluateEntityRequest.newBuilder()
+                    .setEntityId(entityId)
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            ReevaluateEntityResponse response
+                = this.getBlockingStub().reevaluateEntity(request);
+
+            return response.getResult();
+        });
     }
 
     @Override
-    public String searchByAttributes(String attributes, String searchProfile, Set<SzFlag> flags) throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'searchByAttributes'");
+    public String searchByAttributes(String         attributes, 
+                                     String         searchProfile,
+                                     Set<SzFlag>    flags) 
+            throws SzException 
+    {
+        return this.env.execute(() -> {
+            SearchByAttributesRequest request 
+                = SearchByAttributesRequest.newBuilder()
+                    .setAttributes(attributes)
+                    .setSearchProfile(searchProfile)
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            SearchByAttributesResponse response
+                = this.getBlockingStub().searchByAttributes(request);
+
+            return response.getResult();
+        });
     }
 
     @Override
-    public String searchByAttributes(String attributes, Set<SzFlag> flags) throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'searchByAttributes'");
+    public String whySearch(String      attributes, 
+                            long        entityId,
+                            String      searchProfile,
+                            Set<SzFlag> flags)
+            throws SzNotFoundException, SzException 
+    {
+        return this.env.execute(() -> {
+            WhySearchRequest request 
+                = WhySearchRequest.newBuilder()
+                    .setAttributes(attributes)
+                    .setEntityId(entityId)
+                    .setSearchProfile(searchProfile)
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            WhySearchResponse response
+                = this.getBlockingStub().whySearch(request);
+
+            return response.getResult();
+        });
     }
 
     @Override
-    public String whySearch(String attributes, long entityId, String searchProfile, Set<SzFlag> flags)
-            throws SzNotFoundException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'whySearch'");
-    }
-
-    @Override
-    public String getEntity(long entityId, Set<SzFlag> flags) throws SzNotFoundException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getEntity'");
+    public String getEntity(long entityId, Set<SzFlag> flags)
+            throws SzNotFoundException, SzException 
+    {
+        return this.env.execute(() -> {
+            GetEntityByEntityIdRequest request
+                = GetEntityByEntityIdRequest.newBuilder()
+                    .setEntityId(entityId)
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            GetEntityByEntityIdResponse response
+                = this.getBlockingStub().getEntityByEntityId(request);
+            
+            return response.getResult();
+        });
     }
 
     @Override
     public String getEntity(SzRecordKey recordKey, Set<SzFlag> flags)
-            throws SzUnknownDataSourceException, SzNotFoundException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getEntity'");
+            throws SzUnknownDataSourceException, SzNotFoundException, SzException 
+    {
+        return this.env.execute(() -> {
+            GetEntityByRecordIdRequest request
+                = GetEntityByRecordIdRequest.newBuilder()
+                    .setDataSourceCode(recordKey.dataSourceCode())
+                    .setRecordId(recordKey.recordId())
+                    .setFlags(SzFlag.toLong(flags)).build();
+
+            GetEntityByRecordIdResponse response
+                = this.getBlockingStub().getEntityByRecordId(request);
+            
+            return response.getResult();
+        });
     }
 
     @Override
-    public String findInterestingEntities(long entityId, Set<SzFlag> flags) throws SzNotFoundException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findInterestingEntities'");
+    public String findInterestingEntities(long entityId, Set<SzFlag> flags)
+            throws SzNotFoundException, SzException 
+    {
+        return this.env.execute(() -> {
+            FindInterestingEntitiesByEntityIdRequest request
+                = FindInterestingEntitiesByEntityIdRequest.newBuilder()
+                    .setEntityId(entityId)
+                    .setFlags(SzFlag.toLong(flags)).build();
+
+            FindInterestingEntitiesByEntityIdResponse response
+                = this.getBlockingStub().findInterestingEntitiesByEntityId(request);
+            
+            return response.getResult();
+        });
     }
 
     @Override
     public String findInterestingEntities(SzRecordKey recordKey, Set<SzFlag> flags)
-            throws SzUnknownDataSourceException, SzNotFoundException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findInterestingEntities'");
+            throws SzUnknownDataSourceException, SzNotFoundException, SzException 
+    {
+        return this.env.execute(() -> {
+            FindInterestingEntitiesByRecordIdRequest request
+                = FindInterestingEntitiesByRecordIdRequest.newBuilder()
+                    .setDataSourceCode(recordKey.dataSourceCode())
+                    .setRecordId(recordKey.recordId())
+                    .setFlags(SzFlag.toLong(flags)).build();
+
+            FindInterestingEntitiesByRecordIdResponse response
+                = this.getBlockingStub().findInterestingEntitiesByRecordId(request);
+            
+            return response.getResult();
+        });
     }
 
     @Override
-    public String findPath(long startEntityId, long endEntityId, int maxDegrees, SzEntityIds avoidEntityIds,
-            Set<String> requiredDataSources, Set<SzFlag> flags)
-            throws SzNotFoundException, SzUnknownDataSourceException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findPath'");
+    public String findPath(long         startEntityId,
+                           long         endEntityId,
+                           int          maxDegrees,
+                           SzEntityIds  avoidEntityIds,
+                           Set<String>  requiredDataSources,
+                           Set<SzFlag>  flags)
+        throws SzNotFoundException, SzUnknownDataSourceException, SzException 
+    {
+        return this.env.execute(() -> {
+            FindPathByEntityIdRequest request
+                = FindPathByEntityIdRequest.newBuilder()
+                    .setStartEntityId(startEntityId)
+                    .setEndEntityId(endEntityId)
+                    .setMaxDegrees(maxDegrees)
+                    .setAvoidEntityIds(encodeEntityIds(avoidEntityIds))
+                    .setRequiredDataSources(encodeDataSources(requiredDataSources))
+                    .setFlags(SzFlag.toLong(flags)).build();
+
+            FindPathByEntityIdResponse response
+                = this.getBlockingStub().findPathByEntityId(request);
+            
+            return response.getResult();
+        });
     }
 
     @Override
-    public String findPath(SzRecordKey startRecordKey, SzRecordKey endRecordKey, int maxDegrees,
-            SzRecordKeys avoidRecordKeys, Set<String> requiredDataSources, Set<SzFlag> flags)
-            throws SzNotFoundException, SzUnknownDataSourceException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findPath'");
+    public String findPath(SzRecordKey  startRecordKey, 
+                           SzRecordKey  endRecordKey,
+                           int          maxDegrees,
+                           SzRecordKeys avoidRecordKeys,
+                           Set<String>  requiredDataSources,
+                           Set<SzFlag>  flags)
+            throws SzNotFoundException, SzUnknownDataSourceException, SzException 
+    {
+        return this.env.execute(() -> {
+            FindPathByRecordIdRequest request
+                = FindPathByRecordIdRequest.newBuilder()
+                    .setStartDataSourceCode(startRecordKey.dataSourceCode())
+                    .setStartRecordId(startRecordKey.recordId())
+                    .setEndDataSourceCode(endRecordKey.dataSourceCode())
+                    .setEndRecordId(endRecordKey.recordId())
+                    .setMaxDegrees(maxDegrees)
+                    .setAvoidRecordKeys(encodeRecordKeys(avoidRecordKeys))
+                    .setRequiredDataSources(encodeDataSources(requiredDataSources))
+                    .setFlags(SzFlag.toLong(flags)).build();
+
+            FindPathByRecordIdResponse response
+                = this.getBlockingStub().findPathByRecordId(request);
+            
+            return response.getResult();
+        });
     }
 
     @Override
-    public String findNetwork(SzEntityIds entityIds, int maxDegrees, int buildOutDegrees, int buildOutMaxEntities,
-            Set<SzFlag> flags) throws SzNotFoundException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findNetwork'");
+    public String findNetwork(SzEntityIds   entityIds, 
+                              int           maxDegrees,
+                              int           buildOutDegrees,
+                              int           buildOutMaxEntities,
+                              Set<SzFlag>   flags)
+            throws SzNotFoundException, SzException 
+    {
+        return this.env.execute(() -> {
+            FindNetworkByEntityIdRequest request
+                = FindNetworkByEntityIdRequest.newBuilder()
+                    .setEntityIds(encodeEntityIds(entityIds))
+                    .setMaxDegrees(maxDegrees)
+                    .setBuildOutDegrees(buildOutDegrees)
+                    .setBuildOutMaxEntities(buildOutMaxEntities)
+                    .setFlags(SzFlag.toLong(flags)).build();
+
+            FindNetworkByEntityIdResponse response
+                = this.getBlockingStub().findNetworkByEntityId(request);
+            
+            return response.getResult();
+        });
     }
 
     @Override
-    public String findNetwork(SzRecordKeys recordKeys, int maxDegrees, int buildOutDegrees, int buildOutMaxEntities,
-            Set<SzFlag> flags) throws SzUnknownDataSourceException, SzNotFoundException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findNetwork'");
+    public String findNetwork(SzRecordKeys  recordKeys, 
+                              int           maxDegrees,
+                              int           buildOutDegrees,
+                              int           buildOutMaxEntities,
+                              Set<SzFlag>   flags) 
+        throws SzUnknownDataSourceException, SzNotFoundException, SzException 
+    {
+        return this.env.execute(() -> {
+            FindNetworkByRecordIdRequest request
+                = FindNetworkByRecordIdRequest.newBuilder()
+                    .setRecordKeys(encodeRecordKeys(recordKeys))
+                    .setMaxDegrees(maxDegrees)
+                    .setBuildOutDegrees(buildOutDegrees)
+                    .setBuildOutMaxEntities(buildOutMaxEntities)
+                    .setFlags(SzFlag.toLong(flags)).build();
+
+            FindNetworkByRecordIdResponse response
+                = this.getBlockingStub().findNetworkByRecordId(request);
+            
+            return response.getResult();
+        });
     }
 
     @Override
     public String whyRecordInEntity(SzRecordKey recordKey, Set<SzFlag> flags)
-            throws SzUnknownDataSourceException, SzNotFoundException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'whyRecordInEntity'");
+        throws SzUnknownDataSourceException, SzNotFoundException, SzException 
+    {
+        return this.env.execute(() -> {
+            WhyRecordInEntityRequest request 
+                = WhyRecordInEntityRequest.newBuilder()
+                    .setDataSourceCode(recordKey.dataSourceCode())
+                    .setRecordId(recordKey.recordId())
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            WhyRecordInEntityResponse response
+                = this.getBlockingStub().whyRecordInEntity(request);
+
+            return response.getResult();
+        });
     }
 
     @Override
-    public String whyRecords(SzRecordKey recordKey1, SzRecordKey recordKey2, Set<SzFlag> flags)
-            throws SzUnknownDataSourceException, SzNotFoundException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'whyRecords'");
+    public String whyRecords(SzRecordKey recordKey1, 
+                             SzRecordKey recordKey2, 
+                             Set<SzFlag> flags)
+            throws SzUnknownDataSourceException, SzNotFoundException, SzException 
+    {
+        return this.env.execute(() -> {
+            WhyRecordsRequest request 
+                = WhyRecordsRequest.newBuilder()
+                    .setDataSourceCode1(recordKey1.dataSourceCode())
+                    .setRecordId1(recordKey1.recordId())
+                    .setDataSourceCode2(recordKey2.dataSourceCode())
+                    .setRecordId2(recordKey2.recordId())
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            WhyRecordsResponse response = this.getBlockingStub().whyRecords(request);
+
+            return response.getResult();
+        });
     }
 
     @Override
     public String whyEntities(long entityId1, long entityId2, Set<SzFlag> flags)
-            throws SzNotFoundException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'whyEntities'");
+            throws SzNotFoundException, SzException 
+    {
+        return this.env.execute(() -> {
+            WhyEntitiesRequest request 
+                = WhyEntitiesRequest.newBuilder()
+                    .setEntityId1(entityId1)
+                    .setEntityId2(entityId2)
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            WhyEntitiesResponse response = this.getBlockingStub().whyEntities(request);
+
+            return response.getResult();
+        });
     }
 
     @Override
-    public String howEntity(long entityId, Set<SzFlag> flags) throws SzNotFoundException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'howEntity'");
+    public String howEntity(long entityId, Set<SzFlag> flags) 
+        throws SzNotFoundException, SzException 
+    {
+        return this.env.execute(() -> {
+            HowEntityByEntityIdRequest request
+                = HowEntityByEntityIdRequest.newBuilder()
+                    .setEntityId(entityId)
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            HowEntityByEntityIdResponse response
+                = this.getBlockingStub().howEntityByEntityId(request);
+            
+            return response.getResult();
+        });
     }
 
     @Override
     public String getVirtualEntity(Set<SzRecordKey> recordKeys, Set<SzFlag> flags)
-            throws SzNotFoundException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getVirtualEntity'");
+            throws SzNotFoundException, SzException 
+    {
+        return this.env.execute(() -> {
+            GetVirtualEntityByRecordIdRequest request
+                = GetVirtualEntityByRecordIdRequest.newBuilder()
+                    .setRecordKeys(encodeRecordKeys(recordKeys))
+                    .setFlags(SzFlag.toLong(flags)).build();
+
+            GetVirtualEntityByRecordIdResponse response
+                = this.getBlockingStub().getVirtualEntityByRecordId(request);
+            
+            return response.getResult();
+        });
     }
 
     @Override
     public String getRecord(SzRecordKey recordKey, Set<SzFlag> flags)
-            throws SzUnknownDataSourceException, SzNotFoundException, SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getRecord'");
+            throws SzUnknownDataSourceException, SzNotFoundException, SzException 
+    {
+        return this.env.execute(() -> {
+            GetRecordRequest request
+                = GetRecordRequest.newBuilder()
+                    .setDataSourceCode(recordKey.dataSourceCode())
+                    .setRecordId(recordKey.recordId())
+                    .setFlags(SzFlag.toLong(flags)).build();
+
+            GetRecordResponse response = this.getBlockingStub().getRecord(request);
+            
+            return response.getResult();
+        });
     }
 
     @Override
     public long exportJsonEntityReport(Set<SzFlag> flags) throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'exportJsonEntityReport'");
+        return this.env.execute(() -> {
+            StreamExportJsonEntityReportRequest request
+                = StreamExportJsonEntityReportRequest.newBuilder()
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            Iterator<StreamExportJsonEntityReportResponse> responseIter
+                = this.getBlockingStub().streamExportJsonEntityReport(request);
+
+            JsonExportIterator exportIter = new JsonExportIterator(responseIter);
+            
+            long exportHandle = 0L;
+            synchronized (this.exportReportMaps) {
+                exportHandle = this.getNextExportHandle();
+                this.exportReportMaps.put(exportHandle, exportIter);
+            }
+
+            return exportHandle;
+        });
     }
 
     @Override
-    public long exportCsvEntityReport(String csvColumnList, Set<SzFlag> flags) throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'exportCsvEntityReport'");
+    public long exportCsvEntityReport(String csvColumnList, Set<SzFlag> flags) 
+        throws SzException 
+    {
+        return this.env.execute(() -> {
+            StreamExportCsvEntityReportRequest request
+                = StreamExportCsvEntityReportRequest.newBuilder()
+                    .setCsvColumnList(csvColumnList)
+                    .setFlags(SzFlag.toLong(flags)).build();
+            
+            Iterator<StreamExportCsvEntityReportResponse> responseIter
+                = this.getBlockingStub().streamExportCsvEntityReport(request);
+
+            CsvExportIterator exportIter = new CsvExportIterator(responseIter);
+            
+            long exportHandle = 0L;
+            synchronized (this.exportReportMaps) {
+                exportHandle = this.getNextExportHandle();
+                this.exportReportMaps.put(exportHandle, exportIter);
+            }
+
+            return exportHandle;
+        });
     }
 
     @Override
     public String fetchNext(long exportHandle) throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'fetchNext'");
+        return this.env.execute(() -> {
+            Iterator<String> exportIter = null;
+            synchronized (this.exportReportMaps) {
+                exportIter = this.exportReportMaps.get(exportHandle);
+            }
+
+            // check if not found
+            if (exportIter == null) {
+                new SzException(
+                    INVALID_EXPORT_HANDLE_CODE, 
+                    INVALID_EXPORT_HANDLE_MESSAGE.replace(
+                        "{0}", String.valueOf(exportHandle)));
+            }
+
+            // check if none remaining
+            if (!exportIter.hasNext()) {
+                return null;
+            }
+            
+            // get the next line
+            return exportIter.next();
+        });
     }
 
     @Override
     public void closeExportReport(long exportHandle) throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'closeExport'");
+        this.env.execute(() -> {
+            Iterator<String> exportIter = null;
+            synchronized (this.exportReportMaps) {
+                exportIter = this.exportReportMaps.remove(exportHandle);
+            }
+            if (exportIter == null) {
+                new SzException(
+                    INVALID_EXPORT_HANDLE_CODE, 
+                    INVALID_EXPORT_HANDLE_MESSAGE.replace(
+                        "{0}", String.valueOf(exportHandle)));
+            }
+            return null;
+        });
     }
 
     @Override
-    public String processRedoRecord(String redoRecord, Set<SzFlag> flags) throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'processRedoRecord'");
+    public String processRedoRecord(String redoRecord, Set<SzFlag> flags)
+        throws SzException 
+    {
+        return this.env.execute(() -> {
+            ProcessRedoRecordRequest request
+                = ProcessRedoRecordRequest.newBuilder()
+                    .setRedoRecord(redoRecord)
+                    .setFlags(SzFlag.toLong(flags)).build();
+
+            ProcessRedoRecordResponse response
+                = this.getBlockingStub().processRedoRecord(request);
+            
+            return response.getResult();
+        });
     }
 
     @Override
-    public String getRedoRecord() throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getRedoRecord'");
+    public String getRedoRecord() throws SzException 
+    {
+        return this.env.execute(() -> {
+            GetRedoRecordRequest request 
+                = GetRedoRecordRequest.newBuilder().build();
+            
+            GetRedoRecordResponse response
+                = this.getBlockingStub().getRedoRecord(request);
+            
+            return response.getResult();
+        });
     }
 
     @Override
-    public long countRedoRecords() throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'countRedoRecords'");
+    public long countRedoRecords() throws SzException 
+    {
+        return this.env.execute(() -> {
+            CountRedoRecordsRequest request 
+                = CountRedoRecordsRequest.newBuilder().build();
+            
+            CountRedoRecordsResponse response
+                = this.getBlockingStub().countRedoRecords(request);
+            
+            return response.getResult();
+        });
     }
-    
 }

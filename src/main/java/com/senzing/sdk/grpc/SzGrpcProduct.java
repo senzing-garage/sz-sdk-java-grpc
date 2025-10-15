@@ -2,7 +2,9 @@ package com.senzing.sdk.grpc;
 
 import com.senzing.sdk.SzException;
 import com.senzing.sdk.SzProduct;
-import com.senzing.sdk.grpc.SzProductGrpc.SzProductBlockingStub;
+
+import static com.senzing.sdk.grpc.SzProductGrpc.*;
+import static com.senzing.sdk.grpc.SzProductProto.*;
 
 import io.grpc.Channel;
 
@@ -35,6 +37,8 @@ public class SzGrpcProduct implements SzProduct {
 
     /**
      * Gets the underlying {@link SzProductBlockingStub} for this instance.
+     * 
+     * @return The underlying {@link SzProductBlockingStub} for this instance.
      */
     SzProductBlockingStub getBlockingStub() {
         return this.blockingStub;
@@ -42,14 +46,30 @@ public class SzGrpcProduct implements SzProduct {
 
     @Override
     public String getLicense() throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getLicense'");
+        return this.env.execute(() -> {
+
+            GetLicenseRequest request
+                = GetLicenseRequest.newBuilder().build();
+            
+            GetLicenseResponse response
+                = this.getBlockingStub().getLicense(request);
+
+            return response.getResult();
+        });      
     }
 
     @Override
     public String getVersion() throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getVersion'");
+        return this.env.execute(() -> {
+
+            GetVersionRequest request
+                = GetVersionRequest.newBuilder().build();
+            
+            GetVersionResponse response
+                = this.getBlockingStub().getVersion(request);
+
+            return response.getResult();
+        });      
     }
     
 }

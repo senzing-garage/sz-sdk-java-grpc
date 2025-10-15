@@ -1,6 +1,5 @@
 package com.senzing.sdk.grpc;
 
-import java.io.IOException;
 import java.io.StringReader;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
@@ -10,7 +9,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.JsonObject;
-import javax.json.JsonReader;
 
 import io.grpc.Channel;
 import io.grpc.Status;
@@ -22,11 +20,9 @@ import com.senzing.sdk.SzEngine;
 import com.senzing.sdk.SzEnvironment;
 import com.senzing.sdk.SzException;
 import com.senzing.sdk.SzProduct;
-import com.senzing.sdk.core.SzCoreEnvironment;
-import com.senzing.sdk.grpc.SzEngineGrpc.SzEngineBlockingStub;
+import com.senzing.sdk.core.SzCoreUtilities;
 import com.senzing.sdk.grpc.SzEngineProto.GetActiveConfigIdRequest;
 import com.senzing.sdk.grpc.SzEngineProto.GetActiveConfigIdResponse;
-import com.senzing.sdk.grpc.SzEngineProto.ReinitializeRequest;
 
 /**
  * Provides a gRPC implementation of {@link SzEnvironment}.
@@ -279,7 +275,7 @@ public class SzGrpcEnvironment implements SzEnvironment {
                 ? reason.substring(index + 1) : "";
 
             // now return the SzException for the error code and message
-            return SzCoreEnvironment.createSzException(errorCode, message);
+            return SzCoreUtilities.createSzException(errorCode, message);
 
         } catch (JsonException e2) {
             // the does not appear to be JSON, use it directly
