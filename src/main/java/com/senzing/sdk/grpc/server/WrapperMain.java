@@ -1,11 +1,9 @@
 package com.senzing.sdk.grpc.server;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -70,9 +68,44 @@ final class WrapperMain {
             }
 
         } else {
+            // check if we have no install jar file
+            if (INSTALL_JAR_FILE == null) {
+                System.err.println();
+                System.err.println(
+                    "The Senzing native library " + LIBRARY_FILE_NAME 
+                    + " could not be found in the library");
+                System.err.println(
+                    "path defined by the " + LIBRARY_PATH_ENV_VARIABLE 
+                    + " environment variable.");
+                System.err.println();
+                System.err.println(
+                    "Please check your " + LIBRARY_PATH_ENV_VARIABLE + " environment setting and "
+                    + "try again.");
+                
+                if (RUNTIME_OS_TYPE == OSType.MACOS) {
+                    System.err.println();
+                    System.err.println(
+                        "NOTE: System Integrity Protection (SIP) on macOS will prevent the Java process from");
+                    System.err.println(
+                        "inheriting the " + LIBRARY_PATH_ENV_VARIABLE + " environment variable if using a Java executable");
+                    System.err.println(
+                        "from a \"system path\" (including the default /usr/bin/java wrapper which finds Java");
+                    System.err.println(
+                        "via JAVA_HOME).");
+                    System.err.println();
+                    System.err.println(
+                        "You are required to directly execute a Java executable from a \"user path\" on macOS.");
+                    System.err.println(
+                        "For example, install Java in your home directory and execute it from there.");
+                    System.err.println();
+                }
+
+                System.exit(1);
+            }
+
             // get the java executable
             String java = ProcessHandle.current().info().command().orElse("java");
-            
+
             // create the class path
             String mainJarPath  = findJarForClass(WrapperMain.class).getPath();
             String sdkJarPath   = INSTALL_JAR_FILE.toString();
