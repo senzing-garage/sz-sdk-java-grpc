@@ -357,6 +357,10 @@
                         <token>public static void main</token>
                         <value>public static void notMain</value>
                     </replacement>
+                    <replacement>
+                        <token>private static final String</token>
+                        <value>static final String</value>
+                    </replacement>
                 </replacements>
             </configuration>
           </execution>
