@@ -74,7 +74,9 @@
       "stackoverflow",
       "unresolve",
       "Senzing",
-      "rawtypes"
+      "rawtypes",
+      "linecorp",
+      "armeria"
     ],
     "ignorePaths": [
       "CHANGELOG.md",

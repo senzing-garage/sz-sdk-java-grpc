@@ -3,15 +3,12 @@ package com.senzing.sdk.grpc.server;
 import java.util.Objects;
 
 import com.senzing.sdk.SzEnvironment;
-import com.senzing.sdk.SzException;
 import com.senzing.sdk.SzProduct;
-import com.senzing.sdk.grpc.server.SzProductGrpc.SzProductImplBase;
-import com.senzing.sdk.grpc.server.SzProductProto.GetLicenseRequest;
-import com.senzing.sdk.grpc.server.SzProductProto.GetLicenseResponse;
-import com.senzing.sdk.grpc.server.SzProductProto.GetVersionRequest;
-import com.senzing.sdk.grpc.server.SzProductProto.GetVersionResponse;
-
 import io.grpc.stub.StreamObserver;
+
+import static com.senzing.sdk.grpc.proto.SzProductGrpc.*;
+import static com.senzing.sdk.grpc.proto.SzProductProto.*;
+import static com.senzing.sdk.grpc.server.SzGrpcServer.*;
 
 /**
  * Provides the gRPC server-side implementation for {@link SzProduct}.
@@ -62,8 +59,8 @@ public class SzGrpcProductImpl extends SzProductImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -83,8 +80,8 @@ public class SzGrpcProductImpl extends SzProductImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 

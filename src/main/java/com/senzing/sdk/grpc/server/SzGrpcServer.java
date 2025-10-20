@@ -17,21 +17,43 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 
 import javax.json.Json;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 
 import com.senzing.cmdline.CommandLineException;
 import com.senzing.cmdline.CommandLineOption;
 import com.senzing.cmdline.DeprecatedOptionWarning;
+import com.senzing.sdk.SzBadInputException;
+import com.senzing.sdk.SzConfigurationException;
 import com.senzing.sdk.SzEnvironment;
 import com.senzing.sdk.SzException;
+import com.senzing.sdk.SzLicenseException;
+import com.senzing.sdk.SzNotFoundException;
+import com.senzing.sdk.SzNotInitializedException;
 import com.senzing.sdk.SzProduct;
+import com.senzing.sdk.SzReplaceConflictException;
+import com.senzing.sdk.SzRetryTimeoutExceededException;
+import com.senzing.sdk.SzRetryableException;
+import com.senzing.sdk.SzUnknownDataSourceException;
+import com.senzing.sdk.core.SzCoreEnvironment;
+import com.senzing.sdk.core.SzCoreUtilities;
 import com.senzing.sdk.core.auto.SzAutoCoreEnvironment;
 import com.senzing.util.JsonUtilities;
 import com.senzing.util.LoggingUtilities;
+
+import io.grpc.StatusRuntimeException;
+import io.grpc.Status;
+
+import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.linecorp.armeria.server.Server;
 import com.linecorp.armeria.server.grpc.GrpcService;
 
@@ -39,13 +61,19 @@ import static com.senzing.sdk.grpc.server.SzGrpcServerConstants.DEFAULT_BIND_ADD
 import static com.senzing.sdk.grpc.server.SzGrpcServerConstants.DEFAULT_GRPC_CONCURRENCY;
 import static com.senzing.sdk.grpc.server.SzGrpcServerConstants.DEFAULT_PORT;
 import static com.senzing.sdk.grpc.server.SzGrpcServerOption.*;
+import static com.senzing.util.JsonUtilities.toJsonText;
 import static com.senzing.util.LoggingUtilities.*;
-
+import static com.senzing.sdk.grpc.SzGrpcEnvironment.*;
 
 /**
  * The Senzing SDK gRPC server class.
  */
 public class SzGrpcServer {
+    // must be in static initializer before ANY Armeria usage
+    static {
+        System.setProperty("com.linecorp.armeria.transportType", "nio");
+    }
+
     /**
      * The number of milliseconds to provide advance warning of an expiring
      * license.
@@ -100,13 +128,12 @@ public class SzGrpcServer {
      * @return The {@link SzAutoCoreEnvironment} that was created using the
      *         specified options.
      * 
-     * @throws SzException If a failure occurs in initialization.
      * @throws IllegalStateException If there is already an active instance of
      *                               {@link com.senzing.sdk.core.SzCoreEnvironment}.
      */
     protected static SzAutoCoreEnvironment createSzAutoCoreEnvironment(
         SzGrpcServerOptions options)
-        throws SzException, IllegalStateException
+        throws IllegalStateException
     {
         String settings = JsonUtilities.toJsonText(options.getCoreSettings());
 
@@ -115,8 +142,10 @@ public class SzGrpcServer {
         boolean verbose = (options.getCoreLogLevel() != 0);
         
         int concurrency = options.getCoreConcurrency();
-        
-        Duration duration = Duration.ofSeconds(options.getRefreshConfigSeconds());
+     
+        long refreshSeconds = options.getRefreshConfigSeconds();
+        Duration duration = (refreshSeconds < 0) 
+            ? null : Duration.ofSeconds(refreshSeconds);
 
         return SzAutoCoreEnvironment.newAutoBuilder()
                 .concurrency(concurrency)
@@ -164,7 +193,7 @@ public class SzGrpcServer {
                     + "the SzEnvironment.  This operation is not supported.");
             }
             try {
-                return method.invoke(SzGrpcServer.this, args);
+                return method.invoke(SzGrpcServer.this.environment, args);
 
             } catch (InvocationTargetException e) {
                 throw e.getCause();
@@ -186,13 +215,11 @@ public class SzGrpcServer {
      * 
      * @param options The {@link SzGrpcServerOptions} for this instance.
      * 
-     * @throws SzException If a failure occurs in Senzing initialization.
-     * 
      * @throws IllegalStateException If another instance of Senzing Core SDK
      *                               is already actively initialized.
      */
     public SzGrpcServer(SzGrpcServerOptions options)
-        throws SzException, IllegalStateException
+        throws IllegalStateException
     {
         this(options, true);
     }
@@ -212,13 +239,10 @@ public class SzGrpcServer {
      * @param startServer <code>true</code> if the server should be started
      *                    upon construction, otherwise <code>false</code>
      * 
-     * @throws SzException If a failure occurs in Senzing initialization.
-     * 
      * @throws IllegalStateException If another instance of Senzing Core SDK
      *                               is already actively initialized.
      */
     public SzGrpcServer(SzGrpcServerOptions options, boolean startServer)
-        throws SzException
     {
         this(createSzAutoCoreEnvironment(options), true, options, startServer);
     }
@@ -244,13 +268,11 @@ public class SzGrpcServer {
      * @param options The {@link SzGrpcServerOptions} for this instance.
      * @param startServer <code>true</code> if the server should be started
      *                    upon construction, otherwise <code>false</code>
-     * @throws SzException If a Senzing failure occurs.
      */
     protected SzGrpcServer(SzEnvironment        env,
                            boolean              manageEnv,
                            SzGrpcServerOptions  options, 
                            boolean              startServer)
-        throws SzException
     {
         this(env, true, options.buildOptionsMap(), startServer);
     }
@@ -277,14 +299,12 @@ public class SzGrpcServer {
      * @param options The {@link SzGrpcServerOptions} for this instance.
      * @param startServer <code>true</code> if the server should be started
      *                    upon construction, otherwise <code>false</code>
-     * @throws SzException If a Senzing failure occurs.
      */
     @SuppressWarnings("rawtypes")
     protected SzGrpcServer(SzEnvironment                    env,
                            boolean                          manageEnv,
                            Map<CommandLineOption, Object>   options, 
                            boolean                          startServer)
-        throws SzException
     {
         Integer     concurrency = (Integer) options.get(GRPC_CONCURRENCY);
         Integer     port        = (Integer) options.get(GRPC_PORT);
@@ -327,9 +347,30 @@ public class SzGrpcServer {
 
         // optionally, start the server
         if (startServer) {
-            this.grpcServer.start();
+            this.grpcServer.start().join();
             this.started = true;
         }
+    }
+
+    /**
+     * Gets the port number on which this {@link SzGrpcServer} is
+     * actively listening.
+     * 
+     * @return The port number on which this {@link SzGrpcServer} is
+     *         actively listening.
+     * 
+     * @throws IllegalStateException If this {@link SzGrpcServer} has 
+     *                               not been started or has been destroyed
+     *                               and is <b>not</b> actively listening
+     *                               on a port.
+     */
+    public synchronized int getActiveGrpcPort() {
+        if (this.destroyed || this.stopped || !this.started) {
+            throw new IllegalStateException(
+                "There is no active port because the server is not "
+                + "currently running");
+        }
+        return this.grpcServer.activeLocalPort();
     }
 
     /**
@@ -599,5 +640,206 @@ public class SzGrpcServer {
      */
     public static String getVersionMessage() {
         return "[VERSION STRING HERE]";
+    }
+
+    /**
+     * Provides a mapping of exception class types to {@link Status}
+     * values.
+     */
+    private static final Map<Class<?>, Status> STATUS_MAP;
+
+    static {
+        Map<Class<?>, Status> map = new LinkedHashMap<>();
+        map.put(UnsupportedOperationException.class, Status.UNIMPLEMENTED);
+        map.put(NullPointerException.class, Status.INTERNAL);
+        map.put(SzNotFoundException.class, Status.NOT_FOUND);
+        map.put(SzUnknownDataSourceException.class, Status.NOT_FOUND);
+        map.put(IllegalArgumentException.class, Status.INVALID_ARGUMENT);
+        map.put(SzBadInputException.class, Status.INVALID_ARGUMENT);
+        map.put(IllegalStateException.class, Status.FAILED_PRECONDITION);
+        map.put(SzConfigurationException.class, Status.FAILED_PRECONDITION);
+        map.put(SzReplaceConflictException.class, Status.FAILED_PRECONDITION);
+        map.put(SzNotInitializedException.class, Status.FAILED_PRECONDITION);
+        map.put(SzRetryTimeoutExceededException.class, Status.DEADLINE_EXCEEDED);
+        map.put(SzLicenseException.class, Status.RESOURCE_EXHAUSTED);
+        map.put(SzRetryableException.class, Status.OUT_OF_RANGE);
+        map.put(SzException.class, Status.INTERNAL);
+        
+        STATUS_MAP = Collections.unmodifiableMap(map);
+    }
+
+    /**
+     * Attempt to infer the {@link Status} from the {@link Throwable}.
+     * If it cannot be inferred then {@link Status#UNKNOWN} is returned.
+     * 
+     * @param t The {@link Throwable} from which to refer the {@link Status}.
+     * @return The inferred {@link Status}.
+     */
+    protected static io.grpc.Status inferStatus(Throwable t) {
+        if (t == null) {
+            return Status.UNKNOWN;
+        }
+        for (Map.Entry<Class<?>,Status> entry : STATUS_MAP.entrySet()) {
+            if (entry.getKey().isInstance(t)) {
+                return entry.getValue();
+            }
+        }
+        return Status.UNKNOWN;
+    }
+
+    /**
+     * Creates a {@link StatusRuntimeException} from the optionally-specified
+     * {@link Status} and the specified {@link Throwable}.
+     * 
+     * @param t The {@link Throwable} instance to use as a basis.
+     * 
+     * @return The {@link StatusRuntimeException} that was created.
+     */
+    protected static StatusRuntimeException toStatusRuntimeException(Throwable  t) 
+    {
+        return toStatusRuntimeException(inferStatus(t), t);
+    }
+
+    /**
+     * Creates a {@link StatusRuntimeException} from the optionally-specified
+     * {@link Status} and the specified {@link Throwable}.
+     * 
+     * @param status The explicit {@link Status} or <code>null</code> if the
+     *               {@link Status} should be inferred from the {@link Throwable}.
+     * 
+     * @param t The {@link Throwable} instance to use as a basis.
+     * 
+     * @return The {@link StatusRuntimeException} that was created.
+     */
+    protected static StatusRuntimeException toStatusRuntimeException(Status     status,
+                                                                     Throwable  t) 
+    {
+        // check if the throwable is null
+        if (t == null) {
+            status = (status == null) ? Status.UNKNOWN : status;
+            return status.asRuntimeException();
+        }
+
+        // check if status is null and infer it if so
+        if (status == null) {
+            status = inferStatus(t);
+        }
+
+        // setup the fields for the JSON error
+        String          reason      = null;
+
+        // check if we have an SzException
+        if (t instanceof SzException) {
+            SzException sze = (SzException) t;
+
+            String prefix   = REASON_PREFIX + sze.getErrorCode() 
+                            + REASON_SPLITTER;
+            String message  = sze.getMessage();
+
+            if (message.startsWith(prefix)) {
+                reason = message;
+            } else {           
+                reason = prefix + message;
+            }
+        }
+
+        // get the other fields
+        StackTraceElement[] stackFrames = t.getStackTrace();
+
+        StackTraceElement relevantFrame = null;
+        for (StackTraceElement ste : stackFrames) {
+            if (ste.getClassName().startsWith("com.senzing")) {
+                String className    = ste.getClassName();
+                String methodName   = ste.getMethodName();
+                if (className == null || methodName == null) {
+                    continue;
+                }
+                // skip the utility method for creating exceptions
+                if (className.equals(SzCoreUtilities.class.getName())
+                    && methodName.equals("createSzException"))
+                {
+                    continue;
+                }
+                // skip the core env method for handling return codes
+                if (className.equals(SzCoreEnvironment.class.getName())
+                    && methodName.equals("handleReturnCode"))
+                {
+                    continue;
+                }
+
+                // any other senzing method, assume it is relevant
+                relevantFrame = ste;
+                break;
+            }
+        }
+
+        // format the relevant frame
+        String function = (relevantFrame == null)
+            ? null : LoggingUtilities.formatStackFrame(relevantFrame);
+
+        // get the stack trace list
+        List<String> stackTrace = new ArrayList<>(stackFrames.length);
+        for (StackTraceElement frame : stackFrames) {
+            stackTrace.add(LoggingUtilities.formatStackFrame(frame));
+        }
+        
+        // get the text for the original exception
+        String text = t.toString();
+
+        // set the fields
+        JsonObjectBuilder job = Json.createObjectBuilder();
+        if (reason != null) {
+            job.add(REASON_FIELD_KEY, reason);
+        }
+        if (text != null) {
+            job.add(TEXT_FIELD_KEY, text);
+        }
+        if (function != null) {
+            job.add(FUNCTION_FIELD_KEY, function);
+        }
+        if (stackTrace != null) {
+            JsonArrayBuilder jab = Json.createArrayBuilder();
+            for (String frame : stackTrace) {
+                jab.add(frame);
+            }
+            job.add(STACK_TRACE_FIELD_KEY, jab);
+        }
+        JsonObjectBuilder wrapper = Json.createObjectBuilder();
+        wrapper.add(ERROR_FIELD_KEY, job);
+
+        String jsonError = toJsonText(wrapper);
+
+        // create the exception
+        return status.withDescription(jsonError)
+                     .withCause(t)
+                     .asRuntimeException();
+    }
+
+    /**
+     * Gets a {@link String} field value from a message that may be
+     * absent.  If the field value is absent then <code>null</code> 
+     * is returned, otherwise the field value is returned.
+     * 
+     * @param message The {@link GeneratedMessageV3} from which the
+     *                value is being extracted.
+     * @param fieldName The name of the field for which the value
+     *                  is being extracted.
+     * @return The value of the field or <code>null</code> if the value
+     *         has not been explicitly set.
+     */
+    public static String getString(GeneratedMessageV3 message, String fieldName) 
+    {
+        Descriptor descriptor = message.getDescriptorForType();
+        FieldDescriptor fieldDesc = descriptor.findFieldByName(fieldName);
+        if (fieldDesc == null) {
+            throw new IllegalArgumentException(
+                "Field (" + fieldName + ") not recognized for type: "
+                + message.getClass().getName());
+        }
+        if (!message.hasField(fieldDesc)) {
+            return null;
+        }
+        Object result = message.getField(fieldDesc);
+        return (result == null) ? null : result.toString();
     }
 }

@@ -1,15 +1,29 @@
 package com.senzing.sdk.grpc;
 
 import com.senzing.sdk.SzConfig;
+import com.senzing.sdk.SzEnvironmentDestroyedException;
 import com.senzing.sdk.SzException;
 import com.senzing.sdk.core.SzCoreEnvironment;
-import static com.senzing.sdk.grpc.SzConfigGrpc.*;
-import static com.senzing.sdk.grpc.SzConfigProto.*;
+
+import static com.senzing.sdk.grpc.proto.SzConfigGrpc.*;
+import static com.senzing.sdk.grpc.proto.SzConfigProto.*;
 
 /**
  * The gRPC implementation of {@link SzConfig}.
  */
 public class SzGrpcConfig implements SzConfig {
+    /**
+     * The result from the {@link #toString()} function if the environment
+     * is already destroyed.
+     */
+    static final String DESTROYED_MESSAGE = "*** DESTROYED ***";
+
+    /**
+     * The prefix to use if an {@link SzException} is thrown from 
+     * {@link #export()} and {@link #toString()} was called.
+     */
+    static final String FAILURE_PREFIX = "*** FAILURE: ";
+
     /**
      * The {@link SzGrpcEnvironment} that constructed this instance.
      */
@@ -122,4 +136,14 @@ public class SzGrpcConfig implements SzConfig {
         });      
     }
     
+    @Override
+    public String toString() {
+        try {
+            return this.export();
+        } catch (SzEnvironmentDestroyedException e) {
+            return DESTROYED_MESSAGE;
+        } catch (Exception e) {
+            return FAILURE_PREFIX + e.getMessage();
+        }
+    }
 }

@@ -113,10 +113,10 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-transport-native-kqueue</artifactId>
             </exclusion>
-            <exclusion>
+            <!-- exclusion>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-transport-native-unix-common</artifactId>
-            </exclusion>
+            </exclusion -->
             <exclusion>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-resolver-dns-native-macos</artifactId>
@@ -139,10 +139,10 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-transport-native-kqueue</artifactId>
             </exclusion>
-            <exclusion>
+            <!-- exclusion>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-transport-native-unix-common</artifactId>
-            </exclusion>
+            </exclusion -->
             <exclusion>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-resolver-dns-native-macos</artifactId>
@@ -357,151 +357,77 @@
                         <token>public static void main</token>
                         <value>public static void notMain</value>
                     </replacement>
-                    <replacement>
-                        <token>private static final String</token>
-                        <value>static final String</value>
-                    </replacement>
                 </replacements>
             </configuration>
           </execution>
           <execution>
-            <id>client-grpc-replace</id>
+            <id>add-grpc-javdocs</id>
             <phase>generate-sources</phase>
             <goals>
               <goal>replace</goal>
             </goals>
             <configuration>
-                <basedir>${project.build.directory}/generated-sources/protobuf/grpc-java/com/senzing/sdk/grpc/</basedir>
+                <basedir>${project.build.directory}/generated-sources/protobuf/grpc-java/com/senzing/sdk/grpc/proto</basedir>
                 <includes>
                   <include>Sz*Grpc.java</include>
                 </includes>
                 <regex>true</regex>
                 <regexFlags>
+                  <regexFlag>DOTALL</regexFlag>
                   <regexFlag>MULTILINE</regexFlag>
                 </regexFlags>
                 <replacements>
                     <replacement>
-                        <token>^public final class Sz([^ ]+)Grpc</token>
-                        <value>final class Sz$1Grpc</value>
+                        <token>^(    )/\*\*\n     \*/\n    default void ([^ (]+)\(</token>
+                        <value><![CDATA[$1/**
+     * Generated gRPC $2 method.
+     * @param request The request.
+     * @param responseObserver The response observer.
+     */
+     default void $2(]]></value>
                     </replacement>
                     <replacement>
-                        <token>public static final class</token>
-                        <value>static final class</value>
+                        <token>^(    )/\*\*\n     \*/\n    public void ([^ (]+)\(</token>
+                        <value><![CDATA[$1/**
+     * Generated gRPC $2 method.
+     * @param request The request.
+     * @param responseObserver The response observer.
+     */
+     public void $2(]]></value>
                     </replacement>
                     <replacement>
-                        <token>public interface</token>
-                        <value>interface</value>
-                    </replacement>
-                </replacements>
-            </configuration>
-          </execution>
-          <execution>
-            <id>client-proto-replace</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>replace</goal>
-            </goals>
-            <configuration>
-                <basedir>${project.build.directory}/generated-sources/protobuf/java/com/senzing/sdk/grpc/</basedir>
-                <includes>
-                  <include>Sz*Proto.java</include>
-                </includes>
-                <regex>true</regex>
-                <regexFlags>
-                  <regexFlag>MULTILINE</regexFlag>
-                </regexFlags>
-                <replacements>
-                    <replacement>
-                        <token>^public final class Sz([^ ]+)Proto</token>
-                        <value>final class Sz$1Proto</value>
+                        <token>^(  )/\*\*\n   \*/\n  public interface ([^ \{]+) \{</token>
+                        <value><![CDATA[$1/**
+   * Generated gRPC $2 interface.
+   */
+   public interface $2 {]]></value>
                     </replacement>
                     <replacement>
-                        <token>public static final class</token>
-                        <value>static final class</value>
+                        <token>^/\*\*\n \*/\n@io.grpc.stub.annotations.GrpcGenerated\npublic final class Sz([^ G]+)Grpc \{</token>
+                        <value><![CDATA[/**
+* Generated gRPC Sz$1Grpc class.
+*/
+@io.grpc.stub.annotations.GrpcGenerated
+public final class Sz$1Grpc {]]></value>
                     </replacement>
                     <replacement>
-                        <token>public interface</token>
-                        <value>interface</value>
-                    </replacement>
-                </replacements>
-            </configuration>
-          </execution>
-          <execution>
-            <id>server-grpc-replace</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>replace</goal>
-            </goals>
-            <configuration>
-                <basedir>${project.build.directory}/generated-sources/protobuf/grpc-java/com/senzing/sdk/grpc/</basedir>
-                <includes>
-                  <include>Sz*Grpc.java</include>
-                </includes>
-                <outputDir>server</outputDir>
-                <regex>true</regex>
-                <regexFlags>
-                  <regexFlag>MULTILINE</regexFlag>
-                </regexFlags>
-                <replacements>
-                    <replacement>
-                        <token>package com\.senzing\.sdk\.grpc;</token>
-                        <value>package com.senzing.sdk.grpc.server;</value>
+                        <token>^(    )/\*\*\n     \*/\n    public com\.senzing\.sdk\.grpc\.proto\.([^ ]+) ([^ (]+)\(</token>
+                        <value><![CDATA[$1/**
+     * Generated gRPC $3 method.
+     * @param request The request.
+     * @return The response.
+     * @throws io.grpc.StatusException If a failure occurs.
+     */
+     public com.senzing.sdk.grpc.proto.$2 $3(]]></value>
                     </replacement>
                     <replacement>
-                        <token>com\.senzing\.sdk\.grpc\.Sz([^ ]+)Proto\.</token>
-                        <value>com.senzing.sdk.grpc.server.Sz$1Proto.</value>
-                    </replacement>
-                    <replacement>
-                        <token>^public final class Sz([^ ]+)Grpc</token>
-                        <value>final class Sz$1Grpc</value>
-                    </replacement>
-                    <replacement>
-                        <token>public static final class</token>
-                        <value>static final class</value>
-                    </replacement>
-                    <replacement>
-                        <token>public interface</token>
-                        <value>interface</value>
-                    </replacement>
-                </replacements>
-            </configuration>
-          </execution>
-          <execution>
-            <id>server-proto-replace</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>replace</goal>
-            </goals>
-            <configuration>
-                <basedir>${project.build.directory}/generated-sources/protobuf/java/com/senzing/sdk/grpc/</basedir>
-                <includes>
-                  <include>Sz*Proto.java</include>
-                </includes>
-                <outputDir>server</outputDir>
-                <regex>true</regex>
-                <regexFlags>
-                  <regexFlag>MULTILINE</regexFlag>
-                </regexFlags>
-                <replacements>
-                    <replacement>
-                        <token>package com\.senzing\.sdk\.grpc;</token>
-                        <value>package com.senzing.sdk.grpc.server;</value>
-                    </replacement>
-                    <replacement>
-                        <token>com\.senzing\.sdk\.grpc\.Sz([^ ]+)Proto\.</token>
-                        <value>com.senzing.sdk.grpc.server.Sz$1Proto.</value>
-                    </replacement>
-                    <replacement>
-                        <token>^public final class Sz([^ ]+)Proto</token>
-                        <value>final class Sz$1Proto</value>
-                    </replacement>
-                    <replacement>
-                        <token>public static final class</token>
-                        <value>static final class</value>
-                    </replacement>
-                    <replacement>
-                        <token>public interface</token>
-                        <value>interface</value>
+                        <token>^(    )/\*\*\n     \*/\n    public com\.google\.common\.util\.concurrent\.ListenableFuture([^ ]+) ([^ (]+)\(</token>
+                        <value><![CDATA[$1/**
+     * Generated gRPC $3 method.
+     * @param request The request.
+     * @return The response.
+     */
+     public com.google.common.util.concurrent.ListenableFuture$2 $3(]]></value>
                     </replacement>
                 </replacements>
             </configuration>
@@ -537,7 +463,10 @@
           </compilerArgs>
           <testExcludes>
             <testExclude>com/senzing/sdk/*.java</testExclude>
-            <testExclude>com/senzing/sdk/core/**</testExclude>
+            <testExclude>com/senzing/sdk/core/Sz*Test.java</testExclude>
+            <testExclude>com/senzing/sdk/core/Sz*Tests.java</testExclude>
+            <testExclude>com/senzing/sdk/core/InstallUtilitiesTest.java</testExclude>
+            <testExclude>com/senzing/sdk/core/Utilities.java</testExclude>
           </testExcludes>
         </configuration>
       </plugin>
@@ -600,6 +529,9 @@
                 <link>https://grpc.github.io/grpc-java/javadoc/</link>
                 <link>https://garage.senzing.com/sz-sdk-java/</link>
               </links>
+              <excludePackageNames>
+                com.senzing.sdk.grpc.proto
+              </excludePackageNames>
               <sourceFileExcludes>
                 <exclude>**/SzConfigGrpc.java</exclude>
                 <exclude>**/SzConfigManagerGrpc.java</exclude>
@@ -670,6 +602,33 @@
                     <exclude>META-INF/proguard/**</exclude>
                   </excludes>
                 </filter>
+
+                <!-- Add this filter to exclude platform-specific unix-common JARs -->
+                <filter>
+                  <artifact>io.netty:netty-transport-native-unix-common:*:linux-aarch_64</artifact>
+                  <excludes>
+                    <exclude>**</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>io.netty:netty-transport-native-unix-common:*:linux-x86_64</artifact>
+                  <excludes>
+                    <exclude>**</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>io.netty:netty-transport-native-unix-common:*:osx-aarch_64</artifact>
+                  <excludes>
+                    <exclude>**</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>io.netty:netty-transport-native-unix-common:*:osx-x86_64</artifact>
+                  <excludes>
+                    <exclude>**</exclude>
+                  </excludes>
+                </filter>
+                <!-- add this filter since we get these files from another jar-->
                 <filter>
                   <artifact>io.netty:*</artifact>
                   <excludes>

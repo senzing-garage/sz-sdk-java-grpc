@@ -3,21 +3,12 @@ package com.senzing.sdk.grpc.server;
 import java.util.Objects;
 
 import com.senzing.sdk.SzDiagnostic;
-import com.senzing.sdk.SzException;
 import com.senzing.sdk.SzEnvironment;
-import com.senzing.sdk.grpc.server.SzDiagnosticGrpc.SzDiagnosticImplBase;
-import com.senzing.sdk.grpc.server.SzDiagnosticProto.CheckRepositoryPerformanceRequest;
-import com.senzing.sdk.grpc.server.SzDiagnosticProto.CheckRepositoryPerformanceResponse;
-import com.senzing.sdk.grpc.server.SzDiagnosticProto.GetFeatureRequest;
-import com.senzing.sdk.grpc.server.SzDiagnosticProto.GetFeatureResponse;
-import com.senzing.sdk.grpc.server.SzDiagnosticProto.GetRepositoryInfoRequest;
-import com.senzing.sdk.grpc.server.SzDiagnosticProto.GetRepositoryInfoResponse;
-import com.senzing.sdk.grpc.server.SzDiagnosticProto.PurgeRepositoryRequest;
-import com.senzing.sdk.grpc.server.SzDiagnosticProto.PurgeRepositoryResponse;
-import com.senzing.sdk.grpc.server.SzDiagnosticProto.ReinitializeRequest;
-import com.senzing.sdk.grpc.server.SzDiagnosticProto.ReinitializeResponse;
-
 import io.grpc.stub.StreamObserver;
+
+import static com.senzing.sdk.grpc.proto.SzDiagnosticGrpc.*;
+import static com.senzing.sdk.grpc.proto.SzDiagnosticProto.*;
+import static com.senzing.sdk.grpc.server.SzGrpcServer.*;
 
 /**
  * Provides the gRPC server-side implementation for {@link SzDiagnostic}.
@@ -71,8 +62,8 @@ class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -95,8 +86,8 @@ class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -117,8 +108,8 @@ class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -138,8 +129,8 @@ class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -159,8 +150,8 @@ class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 

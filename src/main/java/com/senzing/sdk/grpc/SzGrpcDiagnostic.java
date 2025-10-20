@@ -3,8 +3,10 @@ package com.senzing.sdk.grpc;
 import com.senzing.sdk.SzDiagnostic;
 import com.senzing.sdk.SzException;
 
-import static com.senzing.sdk.grpc.SzDiagnosticGrpc.*;
-import static com.senzing.sdk.grpc.SzDiagnosticProto.*;
+import com.senzing.sdk.grpc.proto.SzDiagnosticGrpc;
+
+import static com.senzing.sdk.grpc.proto.SzDiagnosticGrpc.*;
+import static com.senzing.sdk.grpc.proto.SzDiagnosticProto.*;
 
 import io.grpc.Channel;
 

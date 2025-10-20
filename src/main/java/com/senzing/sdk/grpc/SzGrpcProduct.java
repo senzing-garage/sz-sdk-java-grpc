@@ -3,8 +3,10 @@ package com.senzing.sdk.grpc;
 import com.senzing.sdk.SzException;
 import com.senzing.sdk.SzProduct;
 
-import static com.senzing.sdk.grpc.SzProductGrpc.*;
-import static com.senzing.sdk.grpc.SzProductProto.*;
+import com.senzing.sdk.grpc.proto.SzProductGrpc;
+
+import static com.senzing.sdk.grpc.proto.SzProductGrpc.*;
+import static com.senzing.sdk.grpc.proto.SzProductProto.*;
 
 import io.grpc.Channel;
 

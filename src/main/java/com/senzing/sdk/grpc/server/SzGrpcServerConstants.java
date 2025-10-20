@@ -1,6 +1,7 @@
 package com.senzing.sdk.grpc.server;
 
 import java.net.InetAddress;
+import java.time.Duration;
 
 /**
  * Utility class to provide common constants pertaining to the
@@ -16,7 +17,7 @@ public final class SzGrpcServerConstants {
     }
 
     /**
-     * The default port for the API Server ({@value}).
+     * The default port for the gRPC Server ({@value}).
      */
     public static final int DEFAULT_PORT = 8262;
 
@@ -24,16 +25,6 @@ public final class SzGrpcServerConstants {
      * The default port as a string.
      */
     static final String DEFAULT_PORT_PARAM = String.valueOf(DEFAULT_PORT);
-
-    /**
-     * The default secure port for the API Server ({@value}).
-     */
-    public static final int DEFAULT_SECURE_PORT = 8263;
-
-    /**
-     * The default secure port as a string.
-     */
-    static final String DEFAULT_SECURE_PORT_PARAM = String.valueOf(DEFAULT_SECURE_PORT);
 
     /**
      * The default bind address option ({@value}) parameter value.
@@ -54,9 +45,9 @@ public final class SzGrpcServerConstants {
     /**
      * The default core concurrency setting used by API server
      * instances if an explicit core concurrency is not provided.
-     * The default value is {@value}.
      */
-    public static final int DEFAULT_CORE_CONCURRENCY = 8;
+    public static final int DEFAULT_CORE_CONCURRENCY
+        = Runtime.getRuntime().availableProcessors();
 
     /**
      * The default core concurrency as a string.
@@ -67,7 +58,8 @@ public final class SzGrpcServerConstants {
     /**
      * The default number of threads for gRPC request handling.
      */
-    public static final int DEFAULT_GRPC_CONCURRENCY = 20;
+    public static final int DEFAULT_GRPC_CONCURRENCY 
+        = Runtime.getRuntime().availableProcessors() * 4;
 
     /**
      * The default gRPC concurrency as a string.
@@ -91,10 +83,12 @@ public final class SzGrpcServerConstants {
         = String.valueOf(DEFAULT_LOG_STATS_SECONDS);
 
     /**
-     * The number of seconds to wait in between checking for changes in the
-     * configuration and automatically refreshing the configuration.
+     * The default number of seconds to wait in between checking 
+     * for changes in the configuration and automatically refreshing
+     * the configuration.
      */
-    public static final long DEFAULT_REFRESH_CONFIG_SECONDS = 3600;
+    public static final long DEFAULT_REFRESH_CONFIG_SECONDS
+        = (Duration.ofHours(12).toMillis()) / 1000;
 
     /**
      * The config auto refresh period as a string.

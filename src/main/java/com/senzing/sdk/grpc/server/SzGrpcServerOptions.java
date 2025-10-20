@@ -99,7 +99,7 @@ public class SzGrpcServerOptions {
      * The config refresh period (in seconds) with which to initialize
      * the auto core SDK.
      */
-    private Long refreshConfigSeconds = null;
+    private long refreshConfigSeconds = DEFAULT_REFRESH_CONFIG_SECONDS;
 
     /**
      * The minimum number of seconds between logging of engine statistics.
@@ -395,14 +395,14 @@ public class SzGrpcServerOptions {
 
     /**
      * Returns the auto refresh period which is positive to indicate a number
-     * of seconds to delay, zero if auto-refresh is disabled, and negative to
-     * indicate that the auto refresh thread should run but refreshes will be
-     * requested manually (used for testing).
+     * of seconds to delay, zero if configuration refresh should only occur
+     * reactively (not periodically), and a negative number to indicate that
+     * configuration refresh should be disabled.
      *
      * @return The auto refresh period.
      */
     @Option(REFRESH_CONFIG_SECONDS)
-    public Long getRefreshConfigSeconds() {
+    public long getRefreshConfigSeconds() {
         return this.refreshConfigSeconds;
     }
 
@@ -410,14 +410,22 @@ public class SzGrpcServerOptions {
      * Sets the configuration auto refresh period. Set the value to
      * <code>null</code> if the API server should use {@link
      * SzGrpcServerConstants#DEFAULT_REFRESH_CONFIG_SECONDS}.
+     * Use zero (0) to indicate that the configuration should only
+     * be refreshed in reaction to detecting it is out of sync 
+     * after a failure and a negative integer to disable configuration
+     * refresh entirely.
      *
-     * @param autoRefreshPeriod The number of seconds to automatically
+     * @param seconds The number of seconds between periodic automatic
+     *                refresh of the configuration, zero (0) to only 
+     *                refresh reactively, and a negative integer to
+     *                never refresh.
      *
      * @return A reference to this instance.
      */
     @Option(REFRESH_CONFIG_SECONDS)
-    public SzGrpcServerOptions setRefreshConfigSeconds(Long autoRefreshPeriod) {
-        this.refreshConfigSeconds = autoRefreshPeriod;
+    public SzGrpcServerOptions setRefreshConfigSeconds(Long seconds) {
+        this.refreshConfigSeconds = (seconds == null)
+            ? DEFAULT_REFRESH_CONFIG_SECONDS : seconds;
         return this;
     }
 

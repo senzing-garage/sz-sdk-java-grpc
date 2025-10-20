@@ -6,10 +6,13 @@ import com.senzing.sdk.SzConfigurationException;
 import com.senzing.sdk.SzException;
 import com.senzing.sdk.SzReplaceConflictException;
 
-import static com.senzing.sdk.grpc.SzConfigManagerGrpc.*;
-import static com.senzing.sdk.grpc.SzConfigManagerProto.*;
-import static com.senzing.sdk.grpc.SzConfigProto.*;
-import static com.senzing.sdk.grpc.SzConfigGrpc.*;
+import com.senzing.sdk.grpc.proto.SzConfigGrpc;
+import com.senzing.sdk.grpc.proto.SzConfigManagerGrpc;
+
+import static com.senzing.sdk.grpc.proto.SzConfigGrpc.*;
+import static com.senzing.sdk.grpc.proto.SzConfigProto.*;
+import static com.senzing.sdk.grpc.proto.SzConfigManagerGrpc.*;
+import static com.senzing.sdk.grpc.proto.SzConfigManagerProto.*;
 
 import io.grpc.Channel;
 
@@ -85,7 +88,9 @@ public class SzGrpcConfigManager implements SzConfigManager {
     {
         return this.env.execute(() -> {
             VerifyConfigRequest request
-                = VerifyConfigRequest.newBuilder().build();
+                = VerifyConfigRequest.newBuilder()
+                                     .setConfigDefinition(configDefinition)
+                                     .build();
             
             VerifyConfigResponse response
                 = this.getConfigBlockingStub().verifyConfig(request);
@@ -125,10 +130,12 @@ public class SzGrpcConfigManager implements SzConfigManager {
         throws SzException 
     {
         return this.env.execute(() -> {
-            RegisterConfigRequest request
-                = RegisterConfigRequest.newBuilder()
-                    .setConfigDefinition(configDefinition)
-                    .setConfigComment(configComment).build();
+            RegisterConfigRequest.Builder builder = RegisterConfigRequest.newBuilder();
+            builder.setConfigDefinition(configDefinition);
+            if (configComment != null) {
+                builder.setConfigComment(configComment);
+            }
+            RegisterConfigRequest request = builder.build();
             
             RegisterConfigResponse response
                 = this.getBlockingStub().registerConfig(request);
@@ -197,7 +204,7 @@ public class SzGrpcConfigManager implements SzConfigManager {
             ReplaceDefaultConfigIdResponse response
                 = this.getBlockingStub().replaceDefaultConfigId(request);
 
-            return null;
+            return response;
         });
     }
 
@@ -211,7 +218,7 @@ public class SzGrpcConfigManager implements SzConfigManager {
             SetDefaultConfigIdResponse response
                 = this.getBlockingStub().setDefaultConfigId(request);
 
-            return null;
+            return response;
         });
     }
 

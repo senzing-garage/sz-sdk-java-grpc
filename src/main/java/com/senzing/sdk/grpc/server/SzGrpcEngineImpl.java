@@ -15,82 +15,15 @@ import javax.json.JsonString;
 
 import com.senzing.sdk.SzFlag;
 import com.senzing.sdk.SzEngine;
-import com.senzing.sdk.SzException;
 import com.senzing.sdk.SzRecordKey;
 import com.senzing.sdk.SzRecordKeys;
 import com.senzing.sdk.SzEntityIds;
 import com.senzing.sdk.SzEnvironment;
-import com.senzing.sdk.grpc.server.SzEngineGrpc.SzEngineImplBase;
-import com.senzing.sdk.grpc.server.SzEngineProto.AddRecordRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.AddRecordResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.CloseExportReportRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.CloseExportReportResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.CountRedoRecordsRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.CountRedoRecordsResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.DeleteRecordRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.DeleteRecordResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.ExportCsvEntityReportRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.ExportCsvEntityReportResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.ExportJsonEntityReportRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.ExportJsonEntityReportResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.FetchNextRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.FetchNextResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.FindInterestingEntitiesByEntityIdRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.FindInterestingEntitiesByEntityIdResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.FindInterestingEntitiesByRecordIdRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.FindInterestingEntitiesByRecordIdResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.FindNetworkByEntityIdRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.FindNetworkByEntityIdResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.FindNetworkByRecordIdRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.FindNetworkByRecordIdResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.FindPathByEntityIdRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.FindPathByEntityIdResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.FindPathByRecordIdRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.FindPathByRecordIdResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetActiveConfigIdRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetActiveConfigIdResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetEntityByEntityIdRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetEntityByEntityIdResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetEntityByRecordIdRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetEntityByRecordIdResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetRecordPreviewRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetRecordPreviewResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetRecordRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetRecordResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetRedoRecordRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetRedoRecordResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetStatsRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetStatsResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetVirtualEntityByRecordIdRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.GetVirtualEntityByRecordIdResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.HowEntityByEntityIdRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.HowEntityByEntityIdResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.PrimeEngineRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.PrimeEngineResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.ProcessRedoRecordRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.ProcessRedoRecordResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.ReevaluateEntityRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.ReevaluateEntityResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.ReevaluateRecordRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.ReevaluateRecordResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.ReinitializeRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.ReinitializeResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.SearchByAttributesRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.SearchByAttributesResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.StreamExportCsvEntityReportRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.StreamExportCsvEntityReportResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.StreamExportJsonEntityReportRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.StreamExportJsonEntityReportResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.WhyEntitiesRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.WhyEntitiesResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.WhyRecordInEntityRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.WhyRecordInEntityResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.WhyRecordsRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.WhyRecordsResponse;
-import com.senzing.sdk.grpc.server.SzEngineProto.WhySearchRequest;
-import com.senzing.sdk.grpc.server.SzEngineProto.WhySearchResponse;
 
+import static com.senzing.sdk.grpc.proto.SzEngineGrpc.*;
+import static com.senzing.sdk.grpc.proto.SzEngineProto.*;
 import static com.senzing.sdk.SzFlagUsageGroup.*;
+import static com.senzing.sdk.grpc.server.SzGrpcServer.*;
 
 /**
  * Provides the gRPC server-side implementation for {@link SzEngine}.
@@ -129,28 +62,33 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void addRecord(AddRecordRequest                  request, 
                           StreamObserver<AddRecordResponse> responseObserver) 
     {
-        String dataSourceCode   = request.getDataSourceCode();
-        String recordId         = request.getRecordId();
-        String recordDefinition = request.getRecordDefinition();
-        long   flags            = request.getFlags();
-
-        SzRecordKey recordKey   = SzRecordKey.of(dataSourceCode, recordId);
-        Set<SzFlag> flagSet     = SZ_ADD_RECORD_FLAGS.toFlagSet(flags);
         try {
+            String dataSourceCode   = request.getDataSourceCode();
+            String recordId         = request.getRecordId();
+            String recordDefinition = request.getRecordDefinition();
+            long   flags            = request.getFlags();
+
+            SzRecordKey recordKey   = SzRecordKey.of(dataSourceCode, recordId);
+            Set<SzFlag> flagSet     = SZ_ADD_RECORD_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.addRecord(recordKey, 
                                              recordDefinition,
                                              flagSet);
 
-            AddRecordResponse response
-                = AddRecordResponse.newBuilder().setResult(result).build();
+            AddRecordResponse.Builder builder 
+                = AddRecordResponse.newBuilder();
+            if (result != null) {
+                builder.setResult(result);
+            }
+            AddRecordResponse response = builder.build();
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -175,32 +113,37 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
     @Override
     public void deleteRecord(DeleteRecordRequest request, StreamObserver<DeleteRecordResponse> responseObserver) {
-        String dataSourceCode   = request.getDataSourceCode();
-        String recordId         = request.getRecordId();
-        long   flags            = request.getFlags();
-
-        SzRecordKey recordKey   = SzRecordKey.of(dataSourceCode, recordId);
-        Set<SzFlag> flagSet     = SZ_DELETE_RECORD_FLAGS.toFlagSet(flags);
         try {
+            String dataSourceCode   = request.getDataSourceCode();
+            String recordId         = request.getRecordId();
+            long   flags            = request.getFlags();
+
+            SzRecordKey recordKey   = SzRecordKey.of(dataSourceCode, recordId);
+            Set<SzFlag> flagSet     = SZ_DELETE_RECORD_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.deleteRecord(recordKey, flagSet);
 
-            DeleteRecordResponse response
-                = DeleteRecordResponse.newBuilder().setResult(result).build();
+            DeleteRecordResponse.Builder builder
+                = DeleteRecordResponse.newBuilder();
+            if (result != null) {
+                builder.setResult(result);
+            }
+            DeleteRecordResponse response = builder.build();
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
    }
 
@@ -227,10 +170,11 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     @Override
     public void findInterestingEntitiesByEntityId(FindInterestingEntitiesByEntityIdRequest request,
             StreamObserver<FindInterestingEntitiesByEntityIdResponse> responseObserver) {
-        Long        entityId    = request.getEntityId();
-        long        flags       = request.getFlags();
-        Set<SzFlag> flagSet     = SZ_FIND_INTERESTING_ENTITIES_FLAGS.toFlagSet(flags);
         try {
+            Long        entityId    = request.getEntityId();
+            long        flags       = request.getFlags();
+            Set<SzFlag> flagSet     = SZ_FIND_INTERESTING_ENTITIES_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.findInterestingEntities(entityId, flagSet);
@@ -242,21 +186,22 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
     @Override
     public void findInterestingEntitiesByRecordId(FindInterestingEntitiesByRecordIdRequest request,
             StreamObserver<FindInterestingEntitiesByRecordIdResponse> responseObserver) {
-        String dataSourceCode   = request.getDataSourceCode();
-        String recordId         = request.getRecordId();
-        long   flags            = request.getFlags();
-
-        SzRecordKey recordKey   = SzRecordKey.of(dataSourceCode, recordId);
-        Set<SzFlag> flagSet     = SZ_FIND_INTERESTING_ENTITIES_FLAGS.toFlagSet(flags);
         try {
+            String dataSourceCode   = request.getDataSourceCode();
+            String recordId         = request.getRecordId();
+            long   flags            = request.getFlags();
+
+            SzRecordKey recordKey   = SzRecordKey.of(dataSourceCode, recordId);
+            Set<SzFlag> flagSet     = SZ_FIND_INTERESTING_ENTITIES_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.findInterestingEntities(recordKey, flagSet);
@@ -268,13 +213,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
     private static Set<Long> parseEntityIds(String entityIdsJson) {
-        if (entityIdsJson == null) {
+        if (entityIdsJson == null || entityIdsJson.trim().length() == 0) 
+        {
             return null;
         }
         StringReader    sr = new StringReader(entityIdsJson);
@@ -289,7 +235,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     private static Set<SzRecordKey> parseRecordKeys(String recordKeysJson) {
-        if (recordKeysJson == null) {
+        if (recordKeysJson == null || recordKeysJson.trim().length() == 0)
+        {
             return null;
         }
         StringReader    sr = new StringReader(recordKeysJson);
@@ -308,7 +255,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     private static Set<String> parseDataSources(String dataSourcesJson) {
-        if (dataSourcesJson == null) {
+        if (dataSourcesJson == null || dataSourcesJson.trim().length() == 0)
+        {
             return null;
         }
         StringReader    sr = new StringReader(dataSourcesJson);
@@ -326,16 +274,17 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void findNetworkByEntityId(FindNetworkByEntityIdRequest request,
             StreamObserver<FindNetworkByEntityIdResponse> responseObserver) 
     {
-        String  entityIdsJson       = request.getEntityIds();
-        int     maxDegrees          = (int) request.getMaxDegrees();
-        int     buildOutDegrees     = (int) request.getBuildOutDegrees();
-        int     buildOutMaxEntities = (int) request.getBuildOutMaxEntities();
-        long    flags               = request.getFlags();
-
-        Set<Long> entityIds = parseEntityIds(entityIdsJson);
-
-        Set<SzFlag> flagSet = SZ_FIND_NETWORK_FLAGS.toFlagSet(flags);
         try {
+            String  entityIdsJson       = request.getEntityIds();
+            int     maxDegrees          = (int) request.getMaxDegrees();
+            int     buildOutDegrees     = (int) request.getBuildOutDegrees();
+            int     buildOutMaxEntities = (int) request.getBuildOutMaxEntities();
+            long    flags               = request.getFlags();
+
+            Set<Long> entityIds = parseEntityIds(entityIdsJson);
+
+            Set<SzFlag> flagSet = SZ_FIND_NETWORK_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.findNetwork(
@@ -352,8 +301,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -361,16 +310,17 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void findNetworkByRecordId(FindNetworkByRecordIdRequest request,
             StreamObserver<FindNetworkByRecordIdResponse> responseObserver)
     {
-        String  recordKeysJson      = request.getRecordKeys();
-        int     maxDegrees          = (int) request.getMaxDegrees();
-        int     buildOutDegrees     = (int) request.getBuildOutDegrees();
-        int     buildOutMaxEntities = (int) request.getBuildOutMaxEntities();
-        long    flags               = request.getFlags();
-
-        Set<SzRecordKey> recordKeys = parseRecordKeys(recordKeysJson);
-
-        Set<SzFlag> flagSet = SZ_FIND_NETWORK_FLAGS.toFlagSet(flags);
         try {
+            String  recordKeysJson      = request.getRecordKeys();
+            int     maxDegrees          = (int) request.getMaxDegrees();
+            int     buildOutDegrees     = (int) request.getBuildOutDegrees();
+            int     buildOutMaxEntities = (int) request.getBuildOutMaxEntities();
+            long    flags               = request.getFlags();
+
+            Set<SzRecordKey> recordKeys = parseRecordKeys(recordKeysJson);
+
+            Set<SzFlag> flagSet = SZ_FIND_NETWORK_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.findNetwork(
@@ -387,8 +337,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -396,18 +346,19 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void findPathByEntityId(FindPathByEntityIdRequest request,
             StreamObserver<FindPathByEntityIdResponse> responseObserver)
     {
-        long    startEntityId       = request.getStartEntityId();
-        long    endEntityId         = request.getEndEntityId();
-        int     maxDegrees          = (int) request.getMaxDegrees();
-        String  avoidanceJson       = request.getAvoidEntityIds();
-        String  dataSourcesJson     = request.getRequiredDataSources();
-        long    flags               = request.getFlags();
-
-        Set<Long>   avoidEntityIds  = parseEntityIds(avoidanceJson);
-        Set<String> requiredSources = parseDataSources(dataSourcesJson);
-
-        Set<SzFlag> flagSet = SZ_FIND_PATH_FLAGS.toFlagSet(flags);
         try {
+            long    startEntityId       = request.getStartEntityId();
+            long    endEntityId         = request.getEndEntityId();
+            int     maxDegrees          = (int) request.getMaxDegrees();
+            String  avoidanceJson       = request.getAvoidEntityIds();
+            String  dataSourcesJson     = request.getRequiredDataSources();
+            long    flags               = request.getFlags();
+
+            Set<Long>   avoidEntityIds  = parseEntityIds(avoidanceJson);
+            Set<String> requiredSources = parseDataSources(dataSourcesJson);
+
+            Set<SzFlag> flagSet = SZ_FIND_PATH_FLAGS.toFlagSet(flags);
+            
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.findPath(
@@ -425,8 +376,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -434,22 +385,23 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void findPathByRecordId(FindPathByRecordIdRequest request,
             StreamObserver<FindPathByRecordIdResponse> responseObserver)
     {
-        String  startDataSource     = request.getStartDataSourceCode();
-        String  startRecordId       = request.getStartRecordId();
-        String  endDataSource       = request.getEndDataSourceCode();
-        String  endRecordId         = request.getEndRecordId();
-        int     maxDegrees          = (int) request.getMaxDegrees();
-        String  avoidanceJson       = request.getAvoidRecordKeys();
-        String  dataSourcesJson     = request.getRequiredDataSources();
-        long    flags               = request.getFlags();
-
-        Set<SzRecordKey>    avoidRecordKeys = parseRecordKeys(avoidanceJson);
-        Set<String>         requiredSources = parseDataSources(dataSourcesJson);
-
-        SzRecordKey startRecordKey  = SzRecordKey.of(startDataSource, startRecordId);
-        SzRecordKey endRecordKey    = SzRecordKey.of(endDataSource, endRecordId);
-        Set<SzFlag> flagSet         = SZ_FIND_PATH_FLAGS.toFlagSet(flags);
         try {
+            String  startDataSource     = request.getStartDataSourceCode();
+            String  startRecordId       = request.getStartRecordId();
+            String  endDataSource       = request.getEndDataSourceCode();
+            String  endRecordId         = request.getEndRecordId();
+            int     maxDegrees          = (int) request.getMaxDegrees();
+            String  avoidanceJson       = request.getAvoidRecordKeys();
+            String  dataSourcesJson     = request.getRequiredDataSources();
+            long    flags               = request.getFlags();
+
+            Set<SzRecordKey>    avoidRecordKeys = parseRecordKeys(avoidanceJson);
+            Set<String>         requiredSources = parseDataSources(dataSourcesJson);
+
+            SzRecordKey startRecordKey  = SzRecordKey.of(startDataSource, startRecordId);
+            SzRecordKey endRecordKey    = SzRecordKey.of(endDataSource, endRecordId);
+            Set<SzFlag> flagSet         = SZ_FIND_PATH_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.findPath(
@@ -467,8 +419,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -486,8 +438,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -495,10 +447,11 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void getEntityByEntityId(GetEntityByEntityIdRequest request,
             StreamObserver<GetEntityByEntityIdResponse> responseObserver)
     {
-        long        entityId    = request.getEntityId();
-        long        flags       = request.getFlags();
-        Set<SzFlag> flagSet     = SZ_ENTITY_FLAGS.toFlagSet(flags);
         try {
+            long        entityId    = request.getEntityId();
+            long        flags       = request.getFlags();
+            Set<SzFlag> flagSet     = SZ_ENTITY_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.getEntity(entityId, flagSet);
@@ -510,8 +463,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -519,12 +472,13 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void getEntityByRecordId(GetEntityByRecordIdRequest request,
             StreamObserver<GetEntityByRecordIdResponse> responseObserver) 
     {
-        String      dataSource  = request.getDataSourceCode();
-        String      recordId    = request.getRecordId();
-        long        flags       = request.getFlags();
-        SzRecordKey recordKey   = SzRecordKey.of(dataSource, recordId);
-        Set<SzFlag> flagSet     = SZ_ENTITY_FLAGS.toFlagSet(flags);
         try {
+            String      dataSource  = request.getDataSourceCode();
+            String      recordId    = request.getRecordId();
+            long        flags       = request.getFlags();
+            SzRecordKey recordKey   = SzRecordKey.of(dataSource, recordId);
+            Set<SzFlag> flagSet     = SZ_ENTITY_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
             
             String result = engine.getEntity(recordKey, flagSet);
@@ -536,8 +490,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -545,12 +499,13 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void getRecord(GetRecordRequest request, 
         StreamObserver<GetRecordResponse> responseObserver) 
     {
-        String      dataSource  = request.getDataSourceCode();
-        String      recordId    = request.getRecordId();
-        long        flags       = request.getFlags();
-        SzRecordKey recordKey   = SzRecordKey.of(dataSource, recordId);
-        Set<SzFlag> flagSet     = SZ_RECORD_FLAGS.toFlagSet(flags);
         try {
+            String      dataSource  = request.getDataSourceCode();
+            String      recordId    = request.getRecordId();
+            long        flags       = request.getFlags();
+            SzRecordKey recordKey   = SzRecordKey.of(dataSource, recordId);
+            Set<SzFlag> flagSet     = SZ_RECORD_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
             
             String result = engine.getRecord(recordKey, flagSet);
@@ -561,8 +516,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -570,10 +525,11 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void getRecordPreview(GetRecordPreviewRequest request,
             StreamObserver<GetRecordPreviewResponse> responseObserver)
     {
-        String      recordDef   = request.getRecordDefinition();
-        long        flags       = request.getFlags();
-        Set<SzFlag> flagSet     = SZ_RECORD_PREVIEW_FLAGS.toFlagSet(flags);
         try {
+            String      recordDef   = request.getRecordDefinition();
+            long        flags       = request.getFlags();
+            Set<SzFlag> flagSet     = SZ_RECORD_PREVIEW_FLAGS.toFlagSet(flags);
+            
             SzEngine engine = this.getEnvironment().getEngine();
             
             String result = engine.getRecordPreview(recordDef, flagSet);
@@ -584,8 +540,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -597,15 +553,19 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             SzEngine engine = this.getEnvironment().getEngine();
             
             String result = engine.getRedoRecord();
-                
-            GetRedoRecordResponse response
-                = GetRedoRecordResponse.newBuilder().setResult(result).build();
+            
+            GetRedoRecordResponse.Builder builder
+                = GetRedoRecordResponse.newBuilder();
+            if (result != null) {
+                builder.setResult(result);
+            }
+            GetRedoRecordResponse response = builder.build();
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -624,8 +584,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -633,13 +593,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void getVirtualEntityByRecordId(GetVirtualEntityByRecordIdRequest request,
             StreamObserver<GetVirtualEntityByRecordIdResponse> responseObserver) 
     {
-        String  recordKeysJson      = request.getRecordKeys();
-        long    flags               = request.getFlags();
-
-        Set<SzRecordKey> recordKeys = parseRecordKeys(recordKeysJson);
-
-        Set<SzFlag> flagSet = SZ_VIRTUAL_ENTITY_FLAGS.toFlagSet(flags);
         try {
+            String  recordKeysJson      = request.getRecordKeys();
+            long    flags               = request.getFlags();
+
+            Set<SzRecordKey> recordKeys = parseRecordKeys(recordKeysJson);
+
+            Set<SzFlag> flagSet = SZ_VIRTUAL_ENTITY_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.getVirtualEntity(
@@ -652,8 +613,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -661,10 +622,11 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void howEntityByEntityId(HowEntityByEntityIdRequest request,
             StreamObserver<HowEntityByEntityIdResponse> responseObserver) 
     {
-        long        entityId    = request.getEntityId();
-        long        flags       = request.getFlags();
-        Set<SzFlag> flagSet     = SZ_HOW_FLAGS.toFlagSet(flags);
         try {
+            long        entityId    = request.getEntityId();
+            long        flags       = request.getFlags();
+            Set<SzFlag> flagSet     = SZ_HOW_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.howEntity(entityId, flagSet);
@@ -676,8 +638,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -695,8 +657,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -704,22 +666,27 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void processRedoRecord(ProcessRedoRecordRequest request,
             StreamObserver<ProcessRedoRecordResponse> responseObserver) 
     {
-        String      redoRecord  = request.getRedoRecord();
-        long        flags       = request.getFlags();
-        Set<SzFlag> flagSet     = SZ_REDO_FLAGS.toFlagSet(flags);
         try {
+            String      redoRecord  = request.getRedoRecord();
+            long        flags       = request.getFlags();
+            Set<SzFlag> flagSet     = SZ_REDO_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
             
             String result = engine.processRedoRecord(redoRecord, flagSet);
-                
-            ProcessRedoRecordResponse response
-                = ProcessRedoRecordResponse.newBuilder().setResult(result).build();
+            
+            ProcessRedoRecordResponse.Builder builder
+                = ProcessRedoRecordResponse.newBuilder();
+            if (result != null) {
+                builder.setResult(result);
+            }
+            ProcessRedoRecordResponse response = builder.build();
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -727,23 +694,27 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void reevaluateEntity(ReevaluateEntityRequest request,
             StreamObserver<ReevaluateEntityResponse> responseObserver) 
     {
-        long        entityId    = request.getEntityId();
-        long        flags       = request.getFlags();
-        Set<SzFlag> flagSet     = SZ_REEVALUATE_ENTITY_FLAGS.toFlagSet(flags);
         try {
+            long        entityId    = request.getEntityId();
+            long        flags       = request.getFlags();
+            Set<SzFlag> flagSet     = SZ_REEVALUATE_ENTITY_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.reevaluateEntity(entityId, flagSet);
                 
-            ReevaluateEntityResponse response
-                = ReevaluateEntityResponse
-                    .newBuilder().setResult(result).build();
+            ReevaluateEntityResponse.Builder builder
+                = ReevaluateEntityResponse.newBuilder();
+            if (result != null) {
+                builder.setResult(result);
+            }
+            ReevaluateEntityResponse response = builder.build();
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -751,25 +722,29 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void reevaluateRecord(ReevaluateRecordRequest request,
             StreamObserver<ReevaluateRecordResponse> responseObserver)
     {
-        String      dataSource  = request.getDataSourceCode();
-        String      recordId    = request.getRecordId();
-        long        flags       = request.getFlags();
-        SzRecordKey recordKey   = SzRecordKey.of(dataSource, recordId);
-        Set<SzFlag> flagSet     = SZ_REEVALUATE_RECORD_FLAGS.toFlagSet(flags);
         try {
+            String      dataSource  = request.getDataSourceCode();
+            String      recordId    = request.getRecordId();
+            long        flags       = request.getFlags();
+            SzRecordKey recordKey   = SzRecordKey.of(dataSource, recordId);
+            Set<SzFlag> flagSet     = SZ_REEVALUATE_RECORD_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.reevaluateRecord(recordKey, flagSet);
-                
-            ReevaluateRecordResponse response
-                = ReevaluateRecordResponse
-                    .newBuilder().setResult(result).build();
+            
+            ReevaluateRecordResponse.Builder builder
+                = ReevaluateRecordResponse.newBuilder();
+            if (result != null) {
+                builder.setResult(result);
+            }
+            ReevaluateRecordResponse response = builder.build();
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -777,8 +752,9 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void reinitialize(ReinitializeRequest request,
         StreamObserver<ReinitializeResponse> responseObserver) 
     {
-        long configId = request.getConfigId();
         try {
+            long configId = request.getConfigId();
+
             this.getEnvironment().reinitialize(configId);
                 
             ReinitializeResponse response
@@ -787,8 +763,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -796,11 +772,12 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void searchByAttributes(SearchByAttributesRequest request,
             StreamObserver<SearchByAttributesResponse> responseObserver) 
     {
-        String      attributes  = request.getAttributes();
-        String      profile     = request.getSearchProfile();
-        long        flags       = request.getFlags();
-        Set<SzFlag> flagSet     = SZ_REEVALUATE_RECORD_FLAGS.toFlagSet(flags);
         try {
+            String      attributes  = request.getAttributes();
+            String      profile     = request.getSearchProfile();
+            long        flags       = request.getFlags();
+            Set<SzFlag> flagSet     = SZ_REEVALUATE_RECORD_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.searchByAttributes(attributes, profile, flagSet);
@@ -812,8 +789,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -821,10 +798,11 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void streamExportCsvEntityReport(StreamExportCsvEntityReportRequest request,
             StreamObserver<StreamExportCsvEntityReportResponse> responseObserver)
     {
-        String      csvColumnList   = request.getCsvColumnList();
-        long        flags           = request.getFlags();
-        Set<SzFlag> flagSet         = SZ_EXPORT_FLAGS.toFlagSet(flags);
         try {
+            String      csvColumnList   = request.getCsvColumnList();
+            long        flags           = request.getFlags();
+            Set<SzFlag> flagSet         = SZ_EXPORT_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             long exportHandle = engine.exportCsvEntityReport(csvColumnList, flagSet);
@@ -848,8 +826,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
                 engine.closeExportReport(exportHandle);
             }
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -857,9 +835,10 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void streamExportJsonEntityReport(StreamExportJsonEntityReportRequest request,
             StreamObserver<StreamExportJsonEntityReportResponse> responseObserver)
     {
-        long        flags   = request.getFlags();
-        Set<SzFlag> flagSet = SZ_EXPORT_FLAGS.toFlagSet(flags);
         try {
+            long        flags   = request.getFlags();
+            Set<SzFlag> flagSet = SZ_EXPORT_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             long exportHandle = engine.exportJsonEntityReport(flagSet);
@@ -883,8 +862,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
                 engine.closeExportReport(exportHandle);
             }
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -892,11 +871,12 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void whyEntities(WhyEntitiesRequest request,
         StreamObserver<WhyEntitiesResponse> responseObserver) 
     {
-        long        entityId1   = request.getEntityId1();
-        long        entityId2   = request.getEntityId2();
-        long        flags       = request.getFlags();
-        Set<SzFlag> flagSet     = SZ_WHY_ENTITIES_FLAGS.toFlagSet(flags);
         try {
+            long        entityId1   = request.getEntityId1();
+            long        entityId2   = request.getEntityId2();
+            long        flags       = request.getFlags();
+            Set<SzFlag> flagSet     = SZ_WHY_ENTITIES_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.whyEntities(entityId1, entityId2, flagSet);
@@ -907,8 +887,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -916,12 +896,13 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void whyRecordInEntity(WhyRecordInEntityRequest request,
             StreamObserver<WhyRecordInEntityResponse> responseObserver) 
     {
-        String      dataSource  = request.getDataSourceCode();
-        String      recordId    = request.getRecordId();
-        long        flags       = request.getFlags();
-        SzRecordKey recordKey   = SzRecordKey.of(dataSource, recordId);
-        Set<SzFlag> flagSet     = SZ_WHY_RECORD_IN_ENTITY_FLAGS.toFlagSet(flags);
         try {
+            String      dataSource  = request.getDataSourceCode();
+            String      recordId    = request.getRecordId();
+            long        flags       = request.getFlags();
+            SzRecordKey recordKey   = SzRecordKey.of(dataSource, recordId);
+            Set<SzFlag> flagSet     = SZ_WHY_RECORD_IN_ENTITY_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.whyRecordInEntity(recordKey, flagSet);
@@ -933,8 +914,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -942,16 +923,16 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void whyRecords(WhyRecordsRequest request, 
         StreamObserver<WhyRecordsResponse> responseObserver) 
     {
-        String      dataSource1 = request.getDataSourceCode1();
-        String      recordId1   = request.getRecordId1();
-        String      dataSource2 = request.getDataSourceCode2();
-        String      recordId2   = request.getRecordId2();
-        long        flags       = request.getFlags();
-        SzRecordKey recordKey1  = SzRecordKey.of(dataSource1, recordId1);
-        SzRecordKey recordKey2  = SzRecordKey.of(dataSource2, recordId2);
-        Set<SzFlag> flagSet     = SZ_WHY_RECORDS_FLAGS.toFlagSet(flags);
-
         try {
+            String      dataSource1 = request.getDataSourceCode1();
+            String      recordId1   = request.getRecordId1();
+            String      dataSource2 = request.getDataSourceCode2();
+            String      recordId2   = request.getRecordId2();
+            long        flags       = request.getFlags();
+            SzRecordKey recordKey1  = SzRecordKey.of(dataSource1, recordId1);
+            SzRecordKey recordKey2  = SzRecordKey.of(dataSource2, recordId2);
+            Set<SzFlag> flagSet     = SZ_WHY_RECORDS_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.whyRecords(recordKey1, recordKey2, flagSet);
@@ -962,8 +943,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -971,13 +952,13 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
     public void whySearch(WhySearchRequest request,
         StreamObserver<WhySearchResponse> responseObserver) 
     {
-        String      attributes  = request.getAttributes();
-        long        entityId    = request.getEntityId();
-        String      profile     = request.getSearchProfile();
-        long        flags       = request.getFlags();
-        Set<SzFlag> flagSet     = SZ_WHY_SEARCH_FLAGS.toFlagSet(flags);
-
         try {
+            String      attributes  = request.getAttributes();
+            long        entityId    = request.getEntityId();
+            String      profile     = request.getSearchProfile();
+            long        flags       = request.getFlags();
+            Set<SzFlag> flagSet     = SZ_WHY_SEARCH_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.whySearch(attributes, entityId, profile, flagSet);
@@ -988,8 +969,8 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 

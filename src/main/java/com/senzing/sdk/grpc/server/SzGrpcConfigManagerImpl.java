@@ -5,26 +5,12 @@ import java.util.Objects;
 import com.senzing.sdk.SzConfig;
 import com.senzing.sdk.SzConfigManager;
 import com.senzing.sdk.SzEnvironment;
-import com.senzing.sdk.SzException;
-import com.senzing.sdk.grpc.server.SzConfigManagerGrpc.SzConfigManagerImplBase;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.GetConfigRegistryRequest;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.GetConfigRegistryResponse;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.GetConfigRequest;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.GetConfigResponse;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.GetDefaultConfigIdRequest;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.GetDefaultConfigIdResponse;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.GetTemplateConfigRequest;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.GetTemplateConfigResponse;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.RegisterConfigRequest;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.RegisterConfigResponse;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.ReplaceDefaultConfigIdRequest;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.ReplaceDefaultConfigIdResponse;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.SetDefaultConfigIdRequest;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.SetDefaultConfigIdResponse;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.SetDefaultConfigRequest;
-import com.senzing.sdk.grpc.server.SzConfigManagerProto.SetDefaultConfigResponse;
 
 import io.grpc.stub.StreamObserver;
+
+import static com.senzing.sdk.grpc.proto.SzConfigManagerGrpc.*;
+import static com.senzing.sdk.grpc.proto.SzConfigManagerProto.*;
+import static com.senzing.sdk.grpc.server.SzGrpcServer.*;
 
 /**
  * Provides the gRPC server-side implementation for {@link SzConfigManager}.
@@ -79,8 +65,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -101,8 +87,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -123,8 +109,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -147,8 +133,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -172,8 +158,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -196,8 +182,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -223,8 +209,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -246,8 +232,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 

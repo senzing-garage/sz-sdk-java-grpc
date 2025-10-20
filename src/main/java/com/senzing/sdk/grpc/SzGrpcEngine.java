@@ -9,6 +9,7 @@ import javax.json.JsonObjectBuilder;
 import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.LinkedHashMap;
 
 import io.grpc.Channel;
@@ -23,8 +24,10 @@ import com.senzing.sdk.SzRecordKey;
 import com.senzing.sdk.SzRecordKeys;
 import com.senzing.sdk.SzUnknownDataSourceException;
 
-import static com.senzing.sdk.grpc.SzEngineGrpc.*;
-import static com.senzing.sdk.grpc.SzEngineProto.*;
+import com.senzing.sdk.grpc.proto.SzEngineGrpc;
+
+import static com.senzing.sdk.grpc.proto.SzEngineGrpc.*;
+import static com.senzing.sdk.grpc.proto.SzEngineProto.*;
 
 /**
  * The gRPC implementation of {@link SzEngine}.
@@ -76,6 +79,9 @@ public class SzGrpcEngine implements SzEngine {
 
         private CsvExportIterator(Iterator<StreamExportCsvEntityReportResponse> iter) {
             this.iter = iter;
+            
+            // check if we have a next element to force blocking for first
+            this.iter.hasNext();
         }
         @Override
         public boolean hasNext() {
@@ -98,6 +104,9 @@ public class SzGrpcEngine implements SzEngine {
 
         private JsonExportIterator(Iterator<StreamExportJsonEntityReportResponse> iter) {
             this.iter = iter;
+
+            // check if we have a next element to force blocking for first
+            this.iter.hasNext();
         }
         @Override
         public boolean hasNext() {
@@ -268,9 +277,7 @@ public class SzGrpcEngine implements SzEngine {
             PrimeEngineRequest request 
                 = PrimeEngineRequest.newBuilder().build();
             
-            this.getBlockingStub().primeEngine(request);
-
-            return null;
+            return this.getBlockingStub().primeEngine(request);
         });
     }
 
@@ -300,7 +307,8 @@ public class SzGrpcEngine implements SzEngine {
             
             AddRecordResponse response = this.getBlockingStub().addRecord(request);
 
-            return response.getResult();
+            String result = response.getResult();
+            return (result.length() == 0) ? null : result;
         });
     }
 
@@ -333,7 +341,8 @@ public class SzGrpcEngine implements SzEngine {
             DeleteRecordResponse response
                 = this.getBlockingStub().deleteRecord(request);
 
-            return response.getResult();
+            String result = response.getResult();
+            return (result.length() == 0) ? null : result;
         });
     }
 
@@ -351,7 +360,8 @@ public class SzGrpcEngine implements SzEngine {
             ReevaluateRecordResponse response
                 = this.getBlockingStub().reevaluateRecord(request);
 
-            return response.getResult();
+            String result = response.getResult();
+            return (result.length() == 0) ? null : result;
         });
     }
 
@@ -368,7 +378,8 @@ public class SzGrpcEngine implements SzEngine {
             ReevaluateEntityResponse response
                 = this.getBlockingStub().reevaluateEntity(request);
 
-            return response.getResult();
+            String result = response.getResult();
+            return (result.length() == 0) ? null : result;
         });
     }
 
@@ -379,11 +390,16 @@ public class SzGrpcEngine implements SzEngine {
             throws SzException 
     {
         return this.env.execute(() -> {
-            SearchByAttributesRequest request 
+            SearchByAttributesRequest.Builder builder
                 = SearchByAttributesRequest.newBuilder()
                     .setAttributes(attributes)
-                    .setSearchProfile(searchProfile)
-                    .setFlags(SzFlag.toLong(flags)).build();
+                    .setFlags(SzFlag.toLong(flags));
+
+            if (searchProfile != null) {
+                builder.setSearchProfile(searchProfile);
+            }
+
+            SearchByAttributesRequest request = builder.build();
             
             SearchByAttributesResponse response
                 = this.getBlockingStub().searchByAttributes(request);
@@ -400,12 +416,17 @@ public class SzGrpcEngine implements SzEngine {
             throws SzNotFoundException, SzException 
     {
         return this.env.execute(() -> {
-            WhySearchRequest request 
+            WhySearchRequest.Builder builder
                 = WhySearchRequest.newBuilder()
                     .setAttributes(attributes)
                     .setEntityId(entityId)
-                    .setSearchProfile(searchProfile)
-                    .setFlags(SzFlag.toLong(flags)).build();
+                    .setFlags(SzFlag.toLong(flags));
+            
+            if (searchProfile != null) {
+                builder.setSearchProfile(searchProfile);
+            }
+
+            WhySearchRequest request = builder.build();
             
             WhySearchResponse response
                 = this.getBlockingStub().whySearch(request);
@@ -494,14 +515,20 @@ public class SzGrpcEngine implements SzEngine {
         throws SzNotFoundException, SzUnknownDataSourceException, SzException 
     {
         return this.env.execute(() -> {
-            FindPathByEntityIdRequest request
+            FindPathByEntityIdRequest.Builder builder
                 = FindPathByEntityIdRequest.newBuilder()
                     .setStartEntityId(startEntityId)
                     .setEndEntityId(endEntityId)
                     .setMaxDegrees(maxDegrees)
-                    .setAvoidEntityIds(encodeEntityIds(avoidEntityIds))
-                    .setRequiredDataSources(encodeDataSources(requiredDataSources))
-                    .setFlags(SzFlag.toLong(flags)).build();
+                    .setFlags(SzFlag.toLong(flags));
+            if (avoidEntityIds != null) {
+                builder.setAvoidEntityIds(encodeEntityIds(avoidEntityIds));
+            }
+            if (requiredDataSources != null) {
+                builder.setRequiredDataSources(
+                    encodeDataSources(requiredDataSources));
+            }
+            FindPathByEntityIdRequest request = builder.build();
 
             FindPathByEntityIdResponse response
                 = this.getBlockingStub().findPathByEntityId(request);
@@ -520,17 +547,24 @@ public class SzGrpcEngine implements SzEngine {
             throws SzNotFoundException, SzUnknownDataSourceException, SzException 
     {
         return this.env.execute(() -> {
-            FindPathByRecordIdRequest request
+            FindPathByRecordIdRequest.Builder builder 
                 = FindPathByRecordIdRequest.newBuilder()
                     .setStartDataSourceCode(startRecordKey.dataSourceCode())
                     .setStartRecordId(startRecordKey.recordId())
                     .setEndDataSourceCode(endRecordKey.dataSourceCode())
                     .setEndRecordId(endRecordKey.recordId())
                     .setMaxDegrees(maxDegrees)
-                    .setAvoidRecordKeys(encodeRecordKeys(avoidRecordKeys))
-                    .setRequiredDataSources(encodeDataSources(requiredDataSources))
-                    .setFlags(SzFlag.toLong(flags)).build();
+                    .setFlags(SzFlag.toLong(flags));
 
+            if (avoidRecordKeys != null) {
+                builder.setAvoidRecordKeys(
+                    encodeRecordKeys(avoidRecordKeys));
+            }
+            if (requiredDataSources != null) {
+                builder.setRequiredDataSources(
+                    encodeDataSources(requiredDataSources));
+            }
+            FindPathByRecordIdRequest request = builder.build();
             FindPathByRecordIdResponse response
                 = this.getBlockingStub().findPathByRecordId(request);
             
@@ -750,7 +784,7 @@ public class SzGrpcEngine implements SzEngine {
 
             // check if not found
             if (exportIter == null) {
-                new SzException(
+                throw new SzException(
                     INVALID_EXPORT_HANDLE_CODE, 
                     INVALID_EXPORT_HANDLE_MESSAGE.replace(
                         "{0}", String.valueOf(exportHandle)));
@@ -774,7 +808,7 @@ public class SzGrpcEngine implements SzEngine {
                 exportIter = this.exportReportMaps.remove(exportHandle);
             }
             if (exportIter == null) {
-                new SzException(
+                throw new SzException(
                     INVALID_EXPORT_HANDLE_CODE, 
                     INVALID_EXPORT_HANDLE_MESSAGE.replace(
                         "{0}", String.valueOf(exportHandle)));
@@ -796,7 +830,8 @@ public class SzGrpcEngine implements SzEngine {
             ProcessRedoRecordResponse response
                 = this.getBlockingStub().processRedoRecord(request);
             
-            return response.getResult();
+            String result = response.getResult();
+            return (result.length() == 0) ? null : result;
         });
     }
 
@@ -810,7 +845,8 @@ public class SzGrpcEngine implements SzEngine {
             GetRedoRecordResponse response
                 = this.getBlockingStub().getRedoRecord(request);
             
-            return response.getResult();
+            String result = response.getResult();
+            return (result.length() == 0) ? null : result;
         });
     }
 

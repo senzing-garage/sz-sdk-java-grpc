@@ -5,18 +5,11 @@ import java.util.Objects;
 import com.senzing.sdk.SzConfig;
 import com.senzing.sdk.SzConfigManager;
 import com.senzing.sdk.SzEnvironment;
-import com.senzing.sdk.SzException;
-import com.senzing.sdk.grpc.server.SzConfigGrpc.SzConfigImplBase;
-import com.senzing.sdk.grpc.server.SzConfigProto.GetDataSourceRegistryRequest;
-import com.senzing.sdk.grpc.server.SzConfigProto.GetDataSourceRegistryResponse;
-import com.senzing.sdk.grpc.server.SzConfigProto.RegisterDataSourceRequest;
-import com.senzing.sdk.grpc.server.SzConfigProto.RegisterDataSourceResponse;
-import com.senzing.sdk.grpc.server.SzConfigProto.UnregisterDataSourceRequest;
-import com.senzing.sdk.grpc.server.SzConfigProto.UnregisterDataSourceResponse;
-import com.senzing.sdk.grpc.server.SzConfigProto.VerifyConfigRequest;
-import com.senzing.sdk.grpc.server.SzConfigProto.VerifyConfigResponse;
-
 import io.grpc.stub.StreamObserver;
+
+import static com.senzing.sdk.grpc.proto.SzConfigGrpc.*;
+import static com.senzing.sdk.grpc.proto.SzConfigProto.*;
+import static com.senzing.sdk.grpc.server.SzGrpcServer.*;
 
 /**
  * Provides the gRPC server-side implementation for {@link SzConfig}.
@@ -72,8 +65,8 @@ public class SzGrpcConfigImpl extends SzConfigImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
 
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -102,8 +95,8 @@ public class SzGrpcConfigImpl extends SzConfigImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -131,8 +124,8 @@ public class SzGrpcConfigImpl extends SzConfigImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
 
@@ -155,8 +148,9 @@ public class SzGrpcConfigImpl extends SzConfigImplBase {
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             
-        } catch (SzException e) {
-            responseObserver.onError(e);
+        } catch (Exception e) {
+            e.printStackTrace();
+            responseObserver.onError(toStatusRuntimeException(e));
         }
     }
     
