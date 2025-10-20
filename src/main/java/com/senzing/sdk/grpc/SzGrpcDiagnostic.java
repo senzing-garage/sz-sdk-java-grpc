@@ -3,30 +3,104 @@ package com.senzing.sdk.grpc;
 import com.senzing.sdk.SzDiagnostic;
 import com.senzing.sdk.SzException;
 
-public class SzGrpcDiagnostic implements SzDiagnostic {
+import com.senzing.sdk.grpc.proto.SzDiagnosticGrpc;
 
-    @Override
-    public String getDatastoreInfo() throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getDatastoreInfo'");
+import static com.senzing.sdk.grpc.proto.SzDiagnosticGrpc.*;
+import static com.senzing.sdk.grpc.proto.SzDiagnosticProto.*;
+
+import io.grpc.Channel;
+
+/**
+ * The gRPC implementation of {@link SzDiagnostic}.
+ */
+public class SzGrpcDiagnostic implements SzDiagnostic {
+    /**
+     * The {@link SzGrpcEnvironment} that constructed this instance.
+     */
+    private SzGrpcEnvironment env = null;
+
+    /**
+     * The underlying blocking stub.
+     */
+    private SzDiagnosticBlockingStub blockingStub = null;
+
+    /**
+     * Package-access constructor.
+     * 
+     * @param environment the {@link SzGrpcEnvironment} with which to construct.
+     */
+    SzGrpcDiagnostic(SzGrpcEnvironment environment) {
+        this.env = environment;
+        
+        Channel channel = this.env.getChannel();
+
+        this.blockingStub = SzDiagnosticGrpc.newBlockingStub(channel);
+    }
+
+    /**
+     * Gets the underlying {@link SzDiagnosticBlockingStub} for this instance.
+     * 
+     * @return The underlying {@link SzDiagnosticBlockingStub} for this instance.
+     */
+    SzDiagnosticBlockingStub getBlockingStub() {
+        return this.blockingStub;
     }
 
     @Override
-    public String checkDatastorePerformance(int secondsToRun) throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'checkDatastorePerformance'");
+    public String getRepositoryInfo() throws SzException {
+        return this.env.execute(() -> {
+
+            GetRepositoryInfoRequest request
+                = GetRepositoryInfoRequest.newBuilder().build();
+            
+            GetRepositoryInfoResponse response
+                = this.getBlockingStub().getRepositoryInfo(request);
+
+            return response.getResult();
+        });      
+    }
+
+    @Override
+    public String checkRepositoryPerformance(int secondsToRun) throws SzException {
+        return this.env.execute(() -> {
+
+            CheckRepositoryPerformanceRequest request
+                = CheckRepositoryPerformanceRequest.newBuilder()
+                    .setSecondsToRun(secondsToRun).build();
+            
+            CheckRepositoryPerformanceResponse response
+                = this.getBlockingStub().checkRepositoryPerformance(request);
+
+            return response.getResult();
+        });      
     }
 
     @Override
     public void purgeRepository() throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'purgeRepository'");
+        this.env.execute(() -> {
+
+            PurgeRepositoryRequest request
+                = PurgeRepositoryRequest.newBuilder().build();
+            
+            this.getBlockingStub().purgeRepository(request);
+
+            return null;
+        });      
     }
 
     @Override
     public String getFeature(long featureId) throws SzException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getFeature'");
+        return this.env.execute(() -> {
+
+            GetFeatureRequest request
+                = GetFeatureRequest.newBuilder()
+                    .setFeatureId(featureId).build();
+            
+            GetFeatureResponse response
+                = this.getBlockingStub().getFeature(request);
+
+            return response.getResult();
+        });      
     }
     
 }
