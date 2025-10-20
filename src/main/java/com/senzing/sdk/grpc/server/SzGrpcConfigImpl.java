@@ -149,7 +149,6 @@ public class SzGrpcConfigImpl extends SzConfigImplBase {
             responseObserver.onCompleted();
             
         } catch (Exception e) {
-            e.printStackTrace();
             responseObserver.onError(toStatusRuntimeException(e));
         }
     }

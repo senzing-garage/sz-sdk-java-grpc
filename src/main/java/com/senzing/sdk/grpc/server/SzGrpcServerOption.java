@@ -731,7 +731,6 @@ public enum SzGrpcServerOption
             DEPENDENCIES = Collections.unmodifiableMap(dependencyMap);
 
         } catch (Exception e) {
-            e.printStackTrace();
             throw new ExceptionInInitializerError(e);
         }
     }
