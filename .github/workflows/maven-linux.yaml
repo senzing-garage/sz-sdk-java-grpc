@@ -29,8 +29,8 @@ jobs:
       - name: checkout repository
         uses: actions/checkout@v5
         with:
-          fetch-depth: 0
           persist-credentials: false
+          submodules: recursive
 
       - uses: actions/setup-java@v4
         with:
