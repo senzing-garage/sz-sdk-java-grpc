@@ -19,14 +19,14 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
     /**
      * The {@link SzGrpcServer} to use.
      */
-    SzGrpcServer server = null;
+    private SzGrpcServer server = null;
 
     /**
      * Constructs with the {@link SzGrpcServer}.
      * 
      * @param server The {@link SzGrpcServer}.
      */
-    public SzGrpcConfigManagerImpl(SzGrpcServer server) {
+    protected SzGrpcConfigManagerImpl(SzGrpcServer server) {
         Objects.requireNonNull(server, "The server cannot be null");
         if (server.isDestroyed()) {
             throw new IllegalArgumentException(
@@ -41,10 +41,18 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
      * 
      * @return The {@link SzEnvironment} for the backing server.
      */
-    private SzEnvironment getEnvironment() {
+    protected SzEnvironment getEnvironment() {
         return this.server.getEnvironment();
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzConfigManager#createConfig(long)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getConfig(GetConfigRequest                  request, 
                           StreamObserver<GetConfigResponse> responseObserver) 
@@ -70,6 +78,14 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzConfigManager#getConfigRegistry()} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getConfigRegistry(
         GetConfigRegistryRequest                    request,
@@ -92,6 +108,14 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzConfigManager#getDefaultConfigId()} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getDefaultConfigId(
             GetDefaultConfigIdRequest                   request,
@@ -114,6 +138,14 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzConfigManager#createConfig()} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getTemplateConfig(
             GetTemplateConfigRequest                    request,
@@ -138,6 +170,14 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzConfigManager#registerConfig(String,String)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void registerConfig(
         RegisterConfigRequest                   request, 
@@ -163,6 +203,14 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzConfigManager#replaceDefaultConfigId(long,long)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void replaceDefaultConfigId(
             ReplaceDefaultConfigIdRequest                   request,
@@ -187,6 +235,14 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzConfigManager#setDefaultConfig(String,String)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void setDefaultConfig(
             SetDefaultConfigRequest                     request,
@@ -214,6 +270,14 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzConfigManager#setDefaultConfigId(long)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void setDefaultConfigId(
             SetDefaultConfigIdRequest                   request,

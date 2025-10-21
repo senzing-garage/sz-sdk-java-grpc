@@ -323,27 +323,30 @@ public enum SzGrpcServerOption
      * {@link Set} values containing the {@link SzGrpcServerOption} values that
      * conflict with the key {@link SzGrpcServerOption} value.
      */
-    private static Map<SzGrpcServerOption, Set<CommandLineOption>> CONFLICTING_OPTIONS;
+    private static final Map<SzGrpcServerOption, Set<CommandLineOption>> 
+        CONFLICTING_OPTIONS;
 
     /**
      * The {@link Map} of {@link SzGrpcServerOption} keys to <b>unmodifiable</b>
      * {@link Set} values containing the {@link SzGrpcServerOption} values that
      * are alternatives to the key {@link SzGrpcServerOption} value.
      */
-    private static Map<SzGrpcServerOption, Set<SzGrpcServerOption>> ALTERNATIVE_OPTIONS;
+    private static final Map<SzGrpcServerOption, Set<SzGrpcServerOption>> 
+        ALTERNATIVE_OPTIONS;
 
     /**
      * The {@link Map} of {@link String} option flags to their corresponding
      * {@link SzGrpcServerOption} values.
      */
-    private static Map<String, SzGrpcServerOption> OPTIONS_BY_FLAG;
+    private static final Map<String, SzGrpcServerOption> OPTIONS_BY_FLAG;
 
     /**
      * The {@link Map} of {@link SzGrpcServerOption} keys to <b>unmodifiable</b>
      * {@link Set} values containing alternative {@link Set}'s of {@link
      * SzGrpcServerOption} that the key option is dependent on if specified.
      */
-    private static Map<SzGrpcServerOption, Set<Set<CommandLineOption>>> DEPENDENCIES;
+    private static final Map<SzGrpcServerOption, Set<Set<CommandLineOption>>>
+        DEPENDENCIES;
 
     /**
      * Flag indicating if this option is considered a "primary" option.
@@ -545,45 +548,75 @@ public enum SzGrpcServerOption
                 : List.copyOf(defaultParameters);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int getMinimumParameterCount() {
         return this.minParamCount;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int getMaximumParameterCount() {
         return this.maxParamCount;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getDefaultParameters() {
         return this.defaultParameters;
     }
 
+    /**
+     * Checks if this is a primary option.
+     * 
+     * @return <code>true</code> if this is a primary option, otherwise
+     *         <code>false</code>.
+     */
     public boolean isPrimary() {
         return this.primary;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isDeprecated() {
         return this.deprecated;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getCommandLineFlag() {
         return this.cmdLineFlag;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Set<String> getSynonymFlags() {
         return this.synonymFlags;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getEnvironmentVariable() {
         return this.envVariable;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<String> getEnvironmentFallbacks() {
         return this.envFallbacks;
@@ -625,6 +658,9 @@ public enum SzGrpcServerOption
         return this.groupOptional;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Set<CommandLineOption> getConflicts() {
         return CONFLICTING_OPTIONS.get(this);
@@ -642,6 +678,9 @@ public enum SzGrpcServerOption
         return ALTERNATIVE_OPTIONS.get(this);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Set<Set<CommandLineOption>> getDependencies() {
         Set<Set<CommandLineOption>> set = DEPENDENCIES.get(this);
@@ -675,11 +714,12 @@ public enum SzGrpcServerOption
                 altMap.put(option, new LinkedHashSet<>());
                 lookupMap.put(option.getCommandLineFlag().toLowerCase(), option);
             }
-            SzGrpcServerOption[] exclusiveOptions = { HELP, VERSION };
+            SzGrpcServerOption[] exclusiveOptions = {HELP, VERSION};
             for (SzGrpcServerOption option : SzGrpcServerOption.values()) {
                 for (SzGrpcServerOption exclOption : exclusiveOptions) {
-                    if (option == exclOption)
+                    if (option == exclOption) {
                         continue;
+                    }
                     Set<CommandLineOption> set = conflictMap.get(exclOption);
                     set.add(option);
                     set = conflictMap.get(option);
@@ -693,8 +733,9 @@ public enum SzGrpcServerOption
             Map<String, Set<SzGrpcServerOption>> groups = new LinkedHashMap<>();
             for (SzGrpcServerOption option : SzGrpcServerOption.values()) {
                 String groupName = option.getGroupName();
-                if (groupName == null)
+                if (groupName == null) {
                     continue;
+                }
                 Set<SzGrpcServerOption> set = groups.get(groupName);
                 if (set == null) {
                     set = new LinkedHashSet<>();
@@ -713,8 +754,9 @@ public enum SzGrpcServerOption
 
                     // remove any options that are not required
                     for (SzGrpcServerOption opt : group) {
-                        if (opt.isGroupOptional())
+                        if (opt.isGroupOptional()) {
                             others.remove(opt);
+                        }
                     }
 
                     // make the others set unmodifiable
@@ -731,7 +773,6 @@ public enum SzGrpcServerOption
             DEPENDENCIES = Collections.unmodifiableMap(dependencyMap);
 
         } catch (Exception e) {
-            e.printStackTrace();
             throw new ExceptionInInitializerError(e);
         }
     }
@@ -911,8 +952,9 @@ public enum SzGrpcServerOption
                 case SKIP_STARTUP_PERF:
                 case SKIP_ENGINE_PRIMING:
                 case IGNORE_ENVIRONMENT:
-                    if (params.size() == 0)
+                    if (params.size() == 0) {
                         return Boolean.TRUE;
+                    }
                     String boolText = params.get(0);
                     if ("false".equalsIgnoreCase(boolText)) {
                         return Boolean.FALSE;

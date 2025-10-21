@@ -28,18 +28,18 @@ import static com.senzing.sdk.grpc.server.SzGrpcServer.*;
 /**
  * Provides the gRPC server-side implementation for {@link SzEngine}.
  */
-class SzGrpcEngineImpl extends SzEngineImplBase {
+public class SzGrpcEngineImpl extends SzEngineImplBase {
     /**
      * The {@link SzGrpcServer} to use.
      */
-    SzGrpcServer server = null;
+    private SzGrpcServer server = null;
 
     /**
      * Constructs with the {@link SzGrpcServer}.
      * 
      * @param server The {@link SzGrpcServer} to use.
      */
-    public SzGrpcEngineImpl(SzGrpcServer server) {
+    protected SzGrpcEngineImpl(SzGrpcServer server) {
         Objects.requireNonNull(server, "The environment cannot be null");
         if (server.isDestroyed()) {
             throw new IllegalArgumentException(
@@ -54,10 +54,18 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
      * 
      * @return The {@link SzEnvironment} for the backing server.
      */
-    private SzEnvironment getEnvironment() {
+    protected SzEnvironment getEnvironment() {
         return this.server.getEnvironment();
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#addRecord(SzRecordKey,String,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void addRecord(AddRecordRequest                  request, 
                           StreamObserver<AddRecordResponse> responseObserver) 
@@ -92,6 +100,17 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to defer to the base implementation to throw a 
+     * {@link io.grpc.StatusRuntimeException} indicating that the
+     * operation is not implemented.
+     * <p>
+     * <b>NOTE:</b> Remove this method once it is removed from the
+     * engine proto file.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void closeExportReport(CloseExportReportRequest request,
             StreamObserver<CloseExportReportResponse> responseObserver) {
@@ -99,6 +118,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         super.closeExportReport(request, responseObserver);
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#countRedoRecords()} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void countRedoRecords(CountRedoRecordsRequest request,
             StreamObserver<CountRedoRecordsResponse> responseObserver) {
@@ -118,6 +145,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#deleteRecord(SzRecordKey,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void deleteRecord(DeleteRecordRequest request, StreamObserver<DeleteRecordResponse> responseObserver) {
         try {
@@ -147,6 +182,17 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
    }
 
+    /**
+     * Implemented to defer to the base implementation to throw a 
+     * {@link io.grpc.StatusRuntimeException} indicating that the
+     * operation is not implemented.
+     * <p>
+     * <b>NOTE:</b> Remove this method once it is removed from the
+     * engine proto file.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void exportCsvEntityReport(ExportCsvEntityReportRequest request,
             StreamObserver<ExportCsvEntityReportResponse> responseObserver) {
@@ -154,6 +200,17 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         super.exportCsvEntityReport(request, responseObserver);
     }
 
+    /**
+     * Implemented to defer to the base implementation to throw a 
+     * {@link io.grpc.StatusRuntimeException} indicating that the
+     * operation is not implemented.
+     * <p>
+     * <b>NOTE:</b> Remove this method once it is removed from the
+     * engine proto file.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void exportJsonEntityReport(ExportJsonEntityReportRequest request,
             StreamObserver<ExportJsonEntityReportResponse> responseObserver) {
@@ -161,12 +218,31 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         super.exportJsonEntityReport(request, responseObserver);
     }
 
+    /**
+     * Implemented to defer to the base implementation to throw a 
+     * {@link io.grpc.StatusRuntimeException} indicating that the
+     * operation is not implemented.
+     * <p>
+     * <b>NOTE:</b> Remove this method once it is removed from the
+     * engine proto file.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void fetchNext(FetchNextRequest request, StreamObserver<FetchNextResponse> responseObserver) {
         // Leave this unimplemented since gRPC client should stream exports
         super.fetchNext(request, responseObserver);
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#findInterestingEntities(long,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void findInterestingEntitiesByEntityId(FindInterestingEntitiesByEntityIdRequest request,
             StreamObserver<FindInterestingEntitiesByEntityIdResponse> responseObserver) {
@@ -191,6 +267,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#findInterestingEntities(SzRecordKey,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void findInterestingEntitiesByRecordId(FindInterestingEntitiesByRecordIdRequest request,
             StreamObserver<FindInterestingEntitiesByRecordIdResponse> responseObserver) {
@@ -218,6 +302,13 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Internal method for parsing the entity ID's JSON.
+     * 
+     * @param entityIdsJson The JSON text to parse.
+     * 
+     * @return The {@link Set} of {@link Long} entity ID's.
+     */
     private static Set<Long> parseEntityIds(String entityIdsJson) {
         if (entityIdsJson == null || entityIdsJson.trim().length() == 0) 
         {
@@ -234,6 +325,13 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         return entityIds;
     }
 
+    /**
+     * Internal method for parsing the record keys JSON.
+     * 
+     * @param recordKeysJson The JSON text to parse.
+     * 
+     * @return The {@link Set} of {@link SzRecordKey} instances.
+     */
     private static Set<SzRecordKey> parseRecordKeys(String recordKeysJson) {
         if (recordKeysJson == null || recordKeysJson.trim().length() == 0)
         {
@@ -254,6 +352,13 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         return recordKeys;
     }
 
+    /**
+     * Internal method for parsing the data sources JSON.
+     * 
+     * @param dataSourcesJson The JSON text to parse.
+     * 
+     * @return The {@link Set} of {@link String} data source codes.
+     */
     private static Set<String> parseDataSources(String dataSourcesJson) {
         if (dataSourcesJson == null || dataSourcesJson.trim().length() == 0)
         {
@@ -270,6 +375,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         return dataSources;
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#findNetwork(SzEntityIds,int,int,int,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void findNetworkByEntityId(FindNetworkByEntityIdRequest request,
             StreamObserver<FindNetworkByEntityIdResponse> responseObserver) 
@@ -306,6 +419,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#findNetwork(SzRecordKeys,int,int,int,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void findNetworkByRecordId(FindNetworkByRecordIdRequest request,
             StreamObserver<FindNetworkByRecordIdResponse> responseObserver)
@@ -342,6 +463,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#findPath(long,long,int,SzEntityIds,Set,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void findPathByEntityId(FindPathByEntityIdRequest request,
             StreamObserver<FindPathByEntityIdResponse> responseObserver)
@@ -381,6 +510,15 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#findPath(SzRecordKey,SzRecordKey,int,SzRecordKeys,Set,Set)}
+     * method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void findPathByRecordId(FindPathByRecordIdRequest request,
             StreamObserver<FindPathByRecordIdResponse> responseObserver)
@@ -424,6 +562,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEnvironment#getActiveConfigId()} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getActiveConfigId(GetActiveConfigIdRequest request,
             StreamObserver<GetActiveConfigIdResponse> responseObserver) 
@@ -443,6 +589,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#getEntity(long,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getEntityByEntityId(GetEntityByEntityIdRequest request,
             StreamObserver<GetEntityByEntityIdResponse> responseObserver)
@@ -468,6 +622,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#getEntity(SzRecordKey,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getEntityByRecordId(GetEntityByRecordIdRequest request,
             StreamObserver<GetEntityByRecordIdResponse> responseObserver) 
@@ -495,6 +657,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#getRecord(SzRecordKey,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getRecord(GetRecordRequest request, 
         StreamObserver<GetRecordResponse> responseObserver) 
@@ -521,6 +691,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#getRecordPreview(String,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getRecordPreview(GetRecordPreviewRequest request,
             StreamObserver<GetRecordPreviewResponse> responseObserver)
@@ -545,6 +723,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#getRedoRecord()} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getRedoRecord(GetRedoRecordRequest request, 
         StreamObserver<GetRedoRecordResponse> responseObserver) 
@@ -569,6 +755,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#getStats()} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getStats(GetStatsRequest request,
         StreamObserver<GetStatsResponse> responseObserver) 
@@ -589,6 +783,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#getVirtualEntity(Set,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getVirtualEntityByRecordId(GetVirtualEntityByRecordIdRequest request,
             StreamObserver<GetVirtualEntityByRecordIdResponse> responseObserver) 
@@ -618,6 +820,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#howEntity(long,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void howEntityByEntityId(HowEntityByEntityIdRequest request,
             StreamObserver<HowEntityByEntityIdResponse> responseObserver) 
@@ -643,6 +853,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#primeEngine()} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void primeEngine(PrimeEngineRequest request,
         StreamObserver<PrimeEngineResponse> responseObserver)
@@ -662,6 +880,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#processRedoRecord(String,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void processRedoRecord(ProcessRedoRecordRequest request,
             StreamObserver<ProcessRedoRecordResponse> responseObserver) 
@@ -690,6 +916,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#reevaluateEntity(long,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void reevaluateEntity(ReevaluateEntityRequest request,
             StreamObserver<ReevaluateEntityResponse> responseObserver) 
@@ -718,6 +952,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#reevaluateRecord(SzRecordKey,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void reevaluateRecord(ReevaluateRecordRequest request,
             StreamObserver<ReevaluateRecordResponse> responseObserver)
@@ -748,6 +990,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEnvironment#reinitialize(long)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void reinitialize(ReinitializeRequest request,
         StreamObserver<ReinitializeResponse> responseObserver) 
@@ -768,6 +1018,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#searchByAttributes(String,String,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void searchByAttributes(SearchByAttributesRequest request,
             StreamObserver<SearchByAttributesResponse> responseObserver) 
@@ -794,6 +1052,16 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#exportCsvEntityReport(String,Set)},
+     * {@link SzEngine#fetchNext(long)} and {@link SzEngine#closeExportReport(long)}
+     * methods.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void streamExportCsvEntityReport(StreamExportCsvEntityReportRequest request,
             StreamObserver<StreamExportCsvEntityReportResponse> responseObserver)
@@ -831,6 +1099,16 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#exportJsonEntityReport(Set)},
+     * {@link SzEngine#fetchNext(long)} and {@link SzEngine#closeExportReport(long)}
+     * methods.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void streamExportJsonEntityReport(StreamExportJsonEntityReportRequest request,
             StreamObserver<StreamExportJsonEntityReportResponse> responseObserver)
@@ -867,6 +1145,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#whyEntities(long,long,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void whyEntities(WhyEntitiesRequest request,
         StreamObserver<WhyEntitiesResponse> responseObserver) 
@@ -892,6 +1178,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#whyRecordInEntity(SzRecordKey,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void whyRecordInEntity(WhyRecordInEntityRequest request,
             StreamObserver<WhyRecordInEntityResponse> responseObserver) 
@@ -919,6 +1213,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#whyRecords(SzRecordKey,SzRecordKey,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void whyRecords(WhyRecordsRequest request, 
         StreamObserver<WhyRecordsResponse> responseObserver) 
@@ -948,6 +1250,14 @@ class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEngine#whySearch(String,long,String,Set)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void whySearch(WhySearchRequest request,
         StreamObserver<WhySearchResponse> responseObserver) 

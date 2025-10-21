@@ -5,6 +5,7 @@ import java.util.Objects;
 import com.senzing.sdk.SzConfig;
 import com.senzing.sdk.SzConfigManager;
 import com.senzing.sdk.SzEnvironment;
+
 import io.grpc.stub.StreamObserver;
 
 import static com.senzing.sdk.grpc.proto.SzConfigGrpc.*;
@@ -18,14 +19,14 @@ public class SzGrpcConfigImpl extends SzConfigImplBase {
     /**
      * The {@link SzGrpcServer} to use.
      */
-    SzGrpcServer server = null;
+    private SzGrpcServer server = null;
 
     /**
      * Constructs with the {@link SzGrpcServer}.
      * 
      * @param server The {@link SzGrpcServer}.
      */
-    public SzGrpcConfigImpl(SzGrpcServer server) {
+    protected SzGrpcConfigImpl(SzGrpcServer server) {
         Objects.requireNonNull(server, "The server cannot be null");
         if (server.isDestroyed()) {
             throw new IllegalArgumentException(
@@ -40,10 +41,18 @@ public class SzGrpcConfigImpl extends SzConfigImplBase {
      * 
      * @return The {@link SzEnvironment} for the backing server.
      */
-    private SzEnvironment getEnvironment() {
+    protected SzEnvironment getEnvironment() {
         return this.server.getEnvironment();
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzConfig#getDataSourceRegistry()} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getDataSourceRegistry(
             GetDataSourceRegistryRequest                    request,
@@ -70,6 +79,14 @@ public class SzGrpcConfigImpl extends SzConfigImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzConfig#registerDataSource(String)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void registerDataSource(
             RegisterDataSourceRequest                   request,
@@ -100,6 +117,14 @@ public class SzGrpcConfigImpl extends SzConfigImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzConfig#unregisterDataSource(String)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void unregisterDataSource(
             UnregisterDataSourceRequest                     request,
@@ -129,6 +154,14 @@ public class SzGrpcConfigImpl extends SzConfigImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzConfigManager#createConfig(String)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void verifyConfig(
         VerifyConfigRequest                     request, 
@@ -149,7 +182,6 @@ public class SzGrpcConfigImpl extends SzConfigImplBase {
             responseObserver.onCompleted();
             
         } catch (Exception e) {
-            e.printStackTrace();
             responseObserver.onError(toStatusRuntimeException(e));
         }
     }

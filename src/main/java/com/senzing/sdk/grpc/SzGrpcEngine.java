@@ -9,7 +9,6 @@ import javax.json.JsonObjectBuilder;
 import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Optional;
 import java.util.LinkedHashMap;
 
 import io.grpc.Channel;
@@ -25,6 +24,62 @@ import com.senzing.sdk.SzRecordKeys;
 import com.senzing.sdk.SzUnknownDataSourceException;
 
 import com.senzing.sdk.grpc.proto.SzEngineGrpc;
+import com.senzing.sdk.grpc.proto.SzEngineGrpc.SzEngineBlockingStub;
+import com.senzing.sdk.grpc.proto.SzEngineProto.AddRecordRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.AddRecordResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.CountRedoRecordsRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.CountRedoRecordsResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.DeleteRecordRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.DeleteRecordResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.FindInterestingEntitiesByEntityIdRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.FindInterestingEntitiesByEntityIdResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.FindInterestingEntitiesByRecordIdRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.FindInterestingEntitiesByRecordIdResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.FindNetworkByEntityIdRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.FindNetworkByEntityIdResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.FindNetworkByRecordIdRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.FindNetworkByRecordIdResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.FindPathByEntityIdRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.FindPathByEntityIdResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.FindPathByRecordIdRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.FindPathByRecordIdResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetEntityByEntityIdRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetEntityByEntityIdResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetEntityByRecordIdRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetEntityByRecordIdResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetRecordPreviewRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetRecordPreviewResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetRecordRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetRecordResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetRedoRecordRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetRedoRecordResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetStatsRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetStatsResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetVirtualEntityByRecordIdRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.GetVirtualEntityByRecordIdResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.HowEntityByEntityIdRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.HowEntityByEntityIdResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.PrimeEngineRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.ProcessRedoRecordRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.ProcessRedoRecordResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.ReevaluateEntityRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.ReevaluateEntityResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.ReevaluateRecordRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.ReevaluateRecordResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.SearchByAttributesRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.SearchByAttributesResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.StreamExportCsvEntityReportRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.StreamExportCsvEntityReportResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.StreamExportJsonEntityReportRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.StreamExportJsonEntityReportResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.WhyEntitiesRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.WhyEntitiesResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.WhyRecordInEntityRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.WhyRecordInEntityResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.WhyRecordsRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.WhyRecordsResponse;
+import com.senzing.sdk.grpc.proto.SzEngineProto.WhySearchRequest;
+import com.senzing.sdk.grpc.proto.SzEngineProto.WhySearchResponse;
 
 import static com.senzing.sdk.grpc.proto.SzEngineGrpc.*;
 import static com.senzing.sdk.grpc.proto.SzEngineProto.*;
@@ -74,20 +129,40 @@ public class SzGrpcEngine implements SzEngine {
      * Provide an {@link Iterator} over {@linK String} values that uses
      * the {@link StreamExportCsvEntityReportResponse}.
      */
-    private static class CsvExportIterator implements Iterator<String> {
-        Iterator<StreamExportCsvEntityReportResponse> iter = null;
+    private static final class CsvExportIterator implements Iterator<String> {
+        /**
+         * The streaming response iterator.
+         */
+        private Iterator<StreamExportCsvEntityReportResponse> iter = null;
 
+        /**
+         * Constructs with the specified response iterator.
+         * 
+         * @param iter The response iterator.
+         */
         private CsvExportIterator(Iterator<StreamExportCsvEntityReportResponse> iter) {
             this.iter = iter;
             
             // check if we have a next element to force blocking for first
             this.iter.hasNext();
         }
+
+        /**
+         * Checks if we have further export content.
+         * 
+         * @return <code>true</code> if there is additional export content,
+         *         otherwise <code>false</code>.
+         */
         @Override
         public boolean hasNext() {
             return this.iter.hasNext();
         }
 
+        /**
+         * Gets the next line of export content.
+         * 
+         * @return The next line of export content.
+         */
         @Override
         public String next() {
             StreamExportCsvEntityReportResponse response = this.iter.next();
@@ -99,20 +174,40 @@ public class SzGrpcEngine implements SzEngine {
      * Provide an {@link Iterator} over {@linK String} values that uses
      * the {@link StreamExportJsonEntityReportResponse}.
      */
-    private static class JsonExportIterator implements Iterator<String> {
-        Iterator<StreamExportJsonEntityReportResponse> iter = null;
+    private static final class JsonExportIterator implements Iterator<String> {
+        /**
+         * The streaming response iterator.
+         */
+        private Iterator<StreamExportJsonEntityReportResponse> iter = null;
 
+        /**
+         * Constructs with the specified response iterator.
+         * 
+         * @param iter The response iterator.
+         */
         private JsonExportIterator(Iterator<StreamExportJsonEntityReportResponse> iter) {
             this.iter = iter;
 
             // check if we have a next element to force blocking for first
             this.iter.hasNext();
         }
+        
+        /**
+         * Checks if we have further export content.
+         * 
+         * @return <code>true</code> if there is additional export content,
+         *         otherwise <code>false</code>.
+         */
         @Override
         public boolean hasNext() {
             return this.iter.hasNext();
         }
 
+        /**
+         * Gets the next line of export content.
+         * 
+         * @return The next line of export content.
+         */
         @Override
         public String next() {
             StreamExportJsonEntityReportResponse response = this.iter.next();
@@ -125,7 +220,7 @@ public class SzGrpcEngine implements SzEngine {
      * 
      * @param environment the {@link SzGrpcEnvironment} with which to construct.
      */
-    SzGrpcEngine(SzGrpcEnvironment environment) {
+    protected SzGrpcEngine(SzGrpcEnvironment environment) {
         this.env = environment;
         
         Channel channel = this.env.getChannel();
@@ -267,10 +362,16 @@ public class SzGrpcEngine implements SzEngine {
      * 
      * @return The underlying {@link SzEngineBlockingStub} for this instance.
      */
-    SzEngineBlockingStub getBlockingStub() {
+    protected SzEngineBlockingStub getBlockingStub() {
         return this.blockingStub;
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public void primeEngine() throws SzException {
         this.env.execute(() -> {
@@ -281,6 +382,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String getStats() throws SzException {
         return this.env.execute(() -> {
@@ -293,6 +400,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String addRecord(SzRecordKey recordKey, String recordDefinition, Set<SzFlag> flags)
             throws SzUnknownDataSourceException, SzBadInputException, SzException 
@@ -312,6 +425,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String getRecordPreview(String recordDefinition, Set<SzFlag> flags) throws SzException {
         return this.env.execute(() -> {
@@ -327,6 +446,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String deleteRecord(SzRecordKey recordKey, Set<SzFlag> flags)
             throws SzUnknownDataSourceException, SzException 
@@ -346,6 +471,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String reevaluateRecord(SzRecordKey recordKey, Set<SzFlag> flags)
             throws SzUnknownDataSourceException, SzException 
@@ -365,6 +496,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String reevaluateEntity(long entityId, Set<SzFlag> flags)
             throws SzException 
@@ -383,6 +520,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String searchByAttributes(String         attributes, 
                                      String         searchProfile,
@@ -408,6 +551,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String whySearch(String      attributes, 
                             long        entityId,
@@ -435,6 +584,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String getEntity(long entityId, Set<SzFlag> flags)
             throws SzNotFoundException, SzException 
@@ -452,6 +607,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String getEntity(SzRecordKey recordKey, Set<SzFlag> flags)
             throws SzUnknownDataSourceException, SzNotFoundException, SzException 
@@ -470,6 +631,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String findInterestingEntities(long entityId, Set<SzFlag> flags)
             throws SzNotFoundException, SzException 
@@ -487,6 +654,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String findInterestingEntities(SzRecordKey recordKey, Set<SzFlag> flags)
             throws SzUnknownDataSourceException, SzNotFoundException, SzException 
@@ -505,6 +678,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String findPath(long         startEntityId,
                            long         endEntityId,
@@ -537,6 +716,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String findPath(SzRecordKey  startRecordKey, 
                            SzRecordKey  endRecordKey,
@@ -572,6 +757,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String findNetwork(SzEntityIds   entityIds, 
                               int           maxDegrees,
@@ -596,6 +787,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String findNetwork(SzRecordKeys  recordKeys, 
                               int           maxDegrees,
@@ -620,6 +817,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String whyRecordInEntity(SzRecordKey recordKey, Set<SzFlag> flags)
         throws SzUnknownDataSourceException, SzNotFoundException, SzException 
@@ -638,6 +841,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String whyRecords(SzRecordKey recordKey1, 
                              SzRecordKey recordKey2, 
@@ -659,6 +868,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String whyEntities(long entityId1, long entityId2, Set<SzFlag> flags)
             throws SzNotFoundException, SzException 
@@ -676,6 +891,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String howEntity(long entityId, Set<SzFlag> flags) 
         throws SzNotFoundException, SzException 
@@ -693,6 +914,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String getVirtualEntity(Set<SzRecordKey> recordKeys, Set<SzFlag> flags)
             throws SzNotFoundException, SzException 
@@ -710,6 +937,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String getRecord(SzRecordKey recordKey, Set<SzFlag> flags)
             throws SzUnknownDataSourceException, SzNotFoundException, SzException 
@@ -727,6 +960,13 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}
+     * using the streaming functionality.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public long exportJsonEntityReport(Set<SzFlag> flags) throws SzException {
         return this.env.execute(() -> {
@@ -749,6 +989,13 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}
+     * using the streaming functionality.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public long exportCsvEntityReport(String csvColumnList, Set<SzFlag> flags) 
         throws SzException 
@@ -774,6 +1021,13 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}
+     * using the streaming response.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String fetchNext(long exportHandle) throws SzException {
         return this.env.execute(() -> {
@@ -800,6 +1054,13 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation by closing the the 
+     * streaming response iterator previously obtained from the 
+     * gRPC server using the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public void closeExportReport(long exportHandle) throws SzException {
         this.env.execute(() -> {
@@ -817,6 +1078,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String processRedoRecord(String redoRecord, Set<SzFlag> flags)
         throws SzException 
@@ -835,6 +1102,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String getRedoRecord() throws SzException 
     {
@@ -850,6 +1123,12 @@ public class SzGrpcEngine implements SzEngine {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public long countRedoRecords() throws SzException 
     {

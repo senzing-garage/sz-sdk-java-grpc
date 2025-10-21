@@ -42,10 +42,16 @@ public class SzGrpcDiagnostic implements SzDiagnostic {
      * 
      * @return The underlying {@link SzDiagnosticBlockingStub} for this instance.
      */
-    SzDiagnosticBlockingStub getBlockingStub() {
+    protected SzDiagnosticBlockingStub getBlockingStub() {
         return this.blockingStub;
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String getRepositoryInfo() throws SzException {
         return this.env.execute(() -> {
@@ -60,6 +66,12 @@ public class SzGrpcDiagnostic implements SzDiagnostic {
         });      
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String checkRepositoryPerformance(int secondsToRun) throws SzException {
         return this.env.execute(() -> {
@@ -75,6 +87,13 @@ public class SzGrpcDiagnostic implements SzDiagnostic {
         });      
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}
+     * (assuming the gRPC allows the operation).
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public void purgeRepository() throws SzException {
         this.env.execute(() -> {
@@ -88,6 +107,12 @@ public class SzGrpcDiagnostic implements SzDiagnostic {
         });      
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String getFeature(long featureId) throws SzException {
         return this.env.execute(() -> {
