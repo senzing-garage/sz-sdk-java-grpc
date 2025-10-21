@@ -29,7 +29,7 @@ public class SzGrpcProduct implements SzProduct {
      * 
      * @param environment the {@link SzGrpcEnvironment} with which to construct.
      */
-    SzGrpcProduct(SzGrpcEnvironment environment) {
+    protected SzGrpcProduct(SzGrpcEnvironment environment) {
         this.env = environment;
         
         Channel channel = this.env.getChannel();
@@ -46,6 +46,12 @@ public class SzGrpcProduct implements SzProduct {
         return this.blockingStub;
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String getLicense() throws SzException {
         return this.env.execute(() -> {
@@ -60,6 +66,12 @@ public class SzGrpcProduct implements SzProduct {
         });      
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String getVersion() throws SzException {
         return this.env.execute(() -> {

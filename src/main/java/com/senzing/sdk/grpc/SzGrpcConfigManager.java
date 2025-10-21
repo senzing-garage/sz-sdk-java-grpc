@@ -42,7 +42,7 @@ public class SzGrpcConfigManager implements SzConfigManager {
      * 
      * @param environment the {@link SzGrpcEnvironment} with which to construct.
      */
-    SzGrpcConfigManager(SzGrpcEnvironment environment) {
+    protected SzGrpcConfigManager(SzGrpcEnvironment environment) {
         this.env = environment;
         
         Channel channel = this.env.getChannel();
@@ -56,17 +56,25 @@ public class SzGrpcConfigManager implements SzConfigManager {
      * 
      * @return The underlying {@link SzConfigManagerBlockingStub} for this instance.
      */
-    SzConfigManagerBlockingStub getBlockingStub() {
+    protected SzConfigManagerBlockingStub getBlockingStub() {
         return this.blockingStub;
     }
 
     /**
      * Gets the underlying {@link SzConfigBlockingStub} for this instance.
+     * 
+     * @return The underlying {@link SzConfigBlockingStub} for this instance.
      */
     SzConfigBlockingStub getConfigBlockingStub() {
         return this.configBlockingStub;
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public SzConfig createConfig() throws SzException {
         return this.env.execute(() -> {
@@ -82,6 +90,12 @@ public class SzGrpcConfigManager implements SzConfigManager {
         });      
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public SzConfig createConfig(String configDefinition)
         throws SzException 
@@ -107,6 +121,12 @@ public class SzGrpcConfigManager implements SzConfigManager {
         });      
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public SzConfig createConfig(long configId)
         throws SzException
@@ -125,6 +145,12 @@ public class SzGrpcConfigManager implements SzConfigManager {
         });      
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public long registerConfig(String configDefinition, String configComment) 
         throws SzException 
@@ -144,6 +170,12 @@ public class SzGrpcConfigManager implements SzConfigManager {
         });      
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public long registerConfig(String configDefinition) 
         throws SzException 
@@ -163,6 +195,12 @@ public class SzGrpcConfigManager implements SzConfigManager {
         });      
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String getConfigRegistry() throws SzException {
         return this.env.execute(() -> {
@@ -177,6 +215,12 @@ public class SzGrpcConfigManager implements SzConfigManager {
         });      
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public long getDefaultConfigId() throws SzException {
         return this.env.execute(() -> {
@@ -190,6 +234,13 @@ public class SzGrpcConfigManager implements SzConfigManager {
         });  
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}
+     * (assuming the gRPC server allows the operation).
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public void replaceDefaultConfigId(long currentDefaultConfigId, 
                                        long newDefaultConfigId)
@@ -208,6 +259,12 @@ public class SzGrpcConfigManager implements SzConfigManager {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public void setDefaultConfigId(long configId) throws SzException {
         this.env.execute(() -> {
@@ -222,6 +279,13 @@ public class SzGrpcConfigManager implements SzConfigManager {
         });
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}
+     * (assuming the gRPC server allows the operation).
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public long setDefaultConfig(String configDefinition, String configComment) 
         throws SzException 
@@ -239,6 +303,13 @@ public class SzGrpcConfigManager implements SzConfigManager {
         });      
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}
+     * (assuming the gRPC server allows the operation).
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public long setDefaultConfig(String configDefinition) throws SzException {
         return this.env.execute(() -> {
@@ -254,6 +325,5 @@ public class SzGrpcConfigManager implements SzConfigManager {
 
             return response.getResult();
         });      
-    }
-    
+    }    
 }

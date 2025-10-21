@@ -61,7 +61,7 @@ final class WrapperMain {
 
                 mainMethod.invoke(null, ((Object) args));
 
-            } catch (ClassNotFoundException|NoSuchMethodException|InvocationTargetException|IllegalAccessException e) {
+            } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                 System.err.println("Failed to execute " + SERVER_CLASS_NAME 
                                    + ".main(): " + e.getMessage());
                 System.exit(1);

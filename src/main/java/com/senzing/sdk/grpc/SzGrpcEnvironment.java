@@ -15,11 +15,9 @@ import javax.json.JsonException;
 import javax.json.JsonObject;
 
 import io.grpc.Channel;
-import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
-import com.google.gson.JsonArray;
 import com.senzing.sdk.SzConfigManager;
 import com.senzing.sdk.SzDiagnostic;
 import com.senzing.sdk.SzEngine;
@@ -27,7 +25,6 @@ import com.senzing.sdk.SzEnvironment;
 import com.senzing.sdk.SzException;
 import com.senzing.sdk.SzProduct;
 import com.senzing.sdk.core.SzCoreUtilities;
-import com.senzing.util.JsonUtilities;
 
 import static com.senzing.sdk.grpc.proto.SzEngineProto.*;
 import static com.senzing.util.JsonUtilities.*;
@@ -63,7 +60,7 @@ public class SzGrpcEnvironment implements SzEnvironment {
 
     /**
      * The prefix for the reason string in a Senzing gRPC error.
-     */
+q     */
     public static final String REASON_PREFIX = "SENZ";
 
     /**
@@ -307,7 +304,7 @@ public class SzGrpcEnvironment implements SzEnvironment {
      *  
      * @param initializer The {@link Initializer} with which to construct.
      */
-    private SzGrpcEnvironment(Initializer initializer) 
+    protected SzGrpcEnvironment(Initializer initializer) 
     {
         Objects.requireNonNull(initializer, "The Initializer cannot be null");
         Objects.requireNonNull(
@@ -340,6 +337,15 @@ public class SzGrpcEnvironment implements SzEnvironment {
      * Callable} task, wrapping it in an {@link SzException} if it is a
      * checked exception that is not of type {@link SzException}.
      * 
+     * <p>
+     * If overriding ths method, you should throw an {@link IllegalStateException}
+     * if this instance has already been {@linkplain #destroy() destroyed},
+     * otherwise, this method must complete execution of the specified {@link 
+     * Callable} task even if {@link #destroy()} is called after this method
+     * is called but before it completes.  Further, {@link #destroy()} should
+     * not complete until <b>all</b> in-flight tasks complete.
+     * </p>
+     * 
      * @param <T> The return type.
      * @param task The {@link Callable} task to execute.
      * @return The result from the {@link Callable} task.
@@ -347,7 +353,7 @@ public class SzGrpcEnvironment implements SzEnvironment {
      * @throws IllegalStateException If this {@link SzGrpcEnvironment} instance has
      *                               already been destroyed.
      */
-    <T> T execute(Callable<T> task)
+    protected <T> T execute(Callable<T> task)
         throws SzException, IllegalStateException
     {
         Lock lock = null;
@@ -530,6 +536,14 @@ public class SzGrpcEnvironment implements SzEnvironment {
         }
     }
 
+    /**
+     * Returns an {@link SzProduct} implementation that will execute its 
+     * operations over the gRPC protocol to the server associated with this
+     * instance.  This implementation returns an instance of 
+     * {@link SzGrpcProduct}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public SzProduct getProduct() throws IllegalStateException, SzException {
         synchronized (this.monitor) {
@@ -542,6 +556,14 @@ public class SzGrpcEnvironment implements SzEnvironment {
         }
     }
 
+    /**
+     * Returns an {@link SzEngine} implementation that will execute its 
+     * operations over the gRPC protocol to the server associated with this
+     * instance.  This implementation returns an instance of 
+     * {@link SzGrpcEngine}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public SzEngine getEngine() throws IllegalStateException, SzException {
         synchronized (this.monitor) {
@@ -554,6 +576,14 @@ public class SzGrpcEnvironment implements SzEnvironment {
         }
     }
 
+    /**
+     * Returns an {@link SzConfigManager} implementation that will execute its 
+     * operations over the gRPC protocol to the server associated with this
+     * instance.  This implementation returns an instance of 
+     * {@link SzGrpcConfigManager}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public SzConfigManager getConfigManager() throws IllegalStateException, SzException {
         synchronized (this.monitor) {
@@ -567,6 +597,14 @@ public class SzGrpcEnvironment implements SzEnvironment {
         }
     }
 
+    /**
+     * Returns an {@link SzDiagnostic} implementation that will execute its 
+     * operations over the gRPC protocol to the server associated with this
+     * instance.  This implementation returns an instance of 
+     * {@link SzGrpcDiagnostic}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public SzDiagnostic getDiagnostic() throws IllegalStateException, SzException {
         synchronized (this.monitor) {
@@ -579,6 +617,13 @@ public class SzGrpcEnvironment implements SzEnvironment {
         }
     }
 
+    /**
+     * Implemented to execute the operation over the gRPC protocol against
+     * the associated gRPC server and return the active configuration ID 
+     * from the gRPC server's {@link SzEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public long getActiveConfigId() throws IllegalStateException, SzException {
         Lock lock = null;
@@ -614,6 +659,13 @@ public class SzGrpcEnvironment implements SzEnvironment {
         }
     }
 
+    /**
+     * Implemented to execute the operation over the gRPC protocol against
+     * the associated gRPC server and reinitialize gRPC server's
+     * {@link SzEnvironment} (assuming the operation is allowed by the server).
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public void reinitialize(long configId) throws IllegalStateException, SzException {
         Lock lock = null;
@@ -647,6 +699,21 @@ public class SzGrpcEnvironment implements SzEnvironment {
         }
     }
 
+    /**
+     * Implemented to destroy this instance with <b>no</b> effect on the 
+     * the associated gRPC server's {@link SzEnvironment}.  This will block
+     * until all in-flight operations from {@link #execute(Callable)} 
+     * complete, but will prevent further tasks to be invoked via the 
+     * {@link #execute(Callable)} method.
+     * 
+     * <p>
+     * <b>NOTE:</b> This method will <b>not</b> {@linkplain 
+     * io.grpc.ManagedChannel#shutdown() shutdown} the associated gRPC
+     * {@link io.grpc.ManagedChannel}.
+     * 
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public void destroy() {
         Lock lock = null;
@@ -673,7 +740,7 @@ public class SzGrpcEnvironment implements SzEnvironment {
                     "Acquired write lock for destroying environment while tasks "
                     + "still executing: " + exeCount);
             }
-
+            
             // once we get here we can really shut things down
             this.grpcEngine = null;
             this.grpcDiagnostic = null;
@@ -693,6 +760,9 @@ public class SzGrpcEnvironment implements SzEnvironment {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isDestroyed() {
         synchronized (this.monitor) {

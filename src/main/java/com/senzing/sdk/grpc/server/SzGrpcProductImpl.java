@@ -17,14 +17,14 @@ public class SzGrpcProductImpl extends SzProductImplBase {
     /**
      * The {@link SzGrpcServer} to use.
      */
-    SzGrpcServer server = null;
+    private SzGrpcServer server = null;
 
     /**
      * Constructs with the {@link SzGrpcServer}.
      * 
      * @param server The {@link SzGrpcServer}.
      */
-    public SzGrpcProductImpl(SzGrpcServer server) {
+    protected SzGrpcProductImpl(SzGrpcServer server) {
         Objects.requireNonNull(server, "The server cannot be null");
         if (server.isDestroyed()) {
             throw new IllegalArgumentException(
@@ -39,10 +39,18 @@ public class SzGrpcProductImpl extends SzProductImplBase {
      * 
      * @return The {@link SzEnvironment} for the backing server.
      */
-    private SzEnvironment getEnvironment() {
+    protected SzEnvironment getEnvironment() {
         return this.server.getEnvironment();
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzProduct#getLicense()} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getLicense(GetLicenseRequest                    request, 
                            StreamObserver<GetLicenseResponse>   responseObserver)
@@ -64,6 +72,14 @@ public class SzGrpcProductImpl extends SzProductImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzProduct#getVersion()} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getVersion(GetVersionRequest                    request, 
                            StreamObserver<GetVersionResponse>   responseObserver) 
