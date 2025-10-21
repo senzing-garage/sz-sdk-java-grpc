@@ -3,10 +3,18 @@ package com.senzing.sdk.grpc;
 import com.senzing.sdk.SzConfig;
 import com.senzing.sdk.SzEnvironmentDestroyedException;
 import com.senzing.sdk.SzException;
-import com.senzing.sdk.core.SzCoreEnvironment;
+import com.senzing.sdk.grpc.proto.SzConfigGrpc.SzConfigBlockingStub;
+import com.senzing.sdk.grpc.proto.SzConfigProto.GetDataSourceRegistryRequest;
+import com.senzing.sdk.grpc.proto.SzConfigProto.GetDataSourceRegistryResponse;
+import com.senzing.sdk.grpc.proto.SzConfigProto.RegisterDataSourceRequest;
+import com.senzing.sdk.grpc.proto.SzConfigProto.RegisterDataSourceResponse;
+import com.senzing.sdk.grpc.proto.SzConfigProto.UnregisterDataSourceRequest;
+import com.senzing.sdk.grpc.proto.SzConfigProto.UnregisterDataSourceResponse;
 
 import static com.senzing.sdk.grpc.proto.SzConfigGrpc.*;
 import static com.senzing.sdk.grpc.proto.SzConfigProto.*;
+
+import java.util.Objects;
 
 /**
  * The gRPC implementation of {@link SzConfig}.
@@ -46,19 +54,16 @@ public class SzGrpcConfig implements SzConfig {
      * 
      * @param configDefinition The {@link String} config definition describing the
      *                         configuration represented by this instance.
-     * 
-     * @throws IllegalStateException If the underlying {@link SzCoreEnvironment} instance 
-     *                               has already been destroyed.
+     *
+     * @throws IllegalStateException If the specified {@link SzGrpcEnvironment}
+     *                               instance has already been destroyed.
      * 
      * @throws SzException If a Senzing failure occurs during initialization.
      */
-    SzGrpcConfig(SzGrpcEnvironment environment, String configDefinition) 
+    protected SzGrpcConfig(SzGrpcEnvironment environment, String configDefinition) 
         throws IllegalStateException, SzException
     {
-        if (configDefinition == null) {
-            throw new NullPointerException(
-                "The specified config definition cannot be null");
-        }
+        Objects.requireNonNull(configDefinition, "The specified config definition cannot be null");
 
         this.env = environment;
         this.configDefinition = configDefinition;
@@ -74,15 +79,27 @@ public class SzGrpcConfig implements SzConfig {
      * 
      * @return The {@link SzConfigBlockingStub} for this instance.
      */
-    SzConfigBlockingStub getBlockingStub() {
+    protected SzConfigBlockingStub getBlockingStub() {
         return this.blockingStub;
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String export() throws SzException {
         return this.configDefinition;
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String getDataSourceRegistry() throws SzException {
         return this.env.execute(() -> {
@@ -97,6 +114,12 @@ public class SzGrpcConfig implements SzConfig {
         });      
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String registerDataSource(String dataSourceCode) throws SzException 
     {
@@ -117,6 +140,12 @@ public class SzGrpcConfig implements SzConfig {
         });      
     }
 
+    /**
+     * Implemented to execute the operation over gRPC against the 
+     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public void unregisterDataSource(String dataSourceCode) throws SzException {
         this.env.execute(() -> {
@@ -136,6 +165,13 @@ public class SzGrpcConfig implements SzConfig {
         });      
     }
     
+    /**
+     * Implemented to execute to attempt to the operation via 
+     * {@link #export()} and if that fails to return a default message
+     * describing the failure instead of the config definition.
+     * <p>
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         try {

@@ -117,6 +117,10 @@ public class SzGrpcServer {
      */
     private boolean destroyed;
 
+    /**
+     * The {@link DateFormat} to use for parsing the license
+     * expiration date.
+     */
     private static final DateFormat DATE_FORMAT
         = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK);
 
@@ -183,6 +187,12 @@ public class SzGrpcServer {
             DESTROY_METHOD = method;
         }
 
+        /**
+         * Implemented to invoke the method on the {@link SzEnvironment}
+         * from the associated {@link SzGrpcServer}.
+         * <p>
+         * {@inheritDoc}
+         */
         @Override
         public Object invoke(Object proxy, Method method, Object[] args)
             throws Throwable 
@@ -327,7 +337,7 @@ public class SzGrpcServer {
 
         // proxy the environment
         ClassLoader classLoader = SzGrpcServer.class.getClassLoader();
-        Class<?>[] interfaces = { SzEnvironment.class };
+        Class<?>[] interfaces = {SzEnvironment.class};
         this.proxyEnvironment = (SzEnvironment) Proxy.newProxyInstance(
             classLoader, interfaces, new EnvironmentHandler());
 
@@ -400,7 +410,9 @@ public class SzGrpcServer {
      * 
      */
     public synchronized void destroy() {
-        if (this.destroyed) return;
+        if (this.destroyed) {
+            return;
+        }
         if (this.started && !this.stopped) {
             this.grpcServer.stop().join();
             this.stopped = true;
@@ -679,7 +691,7 @@ public class SzGrpcServer {
         if (t == null) {
             return Status.UNKNOWN;
         }
-        for (Map.Entry<Class<?>,Status> entry : STATUS_MAP.entrySet()) {
+        for (Map.Entry<Class<?>, Status> entry : STATUS_MAP.entrySet()) {
             if (entry.getKey().isInstance(t)) {
                 return entry.getValue();
             }

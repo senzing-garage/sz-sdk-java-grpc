@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.senzing.sdk.SzDiagnostic;
 import com.senzing.sdk.SzEnvironment;
+
 import io.grpc.stub.StreamObserver;
 
 import static com.senzing.sdk.grpc.proto.SzDiagnosticGrpc.*;
@@ -13,18 +14,18 @@ import static com.senzing.sdk.grpc.server.SzGrpcServer.*;
 /**
  * Provides the gRPC server-side implementation for {@link SzDiagnostic}.
  */
-class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
+public class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
     /**
      * The {@link SzGrpcServer} to use.
      */
-    SzGrpcServer server = null;
+    private SzGrpcServer server = null;
 
     /**
      * Constructs with the {@link SzGrpcServer}.
      * 
      * @param server The {@link SzGrpcServer}.
      */
-    public SzGrpcDiagnosticImpl(SzGrpcServer server) {
+    protected SzGrpcDiagnosticImpl(SzGrpcServer server) {
         Objects.requireNonNull(server, "The server cannot be null");
         if (server.isDestroyed()) {
             throw new IllegalArgumentException(
@@ -39,10 +40,18 @@ class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
      * 
      * @return The {@link SzEnvironment} for the backing server.
      */
-    private SzEnvironment getEnvironment() {
+    protected SzEnvironment getEnvironment() {
         return this.server.getEnvironment();
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzDiagnostic#checkRepositoryPerformance(int)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void checkRepositoryPerformance(
             CheckRepositoryPerformanceRequest                   request,
@@ -67,6 +76,14 @@ class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzDiagnostic#getFeature(long)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getFeature(
             GetFeatureRequest                   request, 
@@ -91,6 +108,14 @@ class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzDiagnostic#getRepositoryInfo()} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void getRepositoryInfo(
             GetRepositoryInfoRequest                    request,
@@ -113,6 +138,14 @@ class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzDiagnostic#purgeRepository()} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void purgeRepository(
             PurgeRepositoryRequest                  request,
@@ -134,6 +167,14 @@ class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
         }
     }
 
+    /**
+     * Implemented to execute the operation using the {@link SzEnvironment}
+     * from the associated {@link SzGrpcServer} leveraging the 
+     * {@link SzEnvironment#reinitialize(long)} method.
+     * 
+     * @param request The gRPC request for the operation.
+     * @param responseObserver The {@link StreamObserver} for the response.
+     */
     @Override
     public void reinitialize(
             ReinitializeRequest                     request, 
