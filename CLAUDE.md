@@ -16,8 +16,8 @@ Always present recommendations clearly with explanations and let the user decide
 
 When editing this file:
 
-- Ensure Prettier formatting is followed (blank lines before/after lists, before code blocks, etc.)
-- After making changes, the file will be auto-formatted by Prettier
+- Ensure Prettier formatting is followed (empty lines before/after lists, before code blocks, etc.)
+- After making changes, the file will be autoformatted by Prettier
 - Maintain proper Markdown structure with consistent spacing
 
 ## Project Overview
