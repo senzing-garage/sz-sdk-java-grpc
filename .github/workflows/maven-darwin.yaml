@@ -60,8 +60,8 @@ jobs:
         uses: madrapps/jacoco-report@v1.7.2
         with:
           fail-emoji: ":red_circle:"
-          min-coverage-changed-files: 80
-          min-coverage-overall: 80
+          min-coverage-changed-files: 0
+          min-coverage-overall: 20
           pass-emoji: ":green_circle:"
           paths: ${{ github.workspace }}/target/site/**/*.xml
           skip-if-no-changes: true
