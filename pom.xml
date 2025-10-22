@@ -4,7 +4,7 @@
   <groupId>com.senzing</groupId>
   <artifactId>sz-sdk-grpc</artifactId>
   <packaging>jar</packaging>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <name>Senzing Java GRPC SDK</name>
   <description>The Java GRPC Client SDK for Senzing.  This requires a compatible GRPC server at runtime.</description>
   <url>http://github.com/senzing-garage/sz-sdk-java-grpc</url>
@@ -495,6 +495,12 @@ public final class Sz$1Grpc {]]></value>
               junit.jupiter.execution.parallel.config.dynamic.factor = 1
             </configurationParameters>
           </properties>
+          <classpathDependencyExcludes>
+              <classpathDependencyExclude>io.netty:netty-transport-native-unix-common:jar:linux-aarch_64</classpathDependencyExclude>
+              <classpathDependencyExclude>io.netty:netty-transport-native-unix-common:jar:linux-x86_64</classpathDependencyExclude>
+              <classpathDependencyExclude>io.netty:netty-transport-native-unix-common:jar:osx-aarch_64</classpathDependencyExclude>
+              <classpathDependencyExclude>io.netty:netty-transport-native-unix-common:jar:osx-x86_64</classpathDependencyExclude>
+          </classpathDependencyExcludes>
         </configuration>
       </plugin>
       <plugin>
@@ -598,32 +604,6 @@ public final class Sz$1Grpc {]]></value>
                     <exclude>META-INF/proguard/**</exclude>
                   </excludes>
                 </filter>
-
-                <!-- Add this filter to exclude platform-specific unix-common JARs -->
-                <filter>
-                  <artifact>io.netty:netty-transport-native-unix-common:*:linux-aarch_64</artifact>
-                  <excludes>
-                    <exclude>**</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <artifact>io.netty:netty-transport-native-unix-common:*:linux-x86_64</artifact>
-                  <excludes>
-                    <exclude>**</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <artifact>io.netty:netty-transport-native-unix-common:*:osx-aarch_64</artifact>
-                  <excludes>
-                    <exclude>**</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <artifact>io.netty:netty-transport-native-unix-common:*:osx-x86_64</artifact>
-                  <excludes>
-                    <exclude>**</exclude>
-                  </excludes>
-                </filter>
                 <!-- add this filter since we get these files from another jar-->
                 <filter>
                   <artifact>io.netty:*</artifact>
@@ -641,6 +621,10 @@ public final class Sz$1Grpc {]]></value>
                 </includes>
                 <excludes>
                   <exclude>com.senzing:sz-sdk</exclude>
+                  <exclude>io.netty:netty-transport-native-unix-common:jar:linux-aarch_64</exclude>
+                  <exclude>io.netty:netty-transport-native-unix-common:jar:linux-x86_64</exclude>
+                  <exclude>io.netty:netty-transport-native-unix-common:jar:osx-aarch_64</exclude>
+                  <exclude>io.netty:netty-transport-native-unix-common:jar:osx-x86_64</exclude>
                 </excludes>
               </artifactSet>
               <outputFile>${project.build.directory}/${project.artifactId}-server.jar</outputFile>
