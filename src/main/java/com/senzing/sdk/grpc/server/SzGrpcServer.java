@@ -51,7 +51,7 @@ import com.senzing.util.LoggingUtilities;
 import io.grpc.StatusRuntimeException;
 import io.grpc.Status;
 
-import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.linecorp.armeria.server.Server;
@@ -832,14 +832,14 @@ public class SzGrpcServer {
      * absent.  If the field value is absent then <code>null</code> 
      * is returned, otherwise the field value is returned.
      * 
-     * @param message The {@link GeneratedMessageV3} from which the
+     * @param message The {@link GeneratedMessage} from which the
      *                value is being extracted.
      * @param fieldName The name of the field for which the value
      *                  is being extracted.
      * @return The value of the field or <code>null</code> if the value
      *         has not been explicitly set.
      */
-    public static String getString(GeneratedMessageV3 message, String fieldName) 
+    public static String getString(GeneratedMessage message, String fieldName) 
     {
         Descriptor descriptor = message.getDescriptorForType();
         FieldDescriptor fieldDesc = descriptor.findFieldByName(fieldName);
