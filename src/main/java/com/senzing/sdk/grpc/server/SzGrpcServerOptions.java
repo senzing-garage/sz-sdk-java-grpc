@@ -1,6 +1,11 @@
 package com.senzing.sdk.grpc.server;
 
 import com.senzing.cmdline.CommandLineOption;
+import com.senzing.datamart.ConnectionUri;
+import com.senzing.datamart.PostgreSqlUri;
+import com.senzing.datamart.SqliteUri;
+import com.senzing.datamart.SzCoreSettingsUri;
+import com.senzing.listener.communication.sql.PostgreSQLClient;
 import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
@@ -117,6 +122,11 @@ public class SzGrpcServerOptions {
     private boolean skipEnginePriming = false;
 
     /**
+     * The {@link ConnetionUri} for the data mart database connection.
+     */
+    private ConnectionUri dataMartDatabaseUri = null;
+
+    /**
      * Constructs with the {@link Map} of {@link CommandLineOption}
      * keys to {@link Object} values.
      * 
@@ -130,11 +140,18 @@ public class SzGrpcServerOptions {
     }
 
     /**
-     * Constructs with the Senzing SDK initialization settings as a
-     * {@link JsonObject}.
+     * Default constructor.
+     */
+    public SzGrpcServerOptions() {
+        // do nothing
+    }
+
+    /**
+     * Constructs with the {@link JsonObject} representing the settings
+     * with which to initialize the Senzing Core SDK.
      *
-     * @param settings The Senzing SDK initialization settings as a
-     *                 {@link JsonObject}.
+     * @param settings The {@link JsonObject} representing the settings
+     *                 with which to initialize the Senzing Core SDK.
      */
     public SzGrpcServerOptions(JsonObject settings) {
         Objects.requireNonNull(settings,
@@ -143,23 +160,42 @@ public class SzGrpcServerOptions {
     }
 
     /**
-     * Constructs with the Senzing SDK initialization settings as JSON text.
-     *
-     * @param settings The Senzing SDK initialization settings as JSON text.
+     * Constructs with the JSON text representing the settings
+     * with which to initialize the Senzing Core SDK.
+     * 
+     * @param settings The JSON text representing the settings with
+     *                 which to initialize the Senzing Core SDK.
      */
     public SzGrpcServerOptions(String settings) {
         this(JsonUtilities.parseJsonObject(settings));
     }
 
     /**
-     * Returns the {@link JsonObject} describing the Senzing SDK
-     * initialization settings.
+     * Returns the {@link JsonObject} representing the 
+     * settings with which to initialize the Senzing Core SDK.
      *
-     * @return The {@link JsonObject} describing the Senzing SDK
-     *         initialization settings.
+     * @return The {@link JsonObject} representing the settings
+     *         with which to intialize the Senzing Core SDK.
      */
+    @Option(CORE_SETTINGS)
     public JsonObject getCoreSettings() {
         return this.coreSettings;
+    }
+
+    /**
+     * Returns the {@link JsonObject} representing the settings
+     * with which to initialize the Senzing Core SDK.
+     *
+     * @param settings The {@link JsonObject} representing the
+     *                 settings with which to initialize the
+     *                 Senzing Core SDK.
+     * 
+     * @return A reference to this instance.
+     */
+    @Option(CORE_SETTINGS)
+    public SzGrpcServerOptions setCoreSettings(JsonObject settings) {
+        this.coreSettings = settings;
+        return this;
     }
 
     /**
@@ -521,6 +557,37 @@ public class SzGrpcServerOptions {
     @Option(SKIP_ENGINE_PRIMING)
     public SzGrpcServerOptions setSkippingEnginePriming(boolean skipping) {
         this.skipEnginePriming = skipping;
+        return this;
+    }
+
+    /**
+     * Gets the data mart database {@link ConnectionUri} for this instance.
+     * 
+     * @return The data mart database {@link ConnectionUri} for this instance,
+     *         or <code>null</code> if this has not been configured.
+     */
+    @Option(DATA_MART_URI)
+    public ConnectionUri getDataMartDatabaseUri() {
+        return this.dataMartDatabaseUri;
+    }
+
+    /**
+     * Sets the data mart database {@link ConnectionUri} for this instance.
+     * 
+     * @param uri The data mart database {@link ConnectionUri} for this
+     *            instance, or <code>null</code> if this has not been configured.
+     * 
+     * @return A reference to this instance.
+     */
+    @Option(DATA_MART_URI)
+    public SzGrpcServerOptions setDataMartDatabaseUri(ConnectionUri uri) {
+        if (!((uri instanceof PostgreSqlUri)
+              || (uri instanceof SqliteUri)
+              || (uri instanceof SzCoreSettingsUri)))
+        {
+            throw new IllegalArgumentException("Unsupported URI type: " + uri);
+        }
+        this.dataMartDatabaseUri = uri;
         return this;
     }
 

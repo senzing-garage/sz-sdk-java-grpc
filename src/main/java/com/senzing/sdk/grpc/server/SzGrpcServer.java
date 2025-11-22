@@ -4,8 +4,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetAddress;
@@ -30,6 +28,12 @@ import javax.json.JsonObjectBuilder;
 import com.senzing.cmdline.CommandLineException;
 import com.senzing.cmdline.CommandLineOption;
 import com.senzing.cmdline.DeprecatedOptionWarning;
+import com.senzing.datamart.ConnectionUri;
+import com.senzing.datamart.SzCoreSettingsUri;
+import com.senzing.datamart.SzReplicationProvider;
+import com.senzing.datamart.SzReplicator;
+import com.senzing.datamart.SzReplicatorOptions;
+import com.senzing.listener.communication.sql.SQLConsumer;
 import com.senzing.sdk.SzBadInputException;
 import com.senzing.sdk.SzConfigurationException;
 import com.senzing.sdk.SzEnvironment;
@@ -47,7 +51,7 @@ import com.senzing.sdk.core.SzCoreUtilities;
 import com.senzing.sdk.core.auto.SzAutoCoreEnvironment;
 import com.senzing.util.JsonUtilities;
 import com.senzing.util.LoggingUtilities;
-
+import com.senzing.datamart.reports.DataMartReportsServices;
 import io.grpc.StatusRuntimeException;
 import io.grpc.Status;
 
@@ -55,11 +59,11 @@ import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.linecorp.armeria.server.Server;
+import com.linecorp.armeria.server.ServerBuilder;
 import com.linecorp.armeria.server.grpc.GrpcService;
 
+import static com.senzing.reflect.ReflectionUtilities.restrictedProxy;
 import static com.senzing.sdk.grpc.server.SzGrpcServerConstants.DEFAULT_BIND_ADDRESS;
-import static com.senzing.sdk.grpc.server.SzGrpcServerConstants.DEFAULT_GRPC_CONCURRENCY;
-import static com.senzing.sdk.grpc.server.SzGrpcServerConstants.DEFAULT_PORT;
 import static com.senzing.sdk.grpc.server.SzGrpcServerOption.*;
 import static com.senzing.util.JsonUtilities.toJsonText;
 import static com.senzing.util.LoggingUtilities.*;
@@ -118,6 +122,11 @@ public class SzGrpcServer {
     private boolean destroyed;
 
     /**
+     *  The {@link SzReplicator} if the data mart has been configured.
+     */
+    private SzReplicator replicator = null;
+
+    /**
      * The {@link DateFormat} to use for parsing the license
      * expiration date.
      */
@@ -161,57 +170,17 @@ public class SzGrpcServer {
     }
 
     /**
-     * Internal class to prevent calling {@link SzEnvironment#destroy()} 
-     * on the {@link SzEnvironment} returned from 
-     * {@link SzGrpcServer#getEnvironment()}.
+     * A constant for the {@link SzEnvironment#destroy()} method.
      */
-    protected class EnvironmentHandler implements InvocationHandler {
-        /**
-         * Default constructor.
-         */
-        public EnvironmentHandler() {
-            // do nothing
+    private static final Method DESTROY_METHOD;
+    static {
+        Method method = null;
+        try {
+            method = SzEnvironment.class.getMethod("destroy");
+        } catch (NoSuchMethodException e) {
+            throw new ExceptionInInitializerError(e);
         }
-
-        /**
-         * A constant for the {@link SzEnvironment#destroy()} method.
-         */
-        private static final Method DESTROY_METHOD;
-        static {
-            Method method = null;
-            try {
-                method = SzEnvironment.class.getMethod("destroy");
-            } catch (NoSuchMethodException e) {
-                throw new ExceptionInInitializerError(e);
-            }
-            DESTROY_METHOD = method;
-        }
-
-        /**
-         * Implemented to invoke the method on the {@link SzEnvironment}
-         * from the associated {@link SzGrpcServer}.
-         * <p>
-         * {@inheritDoc}
-         */
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args)
-            throws Throwable 
-        {
-            if (method.equals(DESTROY_METHOD)) {
-                throw new UnsupportedOperationException(
-                    "Destroy the SzGrpcServer in order to destroy "
-                    + "the SzEnvironment.  This operation is not supported.");
-            }
-            try {
-                return method.invoke(SzGrpcServer.this.environment, args);
-
-            } catch (InvocationTargetException e) {
-                throw e.getCause();
-
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        DESTROY_METHOD = method;
     }
 
     /**
@@ -284,49 +253,11 @@ public class SzGrpcServer {
                            SzGrpcServerOptions  options, 
                            boolean              startServer)
     {
-        this(env, true, options.buildOptionsMap(), startServer);
-    }
-
-    /**
-     * Constructs with the specified {@link SzEnvironment} and the specified
-     * command-line options
-     * {@link SzGrpcServerOptions}.  The server will be started upon 
-     * construction.  This protected constructor is provided so that derived
-     * classes may use an alternate {@link SzEnvironment} implementation.
-     * 
-     * <b>NOTE:</b> Some options specified in {@link SzGrpcServerOptions} 
-     * pertain to the {@link SzEnvironment} used.  The default implementation
-     * depends on {@link #createSzAutoCoreEnvironment(SzGrpcServerOptions)} 
-     * to create an instance of {@link SzAutoCoreEnvironment} accordingly.
-     * The onus is on the implementer of any derived class to manage how
-     * an implementation with an alternate {@link SzEnvironment} will handle
-     * the specified options that normally pertain to {@link SzAutoCoreEnvironment}.
-     * 
-     * @param env The {@link SzEnvironment} to use.
-     * @param manageEnv <code>true</code> if the constructed instance should manage
-     *                  (e.g.: destroy) the specified {@link SzEnvironment}, or
-     *                  <code>false</code> if it will be managed externally.
-     * @param options The {@link SzGrpcServerOptions} for this instance.
-     * @param startServer <code>true</code> if the server should be started
-     *                    upon construction, otherwise <code>false</code>
-     */
-    @SuppressWarnings("rawtypes")
-    protected SzGrpcServer(SzEnvironment                    env,
-                           boolean                          manageEnv,
-                           Map<CommandLineOption, Object>   options, 
-                           boolean                          startServer)
-    {
-        Integer     concurrency = (Integer) options.get(GRPC_CONCURRENCY);
-        Integer     port        = (Integer) options.get(GRPC_PORT);
-        InetAddress bindAddress = (InetAddress) options.get(BIND_ADDRESS);
+        int         concurrency = options.getGrpcConcurrency();
+        int         port        = options.getGrpcPort();
+        InetAddress bindAddress = options.getBindAddress();
         
         // set the default values for any unspecified options
-        if (concurrency == null) {
-            concurrency = DEFAULT_GRPC_CONCURRENCY;
-        }
-        if (port == null) {
-            port = DEFAULT_PORT;
-        }
         if (bindAddress == null) {
             bindAddress = DEFAULT_BIND_ADDRESS;
         }
@@ -336,30 +267,126 @@ public class SzGrpcServer {
         this.manageEnv   = manageEnv;
 
         // proxy the environment
-        ClassLoader classLoader = SzGrpcServer.class.getClassLoader();
-        Class<?>[] interfaces = {SzEnvironment.class};
-        this.proxyEnvironment = (SzEnvironment) Proxy.newProxyInstance(
-            classLoader, interfaces, new EnvironmentHandler());
+        this.proxyEnvironment = (SzEnvironment)
+            restrictedProxy(this.environment, DESTROY_METHOD);
 
-        // build the server
-        this.grpcServer = Server.builder()
-            .http(new InetSocketAddress(bindAddress, port))
-            .blockingTaskExecutor(concurrency)
-            .service(GrpcService.builder()
+        // check the data mart URI
+        ConnectionUri uri = options.getDataMartDatabaseUri();
+
+        // build the replicator
+        ConnectionUri dataMartUri = options.getDataMartDatabaseUri();
+        if (dataMartUri != null) {
+            SzReplicatorOptions replicatorOptions = new SzReplicatorOptions();
+            replicatorOptions.setUsingDatabaseQueue(true);
+            
+            // check if we have an SzCoreSettingsUri
+            if (dataMartUri instanceof SzCoreSettingsUri) {
+                // get the core settings
+                JsonObject coreSettings = options.getCoreSettings();
+                if (coreSettings == null) {
+                    throw new IllegalArgumentException(
+                        "Cannot specify an " + dataMartUri.getClass().getSimpleName()
+                        + " URI (" + coreSettings.toString() + ") if the core settings "
+                        + "have not been provided.");
+                }
+                SzCoreSettingsUri coreSettingsUri = (SzCoreSettingsUri) dataMartUri;
+                ConnectionUri resolvedUri = coreSettingsUri.resolveUri(coreSettings);
+                if (resolvedUri == null) {
+                    throw new IllegalArgumentException(
+                        "Unable to resolve " + dataMartUri + " Data Mart URI using "
+                        + "the provided core settings: " 
+                        + toJsonText(coreSettings, true));
+                }
+                try {
+                    replicatorOptions.setDatabaseUri(resolvedUri);
+                } catch (Exception e) {
+                    throw new IllegalArgumentException(
+                        "Resolved data mart database URI (" + resolvedUri 
+                        + ") from core settings (" + dataMartUri + ") is not "
+                        + "suitable for data mart", e);
+                }
+            } else {
+                replicatorOptions.setDatabaseUri(dataMartUri);
+            }
+
+            // create the replicator
+            try {
+                this.replicator = new SzReplicator(this.proxyEnvironment, 
+                                                   replicatorOptions,
+                                                   false);
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to initialize data mart", e);
+            }
+        }
+
+        // build the GRPC service
+        GrpcService grpcService = GrpcService.builder()
                 .useBlockingTaskExecutor(true)
                 .addService(new SzGrpcProductImpl(this))
                 .addService(new SzGrpcConfigImpl(this))
                 .addService(new SzGrpcConfigManagerImpl(this))
                 .addService(new SzGrpcDiagnosticImpl(this))
                 .addService(new SzGrpcEngineImpl(this))
-                .build())
-            .build();
+                .build();
+
+        // create the server builder
+        ServerBuilder serverBuilder = Server.builder()
+            .http(new InetSocketAddress(bindAddress, port))
+            .blockingTaskExecutor(concurrency)
+            .service(grpcService);
+
+        // check if we need to build with data mart services
+        if (this.replicator != null && concurrency == 10000) {
+            SzReplicationProvider provider = this.replicator.getReplicationProvider();
+
+            DataMartReportsServices dataMartReports
+                = new DataMartReportsServices(provider.getConnectionProvider());
+
+            serverBuilder.annotatedService(dataMartReports);
+        }
+
+        // build the server
+        this.grpcServer = serverBuilder.build();
 
         // optionally, start the server
         if (startServer) {
+            if (this.replicator != null) {
+                this.replicator.start();
+            }
             this.grpcServer.start().join();
             this.started = true;
         }
+    }
+
+    /**
+     * Gets the {@link SzReplicationProvider} for this instance
+     * if the data mart has been enabled.  This returns 
+     * <code>null</code> if the data mart is not enabled.
+     * 
+     * @return The {@link SzReplicationProvider} for this instance,
+     *         or <code>null</code> if data mart replication is not
+     *         enabled.
+     */
+    public SzReplicationProvider getReplicationProvider() {
+        return (this.replicator == null) ? null 
+            : this.replicator.getReplicationProvider();
+    }
+
+    /**
+     * Gets the {@link SQLConsumer.MessageQueue} for enqueuing INFO
+     * messages for consumption by the data mart.  This returns 
+     * <code>null</code> if the data mart is not enabled.
+     * 
+     * @return The {@link SQLConsumer.MessageQueue} for enqueuing INFO
+     *         messages for consumption by the data mart, or
+     *         <code>null</code> if the data mart is not enabled.
+     * 
+     */
+    public SQLConsumer.MessageQueue getDataMartMessageQueue() {
+        return (this.replicator == null) ? null 
+            : this.replicator.getDatabaseMessageQueue();
     }
 
     /**
@@ -396,7 +423,10 @@ public class SzGrpcServer {
                     "This instance has already been destroyed");
         }
         if (!this.started) {
-            this.grpcServer.start();
+            if (this.replicator != null) {
+                this.replicator.start();
+            }
+            this.grpcServer.start().join();
             this.started = true;
         }
     }
@@ -414,7 +444,10 @@ public class SzGrpcServer {
             return;
         }
         if (this.started && !this.stopped) {
-            this.grpcServer.stop().join();
+            this.grpcServer.stop().join(); // stop incoming requests first
+            if (this.replicator != null) {
+                this.replicator.shutdown(); // shutdown the data mart
+            }
             this.stopped = true;
         }
         if (this.manageEnv) {

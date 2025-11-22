@@ -39,8 +39,7 @@
   </scm>
   <properties>
     <gpg.skip>true</gpg.skip> <!-- skip GPG unless release profile -->
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.release>17</maven.compiler.release>
     <grpc.version>1.76.0</grpc.version><!-- CURRENT_GRPC_VERSION -->
     <protobuf.version>4.33.0</protobuf.version>
     <protoc.version>4.33.0</protoc.version>
@@ -64,6 +63,20 @@
           <type>pom</type>
           <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-bom</artifactId>
+        <version>4.2.7.Final</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>2.20.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>         
     </dependencies>
   </dependencyManagement>
 
@@ -157,12 +170,17 @@
     <dependency>
         <groupId>com.senzing</groupId>
         <artifactId>sz-sdk-auto</artifactId>
-        <version>0.4.1</version>
+        <version>0.5.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.senzing</groupId>
+      <artifactId>data-mart-replicator</artifactId>
+      <version>2.0.0-beta.1.0</version>
     </dependency>
     <dependency>
       <groupId>com.senzing</groupId>
       <artifactId>senzing-commons</artifactId>
-      <version>4.0.0-beta.1.4</version>
+      <version>4.0.0-beta.1.5</version>
     </dependency>
     <dependency>
       <groupId>org.glassfish</groupId>
@@ -577,6 +595,29 @@ public final class Sz$1Grpc {]]></value>
       </plugin>
 
       <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/classes</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/src/main/resources</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+              <propertiesEncoding>ISO-8859-1</propertiesEncoding>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.6.1</version>
@@ -614,6 +655,13 @@ public final class Sz$1Grpc {]]></value>
                     <exclude>META-INF/license/LICENSE.tomcat-native.txt</exclude>
                   </excludes>
                 </filter>
+                <filter>
+                  <artifact>software.amazon.awssdk:third-party-jackson-core</artifact>
+                  <excludes>
+                    <exclude>META-INF/FastDoubleParser-LICENSE</exclude>
+                    <exclude>META-INF/FastDoubleParser-NOTICE</exclude>
+                  </excludes>
+                </filter>            
               </filters>
               <artifactSet>
                 <includes>
@@ -682,6 +730,9 @@ public final class Sz$1Grpc {]]></value>
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                   <resource>META-INF/NOTICE.txt</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/DEPENDENCIES</resource>
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                   <resource>META-INF/com.linecorp.armeria.versions.properties</resource>
