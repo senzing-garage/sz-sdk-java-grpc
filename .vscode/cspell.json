@@ -54,6 +54,7 @@
     "Jacoco",
     "javadocs",
     "LIBFEAT",
+    "libsqlite3",
     "linecorp",
     "locklist",
     "madrapps",

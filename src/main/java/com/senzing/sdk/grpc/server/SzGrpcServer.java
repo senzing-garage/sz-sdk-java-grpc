@@ -29,6 +29,7 @@ import com.senzing.cmdline.CommandLineException;
 import com.senzing.cmdline.CommandLineOption;
 import com.senzing.cmdline.DeprecatedOptionWarning;
 import com.senzing.datamart.ConnectionUri;
+import com.senzing.datamart.ProcessingRate;
 import com.senzing.datamart.SzCoreSettingsUri;
 import com.senzing.datamart.SzReplicationProvider;
 import com.senzing.datamart.SzReplicator;
@@ -55,11 +56,14 @@ import com.senzing.datamart.reports.DataMartReportsServices;
 import io.grpc.StatusRuntimeException;
 import io.grpc.Status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.linecorp.armeria.server.Server;
 import com.linecorp.armeria.server.ServerBuilder;
+import com.linecorp.armeria.server.annotation.JacksonRequestConverterFunction;
+import com.linecorp.armeria.server.annotation.JacksonResponseConverterFunction;
 import com.linecorp.armeria.server.grpc.GrpcService;
 
 import static com.senzing.reflect.ReflectionUtilities.restrictedProxy;
@@ -77,6 +81,11 @@ public class SzGrpcServer {
     static {
         System.setProperty("com.linecorp.armeria.transportType", "nio");
     }
+
+    /**
+     * The data mart path prefix for the reports URL's.
+     */
+    public static final String DATA_MART_PREFIX = "/data-mart";
 
     /**
      * The number of milliseconds to provide advance warning of an expiring
@@ -125,6 +134,12 @@ public class SzGrpcServer {
      *  The {@link SzReplicator} if the data mart has been configured.
      */
     private SzReplicator replicator = null;
+
+    /**
+     * The {@link ObjectMapper} for converting the response objects
+     * for HTTP to JSON text.
+     */
+    private ObjectMapper objectMapper = null;
 
     /**
      * The {@link DateFormat} to use for parsing the license
@@ -270,15 +285,14 @@ public class SzGrpcServer {
         this.proxyEnvironment = (SzEnvironment)
             restrictedProxy(this.environment, DESTROY_METHOD);
 
-        // check the data mart URI
-        ConnectionUri uri = options.getDataMartDatabaseUri();
-
         // build the replicator
         ConnectionUri dataMartUri = options.getDataMartDatabaseUri();
         if (dataMartUri != null) {
+            ProcessingRate processingRate = options.getProcessingRate();
             SzReplicatorOptions replicatorOptions = new SzReplicatorOptions();
             replicatorOptions.setUsingDatabaseQueue(true);
-            
+            replicatorOptions.setProcessingRate(processingRate);
+
             // check if we have an SzCoreSettingsUri
             if (dataMartUri instanceof SzCoreSettingsUri) {
                 // get the core settings
@@ -286,7 +300,7 @@ public class SzGrpcServer {
                 if (coreSettings == null) {
                     throw new IllegalArgumentException(
                         "Cannot specify an " + dataMartUri.getClass().getSimpleName()
-                        + " URI (" + coreSettings.toString() + ") if the core settings "
+                        + " URI (" + dataMartUri.toString() + ") if the core settings "
                         + "have not been provided.");
                 }
                 SzCoreSettingsUri coreSettingsUri = (SzCoreSettingsUri) dataMartUri;
@@ -338,13 +352,22 @@ public class SzGrpcServer {
             .service(grpcService);
 
         // check if we need to build with data mart services
-        if (this.replicator != null && concurrency == 10000) {
+        if (this.replicator != null) {
             SzReplicationProvider provider = this.replicator.getReplicationProvider();
 
             DataMartReportsServices dataMartReports
-                = new DataMartReportsServices(provider.getConnectionProvider());
+                = new DataMartReportsServices(this.proxyEnvironment, 
+                                              provider.getConnectionProvider());
 
-            serverBuilder.annotatedService(dataMartReports);
+            this.objectMapper = new ObjectMapper();
+            
+            serverBuilder.annotatedService()
+                .pathPrefix(DATA_MART_PREFIX)
+                .requestConverters(
+                    new JacksonRequestConverterFunction(this.objectMapper))
+                .responseConverters(
+                    new JacksonResponseConverterFunction(this.objectMapper))
+                .build(dataMartReports);
         }
 
         // build the server
@@ -401,7 +424,7 @@ public class SzGrpcServer {
      *                               and is <b>not</b> actively listening
      *                               on a port.
      */
-    public synchronized int getActiveGrpcPort() {
+    public synchronized int getActivePort() {
         if (this.destroyed || this.stopped || !this.started) {
             throw new IllegalStateException(
                 "There is no active port because the server is not "

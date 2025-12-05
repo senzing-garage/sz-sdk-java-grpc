@@ -19,7 +19,7 @@ public final class SzGrpcServerConstants {
     /**
      * The default port for the gRPC Server ({@value}).
      */
-    public static final int DEFAULT_PORT = 8262;
+    public static final int DEFAULT_PORT = 8261;
 
     /**
      * The default port as a string.

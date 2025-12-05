@@ -3,9 +3,10 @@ package com.senzing.sdk.grpc.server;
 import com.senzing.cmdline.CommandLineOption;
 import com.senzing.datamart.ConnectionUri;
 import com.senzing.datamart.PostgreSqlUri;
+import com.senzing.datamart.ProcessingRate;
 import com.senzing.datamart.SqliteUri;
 import com.senzing.datamart.SzCoreSettingsUri;
-import com.senzing.listener.communication.sql.PostgreSQLClient;
+import com.senzing.datamart.SzReplicator;
 import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
@@ -125,6 +126,11 @@ public class SzGrpcServerOptions {
      * The {@link ConnetionUri} for the data mart database connection.
      */
     private ConnectionUri dataMartDatabaseUri = null;
+
+    /**
+     * The {@link ProcessingRate} to use for the data mart.
+     */
+    private ProcessingRate dataMartProcessingRate = null;
 
     /**
      * Constructs with the {@link Map} of {@link CommandLineOption}
@@ -569,6 +575,43 @@ public class SzGrpcServerOptions {
     @Option(DATA_MART_URI)
     public ConnectionUri getDataMartDatabaseUri() {
         return this.dataMartDatabaseUri;
+    }
+
+    /**
+     * Gets the {@link ProcessingRate} that the {@link 
+     * SzReplicator} would use to balance between quickly
+     * processing messages in order to stay closely in sync
+     * with the entity repository and delaying in order to
+     * batch a larger number of messages and conserve system
+     * resources.
+     *
+     * @return The {@link ProcessingRate} for this instance.
+     */
+    @Option(DATA_MART_RATE)
+    public ProcessingRate getProcessingRate() {
+        return this.dataMartProcessingRate;
+    }
+
+    /**
+     * Sets the {@link ProcessingRate} to determine how the 
+     * {@link SzReplicator} should balance between quickly
+     * processing messages in order to stay closely in sync
+     * with the entity repository and delaying in order to
+     * batch a larger number of messages and conserve system
+     * resources.
+     *
+     * @param rate The {@link ProcessingRate} for the 
+     *             {@link SzReplicator}, or <code>null</code> if
+     *             {@link ProcessingRate#STANDARD} should be used.
+     *
+     * @return A reference to this instance.
+     */
+    @Option(DATA_MART_RATE)
+    public SzGrpcServerOptions setDataMartRate(ProcessingRate rate) 
+    {
+        this.dataMartProcessingRate = (rate == null) 
+            ? ProcessingRate.STANDARD : rate;
+        return this;
     }
 
     /**

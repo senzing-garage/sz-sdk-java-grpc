@@ -10,6 +10,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linecorp.armeria.server.annotation.Order;
 import com.senzing.sdk.SzRecordKey;
 import com.senzing.datamart.reports.model.SzEntitySizeBreakdown;
@@ -21,15 +22,24 @@ import com.senzing.sdk.SzException;
 import com.senzing.sdk.core.SzCoreEnvironment;
 import com.senzing.sdk.grpc.server.SzGrpcServer;
 import com.senzing.sdk.grpc.server.SzGrpcServerOptions;
-import com.senzing.util.Quantified.Statistic;
 import com.senzing.datamart.ConnectionUri;
+import com.senzing.datamart.ProcessingRate;
 import com.senzing.datamart.SqliteUri;
 import com.senzing.datamart.SzCoreSettingsUri;
 import com.senzing.datamart.reports.EntitySizeReports;
+import com.senzing.datamart.reports.EntitySizeReportsService;
 
 import io.grpc.ManagedChannel;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.Inet4Address;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +49,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static com.senzing.util.Quantified.Statistic;
 import static com.senzing.listener.service.scheduling.AbstractSchedulingService.Stat.*;
 import static com.senzing.datamart.SzReplicatorConstants.DEFAULT_CORE_SETTINGS_DATABASE_PATH;
-
+import static com.senzing.io.IOUtilities.UTF_8;
 import static com.senzing.sql.SQLUtilities.close;
+import static com.senzing.datamart.reports.EntitySizeReportsService.*;
 
 /**
  * 
@@ -74,6 +85,8 @@ public class DataMartIntegrationTest extends AbstractGrpcTest {
 
     private long followUpCount = 0;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     public SzEngine getEngine() throws SzException {
         return this.env.getEngine();
     }
@@ -82,6 +95,7 @@ public class DataMartIntegrationTest extends AbstractGrpcTest {
     protected SzGrpcServerOptions getServerOptions() {
         SzCoreSettingsUri coreSettingsUri 
             = new SzCoreSettingsUri(DEFAULT_CORE_SETTINGS_DATABASE_PATH);
+        SzGrpcServerOptions options = super.getServerOptions();
         String settings = this.getRepoSettings();
         ConnectionUri connUri = coreSettingsUri.resolveUri(settings);
         if (connUri instanceof SqliteUri) {
@@ -90,8 +104,8 @@ public class DataMartIntegrationTest extends AbstractGrpcTest {
             file = new File(file.getParentFile(), "DataMart.db");
             connUri = new SqliteUri(file, sqliteUri.getQueryOptions());
         }
-        SzGrpcServerOptions options = super.getServerOptions();
         options.setDataMartDatabaseUri(connUri);
+        options.setDataMartRate(ProcessingRate.AGGRESSIVE);
         return options;
     }
 
@@ -122,11 +136,11 @@ public class DataMartIntegrationTest extends AbstractGrpcTest {
 
             // set the counts
             this.taskCount = count.longValue();
-
+            
             // check if we need to wait
             if (this.taskCount < goal) {
                 try {
-                    Thread.sleep(2000L);
+                    Thread.sleep(100L);
                 } catch (InterruptedException e) {
                     // interrupted
                     return;
@@ -134,9 +148,9 @@ public class DataMartIntegrationTest extends AbstractGrpcTest {
             } else {
                 lastFollowUpCount = this.followUpCount;
                 this.followUpCount = followUp.longValue();
-
+                
                 try {
-                    Thread.sleep(10000L);
+                    Thread.sleep(1000L);
                 } catch (InterruptedException e) {
                     // interrupted
                     return;
@@ -152,7 +166,7 @@ public class DataMartIntegrationTest extends AbstractGrpcTest {
 
         this.server = this.createServer();
         
-        this.channel = this.createChannel(this.server.getActiveGrpcPort());
+        this.channel = this.createChannel(this.server.getActivePort());
 
         this.env = SzGrpcEnvironment.newBuilder()
                                     .channel(this.channel)
@@ -180,7 +194,6 @@ public class DataMartIntegrationTest extends AbstractGrpcTest {
             config.registerDataSource(VIPS);
 
             configMgr.setDefaultConfig(config.export());
-            System.err.println("*********** SETUP THE DATA SOURCES");
 
         } catch (SzException e) { 
             throw new RuntimeException(e);
@@ -209,6 +222,30 @@ public class DataMartIntegrationTest extends AbstractGrpcTest {
         } finally {
             this.endTests();
         }
+    }
+
+    protected <T> T readReport(String endpoint, Class<T> type)
+        throws IOException
+    {
+        int port = this.server.getActivePort();
+        String uri = "http://127.0.0.1:" + port + "/" 
+            + SzGrpcServer.DATA_MART_PREFIX + endpoint;
+        
+        URL url = URI.create(uri).toURL();
+        StringBuilder sb = new StringBuilder();
+        char[] buffer = new char[1024];
+        try (InputStream is = url.openStream();
+             InputStreamReader isr = new InputStreamReader(is, UTF_8)) 
+        {
+            for (int readCount = isr.read(buffer);
+                 readCount >= 0;
+                 readCount = isr.read(buffer))
+            {
+                sb.append(buffer, 0, readCount);
+            }
+        }
+        String jsonText = sb.toString();
+        return this.objectMapper.readValue(jsonText, type);
     }
 
     @Order(100)
@@ -251,8 +288,16 @@ public class DataMartIntegrationTest extends AbstractGrpcTest {
                 this.awaitTaskCount(4);
                 
                 conn = this.server.getReplicationProvider().getConnectionProvider().getConnection();
+                
+                SzEntitySizeBreakdown breakdown
+                    = this.readReport(ENTITY_SIZE_BREAKDOWN_ENDPOINT,
+                                 SzEntitySizeBreakdown.class);
+                
+                SzEntitySizeBreakdown expected = EntitySizeReports.getEntitySizeBreakdown(conn, null);
 
-                SzEntitySizeBreakdown breakdown = EntitySizeReports.getEntitySizeBreakdown(conn, null);
+                assertEquals(expected, breakdown, "Entity size breakdown obtained over HTTP "
+                        + "does not match object obtained directly from database");
+                
                 System.err.println();
                 System.err.println("************ BREAKDOWN: " + breakdown);
                 List<SzEntitySizeCount> counts = breakdown.getEntitySizeCounts();
