@@ -122,7 +122,7 @@ public class SzGrpcServerOptions {
     private boolean skipEnginePriming = false;
 
     /**
-     * The {@link ConnetionUri} for the data mart database connection.
+     * The {@link ConnectionUri} for the data mart database connection.
      */
     private ConnectionUri dataMartDatabaseUri = null;
 
@@ -180,7 +180,7 @@ public class SzGrpcServerOptions {
      * settings with which to initialize the Senzing Core SDK.
      *
      * @return The {@link JsonObject} representing the settings
-     *         with which to intialize the Senzing Core SDK.
+     *         with which to initialize the Senzing Core SDK.
      */
     @Option(CORE_SETTINGS)
     public JsonObject getCoreSettings() {

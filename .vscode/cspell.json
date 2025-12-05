@@ -2,6 +2,7 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "adoptium",
     "apidocs",
     "armeria",
     "Bandley",
@@ -16,6 +17,7 @@
     "CONFIGMGR",
     "ctxt",
     "datamart",
+    "dearmor",
     "DFCALL",
     "DFUNC",
     "DISQUAL",
@@ -71,6 +73,7 @@
     "RECOGNISED",
     "reinit",
     "Retryable",
+    "rootfs",
     "RTYPE",
     "SCORESET",
     "SENZ",
