@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.text.DateFormat;
@@ -482,8 +481,8 @@ public class SzGrpcServer {
     /**
      * Gets the {@link SzEnvironment} used by this instance.
      * 
-     * The returned instance is a {@link Proxy} that will not allow 
-     * the caller to invoke {@link SzEnvironment#destroy()}.
+     * The returned instance is a {@link java.lang.reflect.Proxy} that
+     * will not allow  the caller to invoke {@link SzEnvironment#destroy()}.
      * 
      * @return The {@link SzEnvironment} used by this instance.
      */

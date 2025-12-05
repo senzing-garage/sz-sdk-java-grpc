@@ -579,11 +579,10 @@ public class SzGrpcServerOptions {
 
     /**
      * Gets the {@link ProcessingRate} that the {@link 
-     * SzReplicator} would use to balance between quickly
-     * processing messages in order to stay closely in sync
-     * with the entity repository and delaying in order to
-     * batch a larger number of messages and conserve system
-     * resources.
+     * com.senzing.datamart.SzReplicator} would use to balance between
+     * quickly processing messages in order to stay closely in sync
+     * with the entity repository and delaying in order to batch a
+     * larger number of messages and conserve system resources.
      *
      * @return The {@link ProcessingRate} for this instance.
      */

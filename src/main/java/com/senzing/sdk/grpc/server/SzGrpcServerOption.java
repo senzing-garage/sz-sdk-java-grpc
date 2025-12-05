@@ -19,9 +19,7 @@ import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.cmdline.CommandLineValue;
 import com.senzing.cmdline.DeprecatedOptionWarning;
 import com.senzing.cmdline.ParameterProcessor;
-import com.senzing.datamart.PostgreSqlUri;
 import com.senzing.datamart.ProcessingRate;
-import com.senzing.datamart.SqliteUri;
 import com.senzing.datamart.SzCoreSettingsUri;
 import com.senzing.datamart.SzReplicatorConstants;
 import com.senzing.datamart.SzReplicatorOption;
@@ -330,11 +328,11 @@ public enum SzGrpcServerOption
      * the single parameter to this option is the SQLite or PostgreSQL database
      * URL specifying the database connection.  Possible database URL formats are:
      * <ul>
-     *   <li><code>{@value PostgreSqlUri#SUPPORTED_FORMAT_1}</code></li>
-     *   <li><code>{@value PostgreSqlUri#SUPPORTED_FORMAT_2}</code></li>
-     *   <li><code>{@value SqliteUri#SUPPORTED_FORMAT_1}</code></li>
-     *   <li><code>{@value SqliteUri#SUPPORTED_FORMAT_2}</code></li>
-     *   <li><code>{@value SqliteUri#SUPPORTED_FORMAT_3}</code></li>
+     *   <li><code>{@value com.senzing.datamart.PostgreSqlUri#SUPPORTED_FORMAT_1}</code></li>
+     *   <li><code>{@value com.senzing.datamart.PostgreSqlUri#SUPPORTED_FORMAT_2}</code></li>
+     *   <li><code>{@value com.senzing.datamart.SqliteUri#SUPPORTED_FORMAT_1}</code></li>
+     *   <li><code>{@value com.senzing.datamart.SqliteUri#SUPPORTED_FORMAT_2}</code></li>
+     *   <li><code>{@value com.senzing.datamart.SqliteUri#SUPPORTED_FORMAT_3}</code></li>
      * </ul>
      * <b>NOTE:</b> The PostgreSQL or SQLite URI can also be obtained from the 
      * {@link #CORE_SETTINGS} by using a special URI in the following format:
