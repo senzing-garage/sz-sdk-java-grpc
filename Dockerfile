@@ -12,6 +12,10 @@ ARG IMAGE_FINAL=senzing/senzingsdk-runtime:4.1.0@sha256:e57d751dc0148bb8eeafedb7
 
 FROM ${IMAGE_FINAL} AS senzingsdk_runtime
 
+RUN apt-get update \
+ && apt-get -y --no-install-recommends install \
+        senzingsdk-setup
+
 # -----------------------------------------------------------------------------
 # Stage: builder
 # -----------------------------------------------------------------------------
@@ -24,6 +28,11 @@ LABEL Name="senzing/java-builder" \
 # Run as "root" for system installation.
 
 USER root
+
+# Copy files from prior stage.
+
+COPY --from=senzingsdk_runtime  "/opt/senzing/"   "/opt/senzing/"
+COPY --from=senzingsdk_runtime  "/etc/opt/senzing/"   "/etc/opt/senzing/"
 
 # Install packages via apt-get.
 
@@ -61,10 +70,6 @@ ENV PATH=${PATH}:${M2_HOME}/bin
 # COPY ./rootfs /
 COPY . /sz-sdk-java-grpc
 
-# Copy files from prior stage.
-
-COPY --from=senzingsdk_runtime  "/opt/senzing/"   "/opt/senzing/"
-
 # Set path to Senzing libs.
 
 ENV SENZING_PATH=/opt/senzing
@@ -77,7 +82,7 @@ RUN java -jar sz-sdk.jar -x
 WORKDIR /sz-sdk-java-grpc
 #RUN find /opt/senzing -type d
 #RUN find /etc/opt/senzing -type d
-RUN mvn -ntp -Dsenzing.support.dir="/opt/senzing/data" -DskipTests=true package 
+RUN mvn -ntp -DskipTests=true package
 
 # -----------------------------------------------------------------------------
 # Stage: final
@@ -95,6 +100,7 @@ USER root
 
 RUN apt-get update \
  && apt-get -y --no-install-recommends install \
+        senzingsdk-setup \
         libsqlite3-dev \
         apt-transport-https \
         gnupg2 \

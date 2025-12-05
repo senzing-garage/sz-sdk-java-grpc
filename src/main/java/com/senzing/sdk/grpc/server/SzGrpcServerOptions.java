@@ -6,7 +6,6 @@ import com.senzing.datamart.PostgreSqlUri;
 import com.senzing.datamart.ProcessingRate;
 import com.senzing.datamart.SqliteUri;
 import com.senzing.datamart.SzCoreSettingsUri;
-import com.senzing.datamart.SzReplicator;
 import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
@@ -593,15 +592,15 @@ public class SzGrpcServerOptions {
 
     /**
      * Sets the {@link ProcessingRate} to determine how the 
-     * {@link SzReplicator} should balance between quickly
+     * {@link com.senzing.datamart.SzReplicator} should balance between quickly
      * processing messages in order to stay closely in sync
      * with the entity repository and delaying in order to
      * batch a larger number of messages and conserve system
      * resources.
      *
      * @param rate The {@link ProcessingRate} for the 
-     *             {@link SzReplicator}, or <code>null</code> if
-     *             {@link ProcessingRate#STANDARD} should be used.
+     *             {@link com.senzing.datamart.SzReplicator}, or <code>null</code>
+     *             if {@link ProcessingRate#STANDARD} should be used.
      *
      * @return A reference to this instance.
      */

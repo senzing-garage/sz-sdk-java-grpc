@@ -20,7 +20,6 @@ import com.senzing.cmdline.CommandLineValue;
 import com.senzing.cmdline.DeprecatedOptionWarning;
 import com.senzing.cmdline.ParameterProcessor;
 import com.senzing.datamart.ProcessingRate;
-import com.senzing.datamart.SzCoreSettingsUri;
 import com.senzing.datamart.SzReplicatorConstants;
 import com.senzing.datamart.SzReplicatorOption;
 import com.senzing.util.JsonUtilities;
@@ -337,7 +336,7 @@ public enum SzGrpcServerOption
      * <b>NOTE:</b> The PostgreSQL or SQLite URI can also be obtained from the 
      * {@link #CORE_SETTINGS} by using a special URI in the following format:
      * <ul>
-     *   <li><code>{@value SzCoreSettingsUri#SUPPORTED_FORMAT}</code></li>
+     *   <li><code>{@value com.senzing.datamart.SzCoreSettingsUri#SUPPORTED_FORMAT}</code></li>
      * </ul>
      * For example,
      * <code>{@value SzReplicatorConstants#DEFAULT_CORE_SETTINGS_DATABASE_URI}</code>
