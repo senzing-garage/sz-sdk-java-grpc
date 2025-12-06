@@ -6,6 +6,7 @@ import java.io.StringReader;
 
 import java.util.Objects;
 import java.util.Set;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 
 import javax.json.Json;
@@ -20,10 +21,12 @@ import com.senzing.sdk.SzRecordKeys;
 import com.senzing.sdk.SzEntityIds;
 import com.senzing.sdk.SzEnvironment;
 
+import static com.senzing.sdk.SzFlag.SZ_WITH_INFO;
 import static com.senzing.sdk.grpc.proto.SzEngineGrpc.*;
 import static com.senzing.sdk.grpc.proto.SzEngineProto.*;
 import static com.senzing.sdk.SzFlagUsageGroup.*;
 import static com.senzing.sdk.grpc.server.SzGrpcServer.*;
+import static com.senzing.util.LoggingUtilities.formatStackTrace;
 
 /**
  * Provides the gRPC server-side implementation for {@link SzEngine}.
@@ -59,6 +62,82 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
+     * Checks if we are required to publish INFO messages regardless
+     * of what flags are specified by the caller.
+     * 
+     * @return <code>true</code> if always publishing INFO messages 
+     *         to a queue, otherwise <code>false</code>.
+     */
+    protected boolean isPublishingInfo() {
+        return (this.server.getDataMartMessageQueue() != null);
+    }
+
+    /**
+     * If this instance {@linkplain #isPublishingInfo() is publishing
+     * INFO messages} to a message queue <b>and</b> the specified
+     * {@link Set} of {@link SzFlag} instances does <b>not</b> contain
+     * {@link SzFlag#SZ_WITH_INFO} then a copy of the specified 
+     * {@link Set} that also includes {@link SzFlag#SZ_WITH_INFO} is
+     * created and returned, otherwise the specified {@link Set} is
+     * returned.
+     * 
+     * @param flagSet The original flag set.
+     * 
+     * @return The specified {@link Set} of {@link SzFlag} instances
+     *         if no enhancement was required, otherwise a copy of
+     *         the specified {@link Set} that includes {@link 
+     *         SzFlag#SZ_WITH_INFO}.
+     */
+    protected Set<SzFlag> enhanceFlags(Set<SzFlag> flagSet) {
+        if (flagSet.contains(SZ_WITH_INFO) || !this.isPublishingInfo()) {
+            return flagSet;
+        }
+        EnumSet<SzFlag> enhanced = EnumSet.of(SZ_WITH_INFO);
+        enhanced.addAll(flagSet);
+        return enhanced;
+    }
+
+    /**
+     * Publishes the specified message to any configured message queues.
+     * This method does nothing if there are no configured message queues
+     * for publishing the specified message.
+     * 
+     * @param message The message to publish, which may only be 
+     *                <code>null</code> if there are no configured message
+     *                queues.
+     * 
+     * @return <code>true</code>> if a message was published, otherwise
+     *         <code>false</code>.
+     * 
+     * @throws NullPointerException If the specified message is <code>null</code>
+     *                              and {@link #isPublishingInfo()} returns
+     *                              <code>true</code>.
+     */
+    protected boolean publishInfoMessage(String message) {
+        if (!this.isPublishingInfo()) {
+            return false;
+        }
+        Objects.requireNonNull(message, 
+            "The message cannot be null if publishing INFO messages");
+        
+        try {
+            this.server.getDataMartMessageQueue().enqueueMessage(message);
+
+            return true;
+
+        } catch (Exception e) {
+            System.err.println();
+            System.err.println("- - - - - - - - - - - - - - - - - - - ");
+            System.err.println("WARNING: Failed to enqueue INFO message for data mart: ");
+            System.err.println(message);
+            System.err.println("CAUSE: " + e.getMessage());
+            System.err.println(formatStackTrace(e.getStackTrace()));
+            System.err.println("- - - - - - - - - - - - - - - - - - - ");
+            System.err.println();
+            return false;
+        }
+    }
+    /**
      * Implemented to execute the operation using the {@link SzEnvironment}
      * from the associated {@link SzGrpcServer} leveraging the 
      * {@link SzEngine#addRecord(SzRecordKey,String,Set)} method.
@@ -77,17 +156,21 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
             long   flags            = request.getFlags();
 
             SzRecordKey recordKey   = SzRecordKey.of(dataSourceCode, recordId);
-            Set<SzFlag> flagSet     = SZ_ADD_RECORD_FLAGS.toFlagSet(flags);
-
+            Set<SzFlag> origFlagSet = SZ_ADD_RECORD_FLAGS.toFlagSet(flags);
+            Set<SzFlag> flagSet     = this.enhanceFlags(origFlagSet);
+            
             SzEngine engine = this.getEnvironment().getEngine();
 
-            String result = engine.addRecord(recordKey, 
+            String result = engine.addRecord(recordKey,
                                              recordDefinition,
                                              flagSet);
 
+            // optionally publish the info message
+            this.publishInfoMessage(result);
+            
             AddRecordResponse.Builder builder 
                 = AddRecordResponse.newBuilder();
-            if (result != null) {
+            if (result != null && origFlagSet.contains(SZ_WITH_INFO)) {
                 builder.setResult(result);
             }
             AddRecordResponse response = builder.build();
@@ -161,15 +244,19 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
             long   flags            = request.getFlags();
 
             SzRecordKey recordKey   = SzRecordKey.of(dataSourceCode, recordId);
-            Set<SzFlag> flagSet     = SZ_DELETE_RECORD_FLAGS.toFlagSet(flags);
+            Set<SzFlag> origFlagSet = SZ_DELETE_RECORD_FLAGS.toFlagSet(flags);
+            Set<SzFlag> flagSet     = this.enhanceFlags(origFlagSet);
 
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.deleteRecord(recordKey, flagSet);
 
+            // optionally publish the info message
+            this.publishInfoMessage(result);
+
             DeleteRecordResponse.Builder builder
                 = DeleteRecordResponse.newBuilder();
-            if (result != null) {
+            if (result != null && origFlagSet.contains(SZ_WITH_INFO)) {
                 builder.setResult(result);
             }
             DeleteRecordResponse response = builder.build();
@@ -895,15 +982,19 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
         try {
             String      redoRecord  = request.getRedoRecord();
             long        flags       = request.getFlags();
-            Set<SzFlag> flagSet     = SZ_REDO_FLAGS.toFlagSet(flags);
+            Set<SzFlag> origFlagSet = SZ_REDO_FLAGS.toFlagSet(flags);
+            Set<SzFlag> flagSet     = this.enhanceFlags(origFlagSet);
 
             SzEngine engine = this.getEnvironment().getEngine();
             
             String result = engine.processRedoRecord(redoRecord, flagSet);
-            
+
+            // optionally publish the info message
+            this.publishInfoMessage(result);
+                        
             ProcessRedoRecordResponse.Builder builder
                 = ProcessRedoRecordResponse.newBuilder();
-            if (result != null) {
+            if (result != null && origFlagSet.contains(SZ_WITH_INFO)) {
                 builder.setResult(result);
             }
             ProcessRedoRecordResponse response = builder.build();
@@ -931,15 +1022,19 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
         try {
             long        entityId    = request.getEntityId();
             long        flags       = request.getFlags();
-            Set<SzFlag> flagSet     = SZ_REEVALUATE_ENTITY_FLAGS.toFlagSet(flags);
+            Set<SzFlag> origFlagSet = SZ_REEVALUATE_ENTITY_FLAGS.toFlagSet(flags);
+            Set<SzFlag> flagSet     = this.enhanceFlags(origFlagSet);
 
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.reevaluateEntity(entityId, flagSet);
-                
+
+            // optionally publish the info message
+            this.publishInfoMessage(result);
+            
             ReevaluateEntityResponse.Builder builder
                 = ReevaluateEntityResponse.newBuilder();
-            if (result != null) {
+            if (result != null && origFlagSet.contains(SZ_WITH_INFO)) {
                 builder.setResult(result);
             }
             ReevaluateEntityResponse response = builder.build();
@@ -969,17 +1064,22 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
             String      recordId    = request.getRecordId();
             long        flags       = request.getFlags();
             SzRecordKey recordKey   = SzRecordKey.of(dataSource, recordId);
-            Set<SzFlag> flagSet     = SZ_REEVALUATE_RECORD_FLAGS.toFlagSet(flags);
+            Set<SzFlag> origFlagSet = SZ_REEVALUATE_RECORD_FLAGS.toFlagSet(flags);
+            Set<SzFlag> flagSet     = this.enhanceFlags(origFlagSet);
 
             SzEngine engine = this.getEnvironment().getEngine();
 
             String result = engine.reevaluateRecord(recordKey, flagSet);
+
+            // optionally publish the info message
+            this.publishInfoMessage(result);
             
             ReevaluateRecordResponse.Builder builder
                 = ReevaluateRecordResponse.newBuilder();
-            if (result != null) {
+            if (result != null && origFlagSet.contains(SZ_WITH_INFO)) {
                 builder.setResult(result);
             }
+
             ReevaluateRecordResponse response = builder.build();
 
             responseObserver.onNext(response);

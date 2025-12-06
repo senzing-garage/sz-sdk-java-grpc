@@ -89,6 +89,7 @@ public abstract class AbstractGrpcTest extends AbstractCoreTest {
         return new SzGrpcServer(this.getServerOptions(), startServer);
     }
 
+    
     /**
      * Gets the {@link SzGrpcServerOptions} using the results from:
      * <ul>

@@ -65,7 +65,7 @@ public class EngineHowTest
 
         this.server = this.createServer();
         
-        this.channel = this.createChannel(this.server.getActiveGrpcPort());
+        this.channel = this.createChannel(this.server.getActivePort());
 
         this.env = SzGrpcEnvironment.newBuilder()
                                     .channel(this.channel)
