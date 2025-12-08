@@ -328,10 +328,12 @@ public class SzGrpcServer {
                                                    replicatorOptions,
                                                    false);
             } catch (RuntimeException e) {
-                e.printStackTrace();
+                System.err.println(e.toString());
+                System.err.println(formatStackTrace(e.getStackTrace()));
                 throw e;
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println(e.toString());
+                System.err.println(formatStackTrace(e.getStackTrace()));
                 throw new RuntimeException("Failed to initialize data mart", e);
             }
         }
