@@ -29,12 +29,12 @@ public final class SzGrpcServerConstants {
     /**
      * The default bind address option ({@value}) parameter value.
      */
-    public static final String DEFAULT_SERVER_ADDRESS_PARAM = "loopback";
+    public static final String DEFAULT_BIND_ADDRESS_PARAM = "loopback";
     
     /**
      * The default bind address as an {@link InetAddress}.
      */
-    public static final InetAddress DEFAULT_SERVER_ADDRESS
+    public static final InetAddress DEFAULT_BIND_ADDRESS
         = InetAddress.getLoopbackAddress();
 
     /**

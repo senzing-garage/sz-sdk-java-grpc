@@ -113,8 +113,8 @@ public enum SzGrpcServerOption
      * <code>SENZING_TOOLS_SERVER_ADDRESS="{ip-address|loopback|all}"</code></li>
      * </ul>
      */
-    BIND_ADDRESS("--server-address", ENV_PREFIX + "SERVER_ADDRESS",
-                   1, DEFAULT_SERVER_ADDRESS_PARAM),
+    BIND_ADDRESS("--bind-address", ENV_PREFIX + "BIND_ADDRESS",
+                   1, DEFAULT_BIND_ADDRESS_PARAM),
 
     /**
      * <p>
@@ -354,8 +354,7 @@ public enum SzGrpcServerOption
      */
     DATA_MART_URI("--data-mart-uri",
                  ENV_PREFIX + "DATA_MART_DATABASE_URI",
-                 null, 1,
-                 SzReplicatorConstants.DEFAULT_CORE_SETTINGS_DATABASE_URI),
+                 null, 1),
 
     /**
      * <p>
@@ -855,10 +854,10 @@ public enum SzGrpcServerOption
                     switch (paramVal) {
                         case "verbose":
                         case "1":
-                            return true;
+                            return 1;
                         case "muted":
                         case "0":
-                            return false;
+                            return 0;
                         default:
                             throw new IllegalArgumentException(
                                 "The specified core log level is not recognized; " + paramVal);

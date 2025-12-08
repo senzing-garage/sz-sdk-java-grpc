@@ -188,6 +188,11 @@
       <version>1.1.4</version>
     </dependency>
     <dependency>
+      <groupId>org.xerial</groupId>
+      <artifactId>sqlite-jdbc</artifactId>
+      <version>3.51.1.0</version>
+    </dependency>
+    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
       <version>6.0.1</version>
@@ -218,22 +223,14 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.xerial</groupId>
-      <artifactId>sqlite-jdbc</artifactId>
-      <version>3.51.1.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
        <groupId>org.slf4j</groupId>
        <artifactId>slf4j-api</artifactId>
        <version>2.0.17</version>
-       <scope>test</scope>
    </dependency>
    <dependency>
        <groupId>org.slf4j</groupId>
        <artifactId>slf4j-simple</artifactId>
        <version>2.0.17</version>
-       <scope>test</scope>
   </dependency>
   </dependencies>
   <build>
@@ -647,7 +644,7 @@ public final class Sz$1Grpc {]]></value>
                 </filter>
                 <!-- add this filter since we get these files from another jar-->
                 <filter>
-                  <artifact>io.netty:*</artifact>
+                  <artifact>io.netty:netty-tcnative-boringssl-static</artifact>
                   <excludes>
                     <exclude>META-INF/license/LICENSE.aix-netbsd.txt</exclude>
                     <exclude>META-INF/license/LICENSE.boringssl.txt</exclude>
@@ -676,52 +673,6 @@ public final class Sz$1Grpc {]]></value>
                 </excludes>
               </artifactSet>
               <outputFile>${project.build.directory}/${project.artifactId}-server.jar</outputFile>
-              <relocations>
-                <relocation>
-                  <pattern>org</pattern>
-                  <shadedPattern>com.senzing.sdk.grpc.shaded.org</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>io</pattern>
-                  <shadedPattern>com.senzing.sdk.grpc.shaded.io</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>net</pattern>
-                  <shadedPattern>com.senzing.sdk.grpc.shaded.net</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.google</pattern>
-                  <shadedPattern>com.senzing.sdk.grpc.shaded.com.google</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>google</pattern>
-                  <shadedPattern>com.senzing.sdk.grpc.shaded.google</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>grpc</pattern>
-                  <shadedPattern>com.senzing.sdk.grpc.shaded.grpc</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>android</pattern>
-                  <shadedPattern>com.senzing.sdk.grpc.shaded.android</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.linecorp</pattern>
-                  <shadedPattern>com.senzing.sdk.grpc.shaded.com.linecorp</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.fasterxml</pattern>
-                  <shadedPattern>com.senzing.sdk.grpc.shaded.com.fasterxml</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.aayushatharva</pattern>
-                  <shadedPattern>com.senzing.sdk.grpc.shaded.com.aayushatharva</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>javax</pattern>
-                  <shadedPattern>com.senzing.sdk.grpc.shaded.javax</shadedPattern>
-                </relocation>
-              </relocations>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
@@ -739,6 +690,9 @@ public final class Sz$1Grpc {]]></value>
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                   <resource>META-INF/io.netty.versions.properties</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                  <resource>META-INF/thirdparty-LICENSE</resource>
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <manifestEntries>
