@@ -66,7 +66,7 @@ import com.linecorp.armeria.server.annotation.JacksonResponseConverterFunction;
 import com.linecorp.armeria.server.grpc.GrpcService;
 
 import static com.senzing.reflect.ReflectionUtilities.restrictedProxy;
-import static com.senzing.sdk.grpc.server.SzGrpcServerConstants.DEFAULT_BIND_ADDRESS;
+import static com.senzing.sdk.grpc.server.SzGrpcServerConstants.DEFAULT_SERVER_ADDRESS;
 import static com.senzing.sdk.grpc.server.SzGrpcServerOption.*;
 import static com.senzing.util.JsonUtilities.toJsonText;
 import static com.senzing.util.LoggingUtilities.*;
@@ -273,7 +273,7 @@ public class SzGrpcServer {
         
         // set the default values for any unspecified options
         if (bindAddress == null) {
-            bindAddress = DEFAULT_BIND_ADDRESS;
+            bindAddress = DEFAULT_SERVER_ADDRESS;
         }
 
         // set the environment

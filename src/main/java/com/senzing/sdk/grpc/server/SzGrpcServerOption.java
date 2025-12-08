@@ -114,7 +114,7 @@ public enum SzGrpcServerOption
      * </ul>
      */
     BIND_ADDRESS("--server-address", ENV_PREFIX + "SERVER_ADDRESS",
-                   1, DEFAULT_BIND_ADDRESS_PARAM),
+                   1, DEFAULT_SERVER_ADDRESS_PARAM),
 
     /**
      * <p>
