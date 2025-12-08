@@ -41,7 +41,7 @@
     <gpg.skip>true</gpg.skip> <!-- skip GPG unless release profile -->
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
-    <grpc.version>1.76.0</grpc.version><!-- CURRENT_GRPC_VERSION -->
+    <grpc.version>1.77.0</grpc.version><!-- CURRENT_GRPC_VERSION -->
     <protobuf.version>4.33.2</protobuf.version>
     <protoc.version>4.33.0</protoc.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
