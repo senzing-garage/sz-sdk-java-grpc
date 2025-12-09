@@ -57,6 +57,11 @@ jobs:
           mvn clean install -Pcheckstyle,jacoco,spotbugs -Djacoco.haltOnFailure=false -Djacoco.ignoreFailure=true -Dsenzing.support.dir="/opt/senzing/data" -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
 
       - if: always()
+        run: |
+          find / -name "hs_err*.log"
+          find / -name "hs_err"
+
+      - if: always()
         name: Analyze core dumps
         uses: senzing-factory/github-action-core-dumps@v1
         with:
