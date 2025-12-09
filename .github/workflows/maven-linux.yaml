@@ -69,7 +69,7 @@ jobs:
             **/target/**/*.dumpstream
             **/target/**/*.dump
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 6
 
       - if: always()
         name: Analyze core dumps
