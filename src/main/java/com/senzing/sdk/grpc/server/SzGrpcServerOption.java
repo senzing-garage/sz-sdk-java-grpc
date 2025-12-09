@@ -20,7 +20,6 @@ import com.senzing.cmdline.CommandLineValue;
 import com.senzing.cmdline.DeprecatedOptionWarning;
 import com.senzing.cmdline.ParameterProcessor;
 import com.senzing.datamart.ProcessingRate;
-import com.senzing.datamart.SzReplicatorConstants;
 import com.senzing.datamart.SzReplicatorOption;
 import com.senzing.util.JsonUtilities;
 
@@ -339,7 +338,7 @@ public enum SzGrpcServerOption
      *   <li><code>{@value com.senzing.datamart.SzCoreSettingsUri#SUPPORTED_FORMAT}</code></li>
      * </ul>
      * For example,
-     * <code>{@value SzReplicatorConstants#DEFAULT_CORE_SETTINGS_DATABASE_URI}</code>
+     * <code>{@value com.senzing.datamart.SzReplicatorConstants#DEFAULT_CORE_SETTINGS_DATABASE_URI}</code>
      * will obtain the primary SQL connection from the {@linkplain #CORE_SETTINGS
      * Senzing Core SDK settings}.
      * <b>NOTE:</b> The PostgreSQL or SQLite URI can also be obtained from the 
