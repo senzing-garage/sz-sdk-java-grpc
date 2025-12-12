@@ -135,7 +135,7 @@ USER 1001
 # Runtime environment variables.
 ENV SENZING_PATH=/opt/senzing
 ENV LD_LIBRARY_PATH=/opt/senzing/er/lib/
-ENV SENZING_TOOLS_DATABASE_URL=sqlite3://na:na@nowhere/IN_MEMORY_DB?mode=memory&cache=shared
+ENV SENZING_TOOLS_CORE_DATABASE_URI=sqlite3:///tmp/senzing-repo.db
 
 # Runtime execution.
 

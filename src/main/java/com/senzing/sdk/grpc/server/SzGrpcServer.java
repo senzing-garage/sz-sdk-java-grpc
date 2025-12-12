@@ -4,9 +4,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.io.File;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
@@ -29,12 +32,15 @@ import com.senzing.cmdline.CommandLineOption;
 import com.senzing.cmdline.DeprecatedOptionWarning;
 import com.senzing.datamart.ConnectionUri;
 import com.senzing.datamart.ProcessingRate;
+import com.senzing.datamart.SQLiteUri;
 import com.senzing.datamart.SzCoreSettingsUri;
 import com.senzing.datamart.SzReplicationProvider;
 import com.senzing.datamart.SzReplicator;
 import com.senzing.datamart.SzReplicatorOptions;
 import com.senzing.listener.communication.sql.SQLConsumer;
 import com.senzing.sdk.SzBadInputException;
+import com.senzing.sdk.SzConfig;
+import com.senzing.sdk.SzConfigManager;
 import com.senzing.sdk.SzConfigurationException;
 import com.senzing.sdk.SzEnvironment;
 import com.senzing.sdk.SzException;
@@ -49,6 +55,8 @@ import com.senzing.sdk.SzUnknownDataSourceException;
 import com.senzing.sdk.core.SzCoreEnvironment;
 import com.senzing.sdk.core.SzCoreUtilities;
 import com.senzing.sdk.core.auto.SzAutoCoreEnvironment;
+import com.senzing.sql.SQLUtilities;
+import com.senzing.sql.SQLiteConnector;
 import com.senzing.util.JsonUtilities;
 import com.senzing.util.LoggingUtilities;
 import com.senzing.datamart.reports.DataMartReportsServices;
@@ -68,8 +76,11 @@ import com.linecorp.armeria.server.grpc.GrpcService;
 import static com.senzing.reflect.ReflectionUtilities.restrictedProxy;
 import static com.senzing.sdk.grpc.server.SzGrpcServerConstants.DEFAULT_BIND_ADDRESS;
 import static com.senzing.sdk.grpc.server.SzGrpcServerOption.*;
+import static com.senzing.util.JsonUtilities.parseJsonObject;
 import static com.senzing.util.JsonUtilities.toJsonText;
 import static com.senzing.util.LoggingUtilities.*;
+import static com.senzing.util.SzUtilities.basicSettingsFromDatabaseUri;
+import static com.senzing.util.SzUtilities.ensureSenzingSQLiteSchema;
 import static com.senzing.sdk.grpc.SzGrpcEnvironment.*;
 
 /**
@@ -162,7 +173,66 @@ public class SzGrpcServer {
         SzGrpcServerOptions options)
         throws IllegalStateException
     {
-        String settings = JsonUtilities.toJsonText(options.getCoreSettings());
+        JsonObject  coreSettings    = options.getCoreSettings();
+        String      coreDatabaseUri = null;
+        boolean     bootstrapRepo   = false;
+
+        // check if we do not have core settings
+        if (coreSettings == null) {
+            // get the core database URI and optional license string
+            coreDatabaseUri         = options.getCoreDatabaseUri();
+            String  licenseString   = options.getLicenseStringBase64();
+            
+            // check if the core database URI was provided
+            if (coreDatabaseUri != null) {
+                // get the basic settings
+                String jsonSettings = basicSettingsFromDatabaseUri(
+                    coreDatabaseUri, licenseString);
+                
+                // parse the JSON settings
+                coreSettings = parseJsonObject(jsonSettings);
+
+                // check if our database URL is SQLite
+                if (coreDatabaseUri.toLowerCase().startsWith(SQLiteUri.SCHEME_PREFIX)) {
+                    SQLiteUri sqliteUri = SQLiteUri.parse(coreDatabaseUri);
+
+                    String path = (sqliteUri.isMemory()) 
+                        ? sqliteUri.getInMemoryIdentifier() : sqliteUri.getFile().toString();
+                    Map<String, String> connProps = sqliteUri.getQueryOptions();
+
+                    SQLiteConnector connector = new SQLiteConnector(path, connProps);
+                    Connection conn = null;
+                    try {
+                        conn = connector.openConnection();
+
+                        bootstrapRepo = ensureSenzingSQLiteSchema(conn);
+                        
+                    } catch (SQLException e) {
+                        System.err.println(e.getMessage());
+                        System.err.println(formatStackTrace(e.getStackTrace()));
+                        throw new IllegalStateException(
+                            "Failed to install Senzing SQLite schema", e);
+                    } finally {
+                        // check if it is a memory database
+                        if (!sqliteUri.isMemory()) {
+                            // if not a memory database then close the connection
+                            // NOTE: we leave it open if an in-memory database so it
+                            // does not get deleted
+                            SQLUtilities.close(conn);
+                        }
+                    }
+                }
+            }
+        }
+
+        // check if we have no core settings
+        if (coreSettings == null) {
+            throw new IllegalArgumentException(
+                "Failed to obtain core settings from gRPC server options via "
+                + "core settings or core database URL: " + options);
+        }
+
+        String settings = JsonUtilities.toJsonText(coreSettings);
 
         String instanceName = options.getCoreInstanceName();
         
@@ -174,13 +244,26 @@ public class SzGrpcServer {
         Duration duration = (refreshSeconds < 0) 
             ? null : Duration.ofSeconds(refreshSeconds);
 
-        return SzAutoCoreEnvironment.newAutoBuilder()
+        SzAutoCoreEnvironment env = SzAutoCoreEnvironment.newAutoBuilder()
                 .concurrency(concurrency)
                 .configRefreshPeriod(duration)
                 .settings(settings)
                 .instanceName(instanceName)
                 .verboseLogging(verbose)
                 .build();
+
+        // force initialization
+        try {
+            // check if we need to bootstrap the default config
+            if (bootstrapRepo) {
+                SzConfigManager configMgr = env.getConfigManager();
+                SzConfig templateConfig = configMgr.createConfig();
+                configMgr.setDefaultConfig(templateConfig.export());
+            }
+        } catch (SzException e) {
+            throw new RuntimeException(e);
+        }
+        return env;
     }
 
     /**
