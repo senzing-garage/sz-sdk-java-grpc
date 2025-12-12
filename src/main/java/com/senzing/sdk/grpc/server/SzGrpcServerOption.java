@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,6 +28,7 @@ import static com.senzing.sdk.grpc.server.SzGrpcServerConstants.*;
 import static com.senzing.util.CollectionUtilities.*;
 import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.io.IOUtilities.*;
+import static com.senzing.util.SzUtilities.*;
 
 /**
  * Enumerates the options to the {@link SzGrpcServer}.
@@ -136,7 +138,7 @@ public enum SzGrpcServerOption
     /**
      * <p>
      * Option for specifying the core settings JSON with which to initialize
-     * the Core Senzing SDK. The parameter to this option should be the
+     * the Core Senzing SDK.  The parameter to this option should be the
      * settings as a JSON object <b>or</b> the path to a file containing the
      * settings JSON.
      * <p>
@@ -152,6 +154,38 @@ public enum SzGrpcServerOption
                   List.of("SENZING_ENGINE_CONFIGURATION_JSON"),
                   true, 1),
 
+    /**
+     * <p>
+     * This option is used in place of {@link #CORE_SETTINGS} as a basis
+     * to create a basic settings.  The parameter to this option should be
+     * a database URI that is legal for the Senzing core environment settings. 
+     * <p>
+     * This option can be specified in the following ways:
+     * <ul>
+     * <li>Command Line: <code>--core-database-uri {database-uri}</code></li>
+     * <li>Environment: <code>SENZING_TOOLS_CORE_DATABASE_URI="{database-uri}"</code></li>
+     * </ul>
+     */
+    CORE_DATABASE_URI("--core-database-uri",
+                      ENV_PREFIX + "CORE_DATABASE_URI",
+                      null, true, 1),
+        
+    /**
+     * <p>
+     * This option is used along with {@link #CORE_DATABASE_URI} to add a license
+     * to the basic settings.  The parameter to this option should be a base-64
+     * encoded Senzing license string. 
+     * <p>
+     * This option can be specified in the following ways:
+     * <ul>
+     * <li>Command Line: <code>--license-string-base64 {base64-encoded-license}</code></li>
+     * <li>Environment: <code>SENZING_TOOLS_LICENSE_STRING_BASE64="{base64-encoded-license}"</code></li>
+     * </ul>
+     */
+    LICENSE_STRING_BASE64("--license-string-base64",
+                          ENV_PREFIX + "LICENSE_STRING_BASE64",
+                          null, 1),
+    
     /**
      * <p>
      * This option is used with {@link #CORE_SETTINGS} to force a specific
@@ -324,13 +358,13 @@ public enum SzGrpcServerOption
      * This option is used to specify the database connection for the data mart,
      * if omitted then the data mart will <b>NOT</b> enabled.  If provided, then
      * the single parameter to this option is the SQLite or PostgreSQL database
-     * URL specifying the database connection.  Possible database URL formats are:
+     * URI specifying the database connection.  Possible database URI formats are:
      * <ul>
      *   <li><code>{@value com.senzing.datamart.PostgreSqlUri#SUPPORTED_FORMAT_1}</code></li>
      *   <li><code>{@value com.senzing.datamart.PostgreSqlUri#SUPPORTED_FORMAT_2}</code></li>
-     *   <li><code>{@value com.senzing.datamart.SqliteUri#SUPPORTED_FORMAT_1}</code></li>
-     *   <li><code>{@value com.senzing.datamart.SqliteUri#SUPPORTED_FORMAT_2}</code></li>
-     *   <li><code>{@value com.senzing.datamart.SqliteUri#SUPPORTED_FORMAT_3}</code></li>
+     *   <li><code>{@value com.senzing.datamart.SQLiteUri#SUPPORTED_FORMAT_1}</code></li>
+     *   <li><code>{@value com.senzing.datamart.SQLiteUri#SUPPORTED_FORMAT_2}</code></li>
+     *   <li><code>{@value com.senzing.datamart.SQLiteUri#SUPPORTED_FORMAT_3}</code></li>
      * </ul>
      * <b>NOTE:</b> The PostgreSQL or SQLite URI can also be obtained from the 
      * {@link #CORE_SETTINGS} by using a special URI in the following format:
@@ -346,14 +380,14 @@ public enum SzGrpcServerOption
      * <p>
      * This option can be specified in the following ways:
      * <ul>
-     * <li>Command Line: <code>--data-mart-uri {url}</code></li>
+     * <li>Command Line: <code>--data-mart-uri {uri}</code></li>
      * <li>Environment:
-     * <code>SENZING_TOOLS_DATA_MART_DATABASE_URI="{url}"</code></li>
+     * <code>SENZING_TOOLS_DATA_MART_DATABASE_URI="{uri}"</code></li>
      * </ul>
      */
-    DATA_MART_URI("--data-mart-uri",
-                 ENV_PREFIX + "DATA_MART_DATABASE_URI",
-                 null, 1),
+    DATA_MART_DATABASE_URI("--data-mart-database-uri",
+                           ENV_PREFIX + "DATA_MART_DATABASE_URI",
+                           null, 1),
 
     /**
      * <p>
@@ -701,14 +735,18 @@ public enum SzGrpcServerOption
             Map<SzGrpcServerOption, Set<SzGrpcServerOption>> altMap = new LinkedHashMap<>();
             Map<String, SzGrpcServerOption> lookupMap = new LinkedHashMap<>();
 
+            List<SzGrpcServerOption> primaryOptions = new LinkedList<>();
             for (SzGrpcServerOption option : SzGrpcServerOption.values()) {
                 conflictMap.put(option, new LinkedHashSet<>());
                 altMap.put(option, new LinkedHashSet<>());
                 lookupMap.put(option.getCommandLineFlag().toLowerCase(), option);
+                if (option.isPrimary()) {
+                    primaryOptions.add(option);
+                }
             }
-            SzGrpcServerOption[] exclusiveOptions = {HELP, VERSION};
-            for (SzGrpcServerOption option : SzGrpcServerOption.values()) {
-                for (SzGrpcServerOption exclOption : exclusiveOptions) {
+
+            for (SzGrpcServerOption option : primaryOptions) {
+                for (SzGrpcServerOption exclOption : primaryOptions) {
                     if (option == exclOption) {
                         continue;
                     }
@@ -721,7 +759,8 @@ public enum SzGrpcServerOption
 
             Map<SzGrpcServerOption, Set<Set<CommandLineOption>>> dependencyMap = new LinkedHashMap<>();
 
-            dependencyMap.put(DATA_MART_RATE, Set.of(Set.of(DATA_MART_URI)));
+            dependencyMap.put(DATA_MART_RATE, Set.of(Set.of(DATA_MART_DATABASE_URI)));
+            dependencyMap.put(LICENSE_STRING_BASE64, Set.of(Set.of(CORE_DATABASE_URI)));
 
             CONFLICTING_OPTIONS = recursivelyUnmodifiableMap(conflictMap);
             ALTERNATIVE_OPTIONS = recursivelyUnmodifiableMap(altMap);
@@ -792,6 +831,7 @@ public enum SzGrpcServerOption
                     return addr;
 
                 case CORE_INSTANCE_NAME:
+                case LICENSE_STRING_BASE64:
                     return params.get(0).trim();
 
                 case CORE_SETTINGS: {
@@ -838,6 +878,15 @@ public enum SzGrpcServerOption
                         }
                     }
                 }
+                case CORE_DATABASE_URI:
+                    String coreDatabaseUri = params.get(0);
+                    if (!startsWithDatabaseUriPrefix(coreDatabaseUri)) {
+                        throw new IllegalArgumentException(
+                            "The specified core database URI does not appear to be "
+                            + "a supported core database URI: " + coreDatabaseUri);
+                    }
+                    return coreDatabaseUri;
+                
                 case CORE_CONFIG_ID:
                     try {
                         return Long.parseLong(params.get(0));
@@ -905,8 +954,13 @@ public enum SzGrpcServerOption
                     return statsInterval;
                 }
 
-                case DATA_MART_URI:
-                    return SzReplicatorOption.parseDatabaseUri(params.get(0));
+                case DATA_MART_DATABASE_URI:
+                    try {
+                        return SzReplicatorOption.parseDatabaseUri(params.get(0));
+                    } catch (RuntimeException e) {
+                        e.printStackTrace();
+                        throw e;
+                    }
 
                 case DATA_MART_RATE:
                     return SzReplicatorOption.parseProcessingRate(params.get(0));

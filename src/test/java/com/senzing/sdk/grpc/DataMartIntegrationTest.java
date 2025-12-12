@@ -24,7 +24,7 @@ import com.senzing.sdk.grpc.server.SzGrpcServer;
 import com.senzing.sdk.grpc.server.SzGrpcServerOptions;
 import com.senzing.datamart.ConnectionUri;
 import com.senzing.datamart.ProcessingRate;
-import com.senzing.datamart.SqliteUri;
+import com.senzing.datamart.SQLiteUri;
 import com.senzing.datamart.SzCoreSettingsUri;
 import com.senzing.datamart.reports.EntitySizeReports;
 import com.senzing.datamart.reports.EntitySizeReportsService;
@@ -43,6 +43,7 @@ import java.net.URLConnection;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -98,11 +99,34 @@ public class DataMartIntegrationTest extends AbstractGrpcTest {
         SzGrpcServerOptions options = super.getServerOptions();
         String settings = this.getRepoSettings();
         ConnectionUri connUri = coreSettingsUri.resolveUri(settings);
-        if (connUri instanceof SqliteUri) {
-            SqliteUri sqliteUri = (SqliteUri) connUri;
-            File file = sqliteUri.getFile();
-            file = new File(file.getParentFile(), "DataMart.db");
-            connUri = new SqliteUri(file, sqliteUri.getQueryOptions());
+        if (connUri instanceof SQLiteUri) {
+            SQLiteUri sqliteUri = (SQLiteUri) connUri;
+            if (sqliteUri.isMemory()) {
+                // create a new memory identifier based on the existing memory identifier
+                String identifier = sqliteUri.getInMemoryIdentifier();
+                String dataMartId = (identifier == null) ? "sz-data-mart" 
+                    : identifier + "-data-mart";
+                Map<String, String> connProps = sqliteUri.getQueryOptions();
+                if (identifier == null) {
+                    // inherit the properties but ensure we add memory mode
+                    connProps = new TreeMap<>(connProps);
+                    connProps.put(SQLiteUri.MODE_KEY, SQLiteUri.MEMORY_MODE);
+                    connProps.put("cache", "shared");
+                }
+                connUri = new SQLiteUri(new File(dataMartId), connProps);
+
+            } else {
+                // create a new file name based on the existing file name for
+                // a new database file
+                File file = sqliteUri.getFile();
+                String fileName = file.getName();
+                int index = fileName.lastIndexOf('.');
+                if (index >= 0) {
+                    fileName = fileName.substring(0, index);
+                }
+                file = new File(file.getParentFile(), fileName + "-Data-Mart.db");
+                connUri = new SQLiteUri(file, sqliteUri.getQueryOptions());
+            }
         }
         options.setDataMartDatabaseUri(connUri);
         options.setDataMartRate(ProcessingRate.AGGRESSIVE);
