@@ -140,7 +140,7 @@ public class SzGrpcServerOptions {
 
     /**
      * The optional base-64-encoded license string to create the core
-     * settings if not provided
+     * settings if not provided.
      */
     private String licenseStringBase64 = null;
 
