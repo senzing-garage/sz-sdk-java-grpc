@@ -1,6 +1,11 @@
 package com.senzing.sdk.grpc.server;
 
 import com.senzing.cmdline.CommandLineOption;
+import com.senzing.datamart.ConnectionUri;
+import com.senzing.datamart.PostgreSqlUri;
+import com.senzing.datamart.ProcessingRate;
+import com.senzing.datamart.SQLiteUri;
+import com.senzing.datamart.SzCoreSettingsUri;
 import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
@@ -20,6 +25,7 @@ import java.util.Objects;
 
 import static com.senzing.sdk.grpc.server.SzGrpcServerConstants.*;
 import static com.senzing.sdk.grpc.server.SzGrpcServerOption.*;
+import static com.senzing.util.SzUtilities.startsWithDatabaseUriPrefix;
 
 /**
  * Describes the options to be set when constructing an instance of
@@ -117,6 +123,28 @@ public class SzGrpcServerOptions {
     private boolean skipEnginePriming = false;
 
     /**
+     * The {@link ConnectionUri} for the data mart database connection.
+     */
+    private ConnectionUri dataMartDatabaseUri = null;
+
+    /**
+     * The {@link ProcessingRate} to use for the data mart.
+     */
+    private ProcessingRate dataMartProcessingRate = null;
+
+    /**
+     * The optional core database URI to create the core settings if 
+     * not provided.
+     */
+    private String coreDatabaseUri = null;
+
+    /**
+     * The optional base-64-encoded license string to create the core
+     * settings if not provided.
+     */
+    private String licenseStringBase64 = null;
+
+    /**
      * Constructs with the {@link Map} of {@link CommandLineOption}
      * keys to {@link Object} values.
      * 
@@ -130,11 +158,18 @@ public class SzGrpcServerOptions {
     }
 
     /**
-     * Constructs with the Senzing SDK initialization settings as a
-     * {@link JsonObject}.
+     * Default constructor.
+     */
+    public SzGrpcServerOptions() {
+        // do nothing
+    }
+
+    /**
+     * Constructs with the {@link JsonObject} representing the settings
+     * with which to initialize the Senzing Core SDK.
      *
-     * @param settings The Senzing SDK initialization settings as a
-     *                 {@link JsonObject}.
+     * @param settings The {@link JsonObject} representing the settings
+     *                 with which to initialize the Senzing Core SDK.
      */
     public SzGrpcServerOptions(JsonObject settings) {
         Objects.requireNonNull(settings,
@@ -143,23 +178,134 @@ public class SzGrpcServerOptions {
     }
 
     /**
-     * Constructs with the Senzing SDK initialization settings as JSON text.
-     *
-     * @param settings The Senzing SDK initialization settings as JSON text.
+     * Constructs with the JSON text representing the settings
+     * with which to initialize the Senzing Core SDK.
+     * 
+     * @param settings The JSON text representing the settings with
+     *                 which to initialize the Senzing Core SDK.
      */
     public SzGrpcServerOptions(String settings) {
         this(JsonUtilities.parseJsonObject(settings));
     }
 
     /**
-     * Returns the {@link JsonObject} describing the Senzing SDK
-     * initialization settings.
+     * Gets the {@link JsonObject} representing the 
+     * settings with which to initialize the Senzing Core SDK.
      *
-     * @return The {@link JsonObject} describing the Senzing SDK
-     *         initialization settings.
+     * @return The {@link JsonObject} representing the settings
+     *         with which to initialize the Senzing Core SDK.
      */
+    @Option(CORE_SETTINGS)
     public JsonObject getCoreSettings() {
         return this.coreSettings;
+    }
+
+    /**
+     * Sets the {@link JsonObject} representing the settings
+     * with which to initialize the Senzing Core SDK.
+     *
+     * @param settings The {@link JsonObject} representing the
+     *                 settings with which to initialize the
+     *                 Senzing Core SDK.
+     * 
+     * @return A reference to this instance.
+     */
+    @Option(CORE_SETTINGS)
+    public SzGrpcServerOptions setCoreSettings(JsonObject settings) {
+        if (settings != null && this.coreDatabaseUri != null) {
+            throw new IllegalStateException(
+                "Cannot specify a non-null core settings when a core database "
+                + "URL (" + this.coreDatabaseUri + ") has already been specified: " 
+                + settings);
+        }
+        this.coreSettings = settings;
+        return this;
+    }
+
+    /**
+     * Gets the the core database URI from which to create the core
+     * settings to initialize the Senzing Core SDK.
+     * 
+     * @return The core database URI from which to create the core
+     *         settings to initialize the Senzing Core SDK.
+     */
+    @Option(CORE_DATABASE_URI)
+    public String getCoreDatabaseUri() {
+        return this.coreDatabaseUri;
+    }
+
+    /**
+     * Sets the the core database URI from which to create the core
+     * settings to initialize the Senzing Core SDK.
+     *
+     * @param uri The core database URI from which to create the
+     *            core settings to initialize the Senzing Core SDK.
+     * 
+     * @return A reference to this instance.
+     * 
+     * @throws IllegalArgumentException If the specified URI does not appear to
+     *                                  be valid.
+     * 
+     * @throws IllegalStateException If the {@linkplain #setCoreSettings(JsonObject)
+     *                               core settings} have also been provided.
+     */
+    @Option(CORE_DATABASE_URI)
+    public SzGrpcServerOptions setCoreDatabaseUri(String uri) 
+        throws IllegalStateException
+    {
+        if (uri != null && this.coreSettings != null) {
+            throw new IllegalStateException(
+                "Cannot specify a non-null core database URI when core settings "
+                + "have already been specified: " + uri);
+        }
+        if (uri != null && !startsWithDatabaseUriPrefix(uri)) {
+            throw new IllegalArgumentException(
+                "The specified core database URI does not appear to be "
+                + "a supported core database URI: " + uri);
+        }
+        this.coreDatabaseUri = uri;
+        return this;
+    }
+
+    /**
+     * Gets the base-64-encoded Senzing license string to include
+     * in the core settings to initialize the Senzing Core SDK if
+     * the core settings have not provided.
+     * 
+     * @return The base-64-encoded Senzing license string to
+     *         include in the core settings to initialize the
+     *         Senzing Core SDK.
+     */
+    @Option(LICENSE_STRING_BASE64)
+    public String getLicenseStringBase64() {
+        return this.licenseStringBase64;
+    }
+
+    /**
+     * Sets the base-64-encoded Senzing license string to include
+     * in the core settings to initialize the Senzing Core SDK if
+     * the core settings have not provided.
+     *
+     * @param licenseString The base-64-encoded Senzing license
+     *                      string to include in the core settings
+     *                      to initialize the Senzing Core SDK.
+     * 
+     * @return A reference to this instance.
+     * 
+     * @throws IllegalStateException If the {@linkplain #setCoreSettings(JsonObject)
+     *                               core settings} have also been provided.
+     */
+    @Option(LICENSE_STRING_BASE64)
+    public SzGrpcServerOptions setLicenseStringBase64(String licenseString) 
+        throws IllegalStateException
+    {
+        if (licenseString != null && this.coreSettings != null) {
+            throw new IllegalStateException(
+                "Cannot specify a non-null license string when core settings "
+                + "have already been specified: " + licenseString);
+        }
+        this.licenseStringBase64 = licenseString;
+        return this;
     }
 
     /**
@@ -521,6 +667,73 @@ public class SzGrpcServerOptions {
     @Option(SKIP_ENGINE_PRIMING)
     public SzGrpcServerOptions setSkippingEnginePriming(boolean skipping) {
         this.skipEnginePriming = skipping;
+        return this;
+    }
+
+    /**
+     * Gets the data mart database {@link ConnectionUri} for this instance.
+     * 
+     * @return The data mart database {@link ConnectionUri} for this instance,
+     *         or <code>null</code> if this has not been configured.
+     */
+    @Option(DATA_MART_DATABASE_URI)
+    public ConnectionUri getDataMartDatabaseUri() {
+        return this.dataMartDatabaseUri;
+    }
+
+    /**
+     * Gets the {@link ProcessingRate} that the {@link 
+     * com.senzing.datamart.SzReplicator} would use to balance between
+     * quickly processing messages in order to stay closely in sync
+     * with the entity repository and delaying in order to batch a
+     * larger number of messages and conserve system resources.
+     *
+     * @return The {@link ProcessingRate} for this instance.
+     */
+    @Option(DATA_MART_RATE)
+    public ProcessingRate getProcessingRate() {
+        return this.dataMartProcessingRate;
+    }
+
+    /**
+     * Sets the {@link ProcessingRate} to determine how the 
+     * {@link com.senzing.datamart.SzReplicator} should balance between quickly
+     * processing messages in order to stay closely in sync
+     * with the entity repository and delaying in order to
+     * batch a larger number of messages and conserve system
+     * resources.
+     *
+     * @param rate The {@link ProcessingRate} for the 
+     *             {@link com.senzing.datamart.SzReplicator}, or <code>null</code>
+     *             if {@link ProcessingRate#STANDARD} should be used.
+     *
+     * @return A reference to this instance.
+     */
+    @Option(DATA_MART_RATE)
+    public SzGrpcServerOptions setDataMartRate(ProcessingRate rate) 
+    {
+        this.dataMartProcessingRate = (rate == null) 
+            ? ProcessingRate.STANDARD : rate;
+        return this;
+    }
+
+    /**
+     * Sets the data mart database {@link ConnectionUri} for this instance.
+     * 
+     * @param uri The data mart database {@link ConnectionUri} for this
+     *            instance, or <code>null</code> if this has not been configured.
+     * 
+     * @return A reference to this instance.
+     */
+    @Option(DATA_MART_DATABASE_URI)
+    public SzGrpcServerOptions setDataMartDatabaseUri(ConnectionUri uri) {
+        if (!((uri instanceof PostgreSqlUri)
+              || (uri instanceof SQLiteUri)
+              || (uri instanceof SzCoreSettingsUri)))
+        {
+            throw new IllegalArgumentException("Unsupported URI type: " + uri);
+        }
+        this.dataMartDatabaseUri = uri;
         return this;
     }
 

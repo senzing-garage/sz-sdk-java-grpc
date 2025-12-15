@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,12 +20,15 @@ import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.cmdline.CommandLineValue;
 import com.senzing.cmdline.DeprecatedOptionWarning;
 import com.senzing.cmdline.ParameterProcessor;
+import com.senzing.datamart.ProcessingRate;
+import com.senzing.datamart.SzReplicatorOption;
 import com.senzing.util.JsonUtilities;
 
 import static com.senzing.sdk.grpc.server.SzGrpcServerConstants.*;
 import static com.senzing.util.CollectionUtilities.*;
 import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.io.IOUtilities.*;
+import static com.senzing.util.SzUtilities.*;
 
 /**
  * Enumerates the options to the {@link SzGrpcServer}.
@@ -110,7 +114,7 @@ public enum SzGrpcServerOption
      * <code>SENZING_TOOLS_SERVER_ADDRESS="{ip-address|loopback|all}"</code></li>
      * </ul>
      */
-    BIND_ADDRESS("--server-address", ENV_PREFIX + "SERVER_ADDRESS",
+    BIND_ADDRESS("--bind-address", ENV_PREFIX + "BIND_ADDRESS",
                    1, DEFAULT_BIND_ADDRESS_PARAM),
 
     /**
@@ -134,7 +138,7 @@ public enum SzGrpcServerOption
     /**
      * <p>
      * Option for specifying the core settings JSON with which to initialize
-     * the Core Senzing SDK. The parameter to this option should be the
+     * the Core Senzing SDK.  The parameter to this option should be the
      * settings as a JSON object <b>or</b> the path to a file containing the
      * settings JSON.
      * <p>
@@ -150,6 +154,38 @@ public enum SzGrpcServerOption
                   List.of("SENZING_ENGINE_CONFIGURATION_JSON"),
                   true, 1),
 
+    /**
+     * <p>
+     * This option is used in place of {@link #CORE_SETTINGS} as a basis
+     * to create a basic settings.  The parameter to this option should be
+     * a database URI that is legal for the Senzing core environment settings. 
+     * <p>
+     * This option can be specified in the following ways:
+     * <ul>
+     * <li>Command Line: <code>--core-database-uri {database-uri}</code></li>
+     * <li>Environment: <code>SENZING_TOOLS_CORE_DATABASE_URI="{database-uri}"</code></li>
+     * </ul>
+     */
+    CORE_DATABASE_URI("--core-database-uri",
+                      ENV_PREFIX + "CORE_DATABASE_URI",
+                      null, true, 1),
+        
+    /**
+     * <p>
+     * This option is used along with {@link #CORE_DATABASE_URI} to add a license
+     * to the basic settings.  The parameter to this option should be a base-64
+     * encoded Senzing license string. 
+     * <p>
+     * This option can be specified in the following ways:
+     * <ul>
+     * <li>Command Line: <code>--license-string-base64 {base64-encoded-license}</code></li>
+     * <li>Environment: <code>SENZING_TOOLS_LICENSE_STRING_BASE64="{base64-encoded-license}"</code></li>
+     * </ul>
+     */
+    LICENSE_STRING_BASE64("--license-string-base64",
+                          ENV_PREFIX + "LICENSE_STRING_BASE64",
+                          null, 1),
+    
     /**
      * <p>
      * This option is used with {@link #CORE_SETTINGS} to force a specific
@@ -316,8 +352,75 @@ public enum SzGrpcServerOption
      */
     SKIP_ENGINE_PRIMING("--skip-engine-priming",
                         ENV_PREFIX + "SKIP_ENGINE_PRIMING",
-                        0, "false");
+                        0, "false"),
 
+    /**
+     * This option is used to specify the database connection for the data mart,
+     * if omitted then the data mart will <b>NOT</b> enabled.  If provided, then
+     * the single parameter to this option is the SQLite or PostgreSQL database
+     * URI specifying the database connection.  Possible database URI formats are:
+     * <ul>
+     *   <li><code>{@value com.senzing.datamart.PostgreSqlUri#SUPPORTED_FORMAT_1}</code></li>
+     *   <li><code>{@value com.senzing.datamart.PostgreSqlUri#SUPPORTED_FORMAT_2}</code></li>
+     *   <li><code>{@value com.senzing.datamart.SQLiteUri#SUPPORTED_FORMAT_1}</code></li>
+     *   <li><code>{@value com.senzing.datamart.SQLiteUri#SUPPORTED_FORMAT_2}</code></li>
+     *   <li><code>{@value com.senzing.datamart.SQLiteUri#SUPPORTED_FORMAT_3}</code></li>
+     * </ul>
+     * <b>NOTE:</b> The PostgreSQL or SQLite URI can also be obtained from the 
+     * {@link #CORE_SETTINGS} by using a special URI in the following format:
+     * <ul>
+     *   <li><code>{@value com.senzing.datamart.SzCoreSettingsUri#SUPPORTED_FORMAT}</code></li>
+     * </ul>
+     * For example,
+     * <code>{@value com.senzing.datamart.SzReplicatorConstants#DEFAULT_CORE_SETTINGS_DATABASE_URI}</code>
+     * will obtain the primary SQL connection from the {@linkplain #CORE_SETTINGS
+     * Senzing Core SDK settings}.
+     * <b>NOTE:</b> The PostgreSQL or SQLite URI can also be obtained from the 
+     * {@link #CORE_SETTINGS} by using a special URI in the following format:
+     * <p>
+     * This option can be specified in the following ways:
+     * <ul>
+     * <li>Command Line: <code>--data-mart-uri {uri}</code></li>
+     * <li>Environment:
+     * <code>SENZING_TOOLS_DATA_MART_DATABASE_URI="{uri}"</code></li>
+     * </ul>
+     */
+    DATA_MART_DATABASE_URI("--data-mart-database-uri",
+                           ENV_PREFIX + "DATA_MART_DATABASE_URI",
+                           null, 1),
+
+    /**
+     * <p>
+     * Use this option to balance the data mart message consumption and processing
+     * between aggressively keeping the data mart closely in sync with the entity
+     * repository and less frequent batch processing to conserve system resources.
+     * The value to this option is one of the following:
+     * <ul>
+     * <li><code>leisurely</code> -- This setting allows for longer gaps between 
+     * updating the data mart, favoring less frequent batch processing in order to
+     * conserve system resources.</li>
+     * 
+     * <li><code>standard</code> -- This is the default and is balance between 
+     * conserving system resources and keeping the data mart updated in a reasonably
+     * timely manner.</li>
+     * 
+     * <li><code>aggressive</code> -- This setting uses more system resources to 
+     * aggressively consume and process incoming messages to keep the data mart closely
+     * in sync with the least time delay.</li>
+     * 
+     * </ul>
+     * <p>
+     * This option can be specified in the following ways:
+     * <ul>
+     * <li>Command Line:
+     * <code>--processing-rate {leisurely|standard|aggressive}</code></li>
+     * <li>Environment:
+     * <code>SENZING_TOOLS_REFRESH_CONFIG_SECONDS="{integer}"</code></li>
+     * </ul>
+     */
+    DATA_MART_RATE("--data-mart-rate", ENV_PREFIX + "PROCESSING_RATE", null,
+                    1, ProcessingRate.STANDARD.toString().toLowerCase());
+    
     /**
      * The {@link Map} of {@link SzGrpcServerOption} keys to unmodifiable
      * {@link Set} values containing the {@link SzGrpcServerOption} values that
@@ -395,23 +498,6 @@ public enum SzGrpcServerOption
      */
     private List<String> defaultParameters;
 
-    /**
-     * The group name for the option group that this parameter belongs to.
-     */
-    private String groupName;
-
-    /**
-     * The property key to map the option to for the group for initializing a
-     * sub-object with the options in that group.
-     */
-    private String groupPropertyKey;
-
-    /**
-     * The property indicating if the option is not required for the validity of
-     * the group to which it belongs.
-     */
-    private boolean groupOptional;
-
     SzGrpcServerOption(
             String cmdLineFlag,
             Set<String> synonymFlags,
@@ -425,10 +511,7 @@ public enum SzGrpcServerOption
              primary,
              parameterCount,
              Collections.emptyList(),
-             false,
-             null,
-             null,
-             true);
+             false);
     }
     
     SzGrpcServerOption(
@@ -444,10 +527,7 @@ public enum SzGrpcServerOption
              false,
              parameterCount,
              List.of(defaultParams),
-             false,
-             null,
-             null,
-             true);
+             false);
     }
 
     SzGrpcServerOption(
@@ -464,10 +544,7 @@ public enum SzGrpcServerOption
              false,
              parameterCount,
              List.of(defaultParams),
-             false,
-             null,
-             null,
-             true);
+             false);
     }
 
     SzGrpcServerOption(String cmdLineFlag,
@@ -483,10 +560,7 @@ public enum SzGrpcServerOption
              parameterCount < 0 ? 0 : parameterCount,
              parameterCount,
              Collections.emptyList(),
-             false,
-             null,
-             null,
-            true);
+             false);
     }
 
     SzGrpcServerOption(
@@ -497,10 +571,7 @@ public enum SzGrpcServerOption
             boolean         primary,
             int             parameterCount,
             List<String>    defaultParameters,
-            boolean         deprecated,
-            String          groupName,
-            String          groupPropertyKey,
-            boolean         groupOptional) 
+            boolean         deprecated) 
     {
         this(cmdLineFlag, 
              synonymFlags,
@@ -510,10 +581,7 @@ public enum SzGrpcServerOption
              parameterCount,
              parameterCount,
              defaultParameters,
-             deprecated,
-             groupName,
-             groupPropertyKey,
-             groupOptional);
+             deprecated);
     }
 
     SzGrpcServerOption(
@@ -525,10 +593,7 @@ public enum SzGrpcServerOption
             int             minParameterCount,
             int             maxParameterCount,
             List<String>    defaultParameters,
-            boolean         deprecated,
-            String          groupName,
-            String          groupPropertyKey,
-            boolean         groupOptional) 
+            boolean         deprecated) 
     {
         this.cmdLineFlag = cmdLineFlag;
         this.synonymFlags = Set.copyOf(synonymFlags);
@@ -537,9 +602,6 @@ public enum SzGrpcServerOption
         this.minParamCount = minParameterCount;
         this.maxParamCount = maxParameterCount;
         this.deprecated = deprecated;
-        this.groupName = groupName;
-        this.groupPropertyKey = groupPropertyKey;
-        this.groupOptional = groupOptional;
         this.envFallbacks = (envFallbacks == null)
                 ? Collections.emptyList()
                 : List.copyOf(envFallbacks);
@@ -623,42 +685,6 @@ public enum SzGrpcServerOption
     }
 
     /**
-     * Gets the group name (identifier) if this option is 
-     * grouped with other options.
-     * 
-     * @return The group name (identifier) for this option,
-     *         or <code>null</code> if this option does not
-     *         belong to a group.
-     */
-    public String getGroupName() {
-        return this.groupName;
-    }
-
-    /**
-     * The key under which the option value is stored in the
-     * option group's {@link Map} of properties.
-     * 
-     * @return The key under which the option value is stored
-     *         in the option group's {@link Map} of properties.
-     */
-    public String getGroupPropertyKey() {
-        return this.groupPropertyKey;
-    }
-
-    /**
-     * Checks if this option is optional for the group.  These 
-     * options will still trigger the required options for the
-     * group to specified, but are not required if one of the
-     * required options for the group is specified.
-     * 
-     * @return <code>true</code> if the option is optional for 
-     *         for the group, otherwise <code>false</code>.
-     */
-    public boolean isGroupOptional() {
-        return this.groupOptional;
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override
@@ -709,14 +735,18 @@ public enum SzGrpcServerOption
             Map<SzGrpcServerOption, Set<SzGrpcServerOption>> altMap = new LinkedHashMap<>();
             Map<String, SzGrpcServerOption> lookupMap = new LinkedHashMap<>();
 
+            List<SzGrpcServerOption> primaryOptions = new LinkedList<>();
             for (SzGrpcServerOption option : SzGrpcServerOption.values()) {
                 conflictMap.put(option, new LinkedHashSet<>());
                 altMap.put(option, new LinkedHashSet<>());
                 lookupMap.put(option.getCommandLineFlag().toLowerCase(), option);
+                if (option.isPrimary()) {
+                    primaryOptions.add(option);
+                }
             }
-            SzGrpcServerOption[] exclusiveOptions = {HELP, VERSION};
-            for (SzGrpcServerOption option : SzGrpcServerOption.values()) {
-                for (SzGrpcServerOption exclOption : exclusiveOptions) {
+
+            for (SzGrpcServerOption option : primaryOptions) {
+                for (SzGrpcServerOption exclOption : primaryOptions) {
                     if (option == exclOption) {
                         continue;
                     }
@@ -729,43 +759,8 @@ public enum SzGrpcServerOption
 
             Map<SzGrpcServerOption, Set<Set<CommandLineOption>>> dependencyMap = new LinkedHashMap<>();
 
-            // handle dependencies for groups of options that go together
-            Map<String, Set<SzGrpcServerOption>> groups = new LinkedHashMap<>();
-            for (SzGrpcServerOption option : SzGrpcServerOption.values()) {
-                String groupName = option.getGroupName();
-                if (groupName == null) {
-                    continue;
-                }
-                Set<SzGrpcServerOption> set = groups.get(groupName);
-                if (set == null) {
-                    set = new LinkedHashSet<>();
-                    groups.put(groupName, set);
-                }
-                set.add(option);
-            }
-
-            // create the dependencies using the groupings
-            groups.forEach((groupName, group) -> {
-                for (SzGrpcServerOption option : group) {
-                    Set<CommandLineOption> others = new LinkedHashSet<>(group);
-
-                    // remove self from the group (can't depend on itself)
-                    others.remove(option);
-
-                    // remove any options that are not required
-                    for (SzGrpcServerOption opt : group) {
-                        if (opt.isGroupOptional()) {
-                            others.remove(opt);
-                        }
-                    }
-
-                    // make the others set unmodifiable
-                    others = Collections.unmodifiableSet(others);
-
-                    // add the dependency
-                    dependencyMap.put(option, Set.of(others));
-                }
-            });
+            dependencyMap.put(DATA_MART_RATE, Set.of(Set.of(DATA_MART_DATABASE_URI)));
+            dependencyMap.put(LICENSE_STRING_BASE64, Set.of(Set.of(CORE_DATABASE_URI)));
 
             CONFLICTING_OPTIONS = recursivelyUnmodifiableMap(conflictMap);
             ALTERNATIVE_OPTIONS = recursivelyUnmodifiableMap(altMap);
@@ -836,6 +831,7 @@ public enum SzGrpcServerOption
                     return addr;
 
                 case CORE_INSTANCE_NAME:
+                case LICENSE_STRING_BASE64:
                     return params.get(0).trim();
 
                 case CORE_SETTINGS: {
@@ -882,6 +878,15 @@ public enum SzGrpcServerOption
                         }
                     }
                 }
+                case CORE_DATABASE_URI:
+                    String coreDatabaseUri = params.get(0);
+                    if (!startsWithDatabaseUriPrefix(coreDatabaseUri)) {
+                        throw new IllegalArgumentException(
+                            "The specified core database URI does not appear to be "
+                            + "a supported core database URI: " + coreDatabaseUri);
+                    }
+                    return coreDatabaseUri;
+                
                 case CORE_CONFIG_ID:
                     try {
                         return Long.parseLong(params.get(0));
@@ -897,10 +902,10 @@ public enum SzGrpcServerOption
                     switch (paramVal) {
                         case "verbose":
                         case "1":
-                            return true;
+                            return 1;
                         case "muted":
                         case "0":
-                            return false;
+                            return 0;
                         default:
                             throw new IllegalArgumentException(
                                 "The specified core log level is not recognized; " + paramVal);
@@ -948,6 +953,17 @@ public enum SzGrpcServerOption
                     }
                     return statsInterval;
                 }
+
+                case DATA_MART_DATABASE_URI:
+                    try {
+                        return SzReplicatorOption.parseDatabaseUri(params.get(0));
+                    } catch (RuntimeException e) {
+                        e.printStackTrace();
+                        throw e;
+                    }
+
+                case DATA_MART_RATE:
+                    return SzReplicatorOption.parseProcessingRate(params.get(0));
 
                 case SKIP_STARTUP_PERF:
                 case SKIP_ENGINE_PRIMING:
@@ -1023,5 +1039,15 @@ public enum SzGrpcServerOption
                 optionValues, null, jsonBuilder, null);
         
         return processedValues;
+    }
+
+    static {
+        // force load the SzReplicatorOption class to ensure
+        // the supported derivations of ConnectionUri are registered
+        try {
+            Class.forName(SzReplicatorOption.class.getName());
+        } catch (ClassNotFoundException ignore) {
+            // do nothing
+        }
     }
 }
