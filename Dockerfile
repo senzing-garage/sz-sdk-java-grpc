@@ -13,8 +13,8 @@ ARG IMAGE_FINAL=senzing/senzingsdk-runtime:4.1.0@sha256:e57d751dc0148bb8eeafedb7
 FROM ${IMAGE_FINAL} AS senzingsdk_runtime
 
 RUN apt-get update \
- && apt-get -y --no-install-recommends install \
-        senzingsdk-setup
+       && apt-get -y --no-install-recommends install \
+       senzingsdk-setup
 
 # -----------------------------------------------------------------------------
 # Stage: builder
@@ -22,8 +22,8 @@ RUN apt-get update \
 FROM ${IMAGE_BUILDER} AS builder
 ENV REFRESHED_AT=2025-12-12
 LABEL Name="senzing/java-builder" \
-      Maintainer="support@senzing.com" \
-      Version="0.3.0"
+       Maintainer="support@senzing.com" \
+       Version="0.3.0"
 
 # Run as "root" for system installation.
 
@@ -37,29 +37,29 @@ COPY --from=senzingsdk_runtime  "/etc/opt/senzing/"   "/etc/opt/senzing/"
 # Install packages via apt-get.
 
 RUN apt-get update \
- && apt-get -y --no-install-recommends install \
-        libsqlite3-dev \
-        apt-transport-https \
-        gnupg2 \
-        gpg \
-        wget \
- && apt-get install -y --reinstall ca-certificates \
- && update-ca-certificates \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+       && apt-get -y --no-install-recommends install \
+       libsqlite3-dev \
+       apt-transport-https \
+       gnupg2 \
+       gpg \
+       wget \
+       && apt-get install -y --reinstall ca-certificates \
+       && update-ca-certificates \
+       && apt-get clean \
+       && rm -rf /var/lib/apt/lists/*
 
 # Install Java-17.
 
 RUN wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor | tee /etc/apt/trusted.gpg.d/adoptium.gpg > /dev/null \
- && echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
+       && echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends temurin-17-jdk \
- && rm -rf /var/lib/apt/lists/*
+       && apt-get install -y --no-install-recommends temurin-17-jdk \
+       && rm -rf /var/lib/apt/lists/*
 
 RUN wget https://downloads.apache.org/maven/maven-3/3.9.11/binaries/apache-maven-3.9.11-bin.tar.gz -P /opt \
- && tar xf /opt/apache-maven-*.tar.gz -C /opt \
- && ln -s /opt/apache-maven-3.9.11 /opt/maven
+       && tar xf /opt/apache-maven-*.tar.gz -C /opt \
+       && ln -s /opt/apache-maven-3.9.11 /opt/maven
 
 ENV M2_HOME=/opt/maven
 ENV MAVEN_HOME=/opt/maven
@@ -91,34 +91,35 @@ RUN mvn -ntp -DskipTests=true package
 FROM ${IMAGE_FINAL} AS final
 ENV REFRESHED_AT=2024-02-2025
 LABEL Name="senzing/sz-sdk-grpc-java" \
-      Maintainer="support@senzing.com" \
-      Version="0.9.1"
+       Maintainer="support@senzing.com" \
+       Version="0.9.1"
 #HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD ["/app/healthcheck.sh"]
+HEALTHCHECK CMD ["echo hello"]
 USER root
 
 # Install packages via apt-get.
 
 RUN apt-get update \
- && apt-get -y --no-install-recommends install \
-        senzingsdk-setup \
-        libsqlite3-dev \
-        apt-transport-https \
-        gnupg2 \
-        gpg \
-        wget \
- && apt-get install -y --reinstall ca-certificates \
- && update-ca-certificates \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+       && apt-get -y --no-install-recommends install \
+       senzingsdk-setup \
+       libsqlite3-dev \
+       apt-transport-https \
+       gnupg2 \
+       gpg \
+       wget \
+       && apt-get install -y --reinstall ca-certificates \
+       && update-ca-certificates \
+       && apt-get clean \
+       && rm -rf /var/lib/apt/lists/*
 
 # Install Java-17.
 
 RUN wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor | tee /etc/apt/trusted.gpg.d/adoptium.gpg > /dev/null \
- && echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
+       && echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends temurin-17-jdk \
- && rm -rf /var/lib/apt/lists/*
+       && apt-get install -y --no-install-recommends temurin-17-jdk \
+       && rm -rf /var/lib/apt/lists/*
 
 # Copy files from repository.
 
