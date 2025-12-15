@@ -20,10 +20,10 @@ RUN apt-get update \
 # Stage: builder
 # -----------------------------------------------------------------------------
 FROM ${IMAGE_BUILDER} AS builder
-ENV REFRESHED_AT=2025-12-02
+ENV REFRESHED_AT=2025-12-12
 LABEL Name="senzing/java-builder" \
       Maintainer="support@senzing.com" \
-      Version="0.1.0"
+      Version="0.3.0"
 
 # Run as "root" for system installation.
 
@@ -135,7 +135,7 @@ USER 1001
 # Runtime environment variables.
 ENV SENZING_PATH=/opt/senzing
 ENV LD_LIBRARY_PATH=/opt/senzing/er/lib/
-ENV SENZING_TOOLS_DATABASE_URL=sqlite3://na:na@nowhere/IN_MEMORY_DB?mode=memory&cache=shared
+ENV SENZING_TOOLS_CORE_DATABASE_URI=sqlite3:///tmp/senzing-repo.db
 
 # Runtime execution.
 
