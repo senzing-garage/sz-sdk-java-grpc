@@ -458,10 +458,10 @@ public class SzGrpcServer {
 
         // decorate the GRPC service with the CORS decorator if we have one
         if (corsDecorator != null) {
-            grpcService.decorate(corsDecorator);
+            serverBuilder.service(grpcService, corsDecorator);
+        } else {
+            serverBuilder.service(grpcService);
         }
-
-        serverBuilder.service(grpcService);
 
         // check if we need to build with data mart services
         if (this.replicator != null) {
