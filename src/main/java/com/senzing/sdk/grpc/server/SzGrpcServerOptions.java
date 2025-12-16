@@ -17,9 +17,11 @@ import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -133,7 +135,7 @@ public class SzGrpcServerOptions {
     private ProcessingRate dataMartProcessingRate = null;
 
     /**
-     * The optional core database URI to create the core settings if 
+     * The optional core database URI to create the core settings if
      * not provided.
      */
     private String coreDatabaseUri = null;
@@ -145,6 +147,13 @@ public class SzGrpcServerOptions {
     private String licenseStringBase64 = null;
 
     /**
+     * The value for the CORS <code>Access-Control-Allowed-Origins</code>
+     * header to include on all HTTP responses, or <code>null</code> if
+     * the CORS headers should be omitted.
+     */
+    private List<String> allowedOrigins;
+
+    /**
      * Constructs with the {@link Map} of {@link CommandLineOption}
      * keys to {@link Object} values.
      * 
@@ -152,8 +161,7 @@ public class SzGrpcServerOptions {
      *                  keys to {@link Object} values.
      */
     @SuppressWarnings("rawtypes")
-    protected SzGrpcServerOptions(Map<CommandLineOption, Object> optionMap) 
-    {
+    protected SzGrpcServerOptions(Map<CommandLineOption, Object> optionMap) {
         setOptions(this, optionMap);
     }
 
@@ -189,7 +197,7 @@ public class SzGrpcServerOptions {
     }
 
     /**
-     * Gets the {@link JsonObject} representing the 
+     * Gets the {@link JsonObject} representing the
      * settings with which to initialize the Senzing Core SDK.
      *
      * @return The {@link JsonObject} representing the settings
@@ -214,9 +222,9 @@ public class SzGrpcServerOptions {
     public SzGrpcServerOptions setCoreSettings(JsonObject settings) {
         if (settings != null && this.coreDatabaseUri != null) {
             throw new IllegalStateException(
-                "Cannot specify a non-null core settings when a core database "
-                + "URL (" + this.coreDatabaseUri + ") has already been specified: " 
-                + settings);
+                    "Cannot specify a non-null core settings when a core database "
+                            + "URL (" + this.coreDatabaseUri + ") has already been specified: "
+                            + settings);
         }
         this.coreSettings = settings;
         return this;
@@ -246,22 +254,22 @@ public class SzGrpcServerOptions {
      * @throws IllegalArgumentException If the specified URI does not appear to
      *                                  be valid.
      * 
-     * @throws IllegalStateException If the {@linkplain #setCoreSettings(JsonObject)
-     *                               core settings} have also been provided.
+     * @throws IllegalStateException    If the
+     *                                  {@linkplain #setCoreSettings(JsonObject)
+     *                                  core settings} have also been provided.
      */
     @Option(CORE_DATABASE_URI)
-    public SzGrpcServerOptions setCoreDatabaseUri(String uri) 
-        throws IllegalStateException
-    {
+    public SzGrpcServerOptions setCoreDatabaseUri(String uri)
+            throws IllegalStateException {
         if (uri != null && this.coreSettings != null) {
             throw new IllegalStateException(
-                "Cannot specify a non-null core database URI when core settings "
-                + "have already been specified: " + uri);
+                    "Cannot specify a non-null core database URI when core settings "
+                            + "have already been specified: " + uri);
         }
         if (uri != null && !startsWithDatabaseUriPrefix(uri)) {
             throw new IllegalArgumentException(
-                "The specified core database URI does not appear to be "
-                + "a supported core database URI: " + uri);
+                    "The specified core database URI does not appear to be "
+                            + "a supported core database URI: " + uri);
         }
         this.coreDatabaseUri = uri;
         return this;
@@ -296,13 +304,12 @@ public class SzGrpcServerOptions {
      *                               core settings} have also been provided.
      */
     @Option(LICENSE_STRING_BASE64)
-    public SzGrpcServerOptions setLicenseStringBase64(String licenseString) 
-        throws IllegalStateException
-    {
+    public SzGrpcServerOptions setLicenseStringBase64(String licenseString)
+            throws IllegalStateException {
         if (licenseString != null && this.coreSettings != null) {
             throw new IllegalStateException(
-                "Cannot specify a non-null license string when core settings "
-                + "have already been specified: " + licenseString);
+                    "Cannot specify a non-null license string when core settings "
+                            + "have already been specified: " + licenseString);
         }
         this.licenseStringBase64 = licenseString;
         return this;
@@ -324,7 +331,7 @@ public class SzGrpcServerOptions {
 
     /**
      * Sets the gRPC port to bind to. Use zero to bind to a random port and
-     * <code>null</code> to bind to the {@linkplain 
+     * <code>null</code> to bind to the {@linkplain
      * SzGrpcServerConstants#DEFAULT_PORT default port}.
      *
      * @param port The gRPC port to bind to, zero (0) if the server should bind
@@ -341,7 +348,7 @@ public class SzGrpcServerOptions {
 
     /**
      * Gets the {@link InetAddress} for the address that the server will bind
-     * to. If this was never set or set to <code>null</code> then the loopback 
+     * to. If this was never set or set to <code>null</code> then the loopback
      * address is returned.
      *
      * @return The {@link InetAddress} to which the server will bind.
@@ -362,15 +369,55 @@ public class SzGrpcServerOptions {
      */
     @Option(BIND_ADDRESS)
     public SzGrpcServerOptions setBindAddress(InetAddress addr) {
-        this.bindAddress = addr == null 
-            ? InetAddress.getLoopbackAddress() : addr;
+        this.bindAddress = addr == null
+                ? InetAddress.getLoopbackAddress()
+                : addr;
+        return this;
+    }
+
+    /**
+     * Gets the CORS <code>Access-Control-Allow-Origin</code> header to use
+     * for all HTTP responses. This returns <code>null</code> if the CORS
+     * <code>Access-Control-Allow-Origin</code> header is to be omitted from
+     * the HTTP responses.
+     *
+     * @return The CORS <code>Access-Control-Allow-Origin</code> header to
+     *         use all HTTP responses, or <code>null</code> if the header
+     *         is to be omitted.
+     */
+    @Option(ALLOWED_ORIGINS)
+    public List<String> getAllowedOrigins() {
+        return this.allowedOrigins;
+    }
+
+    /**
+     * Sets the CORS <code>Access-Control-Allow-Origin</code> header to use for
+     * responses to all HTTP requests. Set this to <code>null</code> if the
+     * CORS <code>Access-Control-Allow-Origin</code> header is to be omitted
+     * from the HTTP responses.
+     *
+     * @param allowedOrigins The CORS <code>Access-Control-Allow-Origin</code>
+     *                       header to use for responses to all HTTP requests,
+     *                       or <code>null</code> if the header is to be omitted.
+     *
+     * @return A reference to this instance.
+     */
+    @Option(ALLOWED_ORIGINS)
+    public SzGrpcServerOptions setAllowedOrigins(List<String> allowedOrigins) {
+        if (allowedOrigins == null) {
+            this.allowedOrigins = Collections.emptyList();
+        } else {
+            this.allowedOrigins = new ArrayList<>(allowedOrigins.size());
+            this.allowedOrigins.addAll(allowedOrigins);
+            this.allowedOrigins = Collections.unmodifiableList(this.allowedOrigins);
+        }
         return this;
     }
 
     /**
      * Gets the number of threads that the server will create for the
-     * Senzing Core SDK operations.  If the value has not {@linkplain
-     * #setCoreConcurrency(Integer) explicitly set} then {@link 
+     * Senzing Core SDK operations. If the value has not {@linkplain
+     * #setCoreConcurrency(Integer) explicitly set} then {@link
      * SzGrpcServerConstants#DEFAULT_CORE_CONCURRENCY} is returned.
      *
      * @return The number of threads that the server will create for
@@ -383,7 +430,7 @@ public class SzGrpcServerOptions {
 
     /**
      * Sets the number of threads that the server will create for the
-     * Senzing Core SDK operations.  Set to <code>null</code> to use the {@linkplain
+     * Senzing Core SDK operations. Set to <code>null</code> to use the {@linkplain
      * SzGrpcServerConstants#DEFAULT_CORE_CONCURRENCY default number of threads}.
      *
      * @param concurrency The number of threads to create for Senzing Core SDK
@@ -435,12 +482,13 @@ public class SzGrpcServerOptions {
 
     /**
      * Gets the instance name with which to initialize the core Senzing SDK
-     * via {@link com.senzing.sdk.core.SzCoreEnvironment.Builder#instanceName(String)}.
-     * If <code>null</code> is returned then {@link 
+     * via
+     * {@link com.senzing.sdk.core.SzCoreEnvironment.Builder#instanceName(String)}.
+     * If <code>null</code> is returned then {@link
      * SzGrpcServerConstants#DEFAULT_INSTANCE_NAME} is used.
      *
      * @return The instance name with which to initialize the core Senzing SDK,
-     *         or <code>null</code> if {@link 
+     *         or <code>null</code> if {@link
      *         SzGrpcServerConstants#DEFAULT_INSTANCE_NAME} should be used.
      */
     @Option(CORE_INSTANCE_NAME)
@@ -450,14 +498,15 @@ public class SzGrpcServerOptions {
 
     /**
      * Sets the instance name with which to initialize the core Senzing SDK
-     * via {@link com.senzing.sdk.core.SzCoreEnvironment.Builder#instanceName(String)}.
-     * Set to <code>null</code> if the default value of {@link 
+     * via
+     * {@link com.senzing.sdk.core.SzCoreEnvironment.Builder#instanceName(String)}.
+     * Set to <code>null</code> if the default value of {@link
      * SzGrpcServerConstants#DEFAULT_INSTANCE_NAME} is to be used.
      *
      * @param instanceName The instance name with which to initialize the core
-     *                   Senzing SDK, or <code>null</code> then the
-     *                   {@link SzGrpcServerConstants#DEFAULT_INSTANCE_NAME}
-     *                   should be used. 
+     *                     Senzing SDK, or <code>null</code> then the
+     *                     {@link SzGrpcServerConstants#DEFAULT_INSTANCE_NAME}
+     *                     should be used.
      * 
      * @return A reference to this instance.
      */
@@ -470,9 +519,10 @@ public class SzGrpcServerOptions {
     /**
      * Gets the log level with which to initialize the core Senzing SDK.
      * This returns an integer, which currently translates into a boolean
-     * for {@link com.senzing.sdk.core.SzCoreEnvironment.Builder#verboseLogging(boolean)}
+     * for
+     * {@link com.senzing.sdk.core.SzCoreEnvironment.Builder#verboseLogging(boolean)}
      * that is <code>true</code> for non-zero values and <code>false</code>
-     * for zero (0).  If the verbosity has not been {@linkplain 
+     * for zero (0). If the verbosity has not been {@linkplain
      * #setCoreLogLevel(int) explicitly set} then <code>false</code> is
      * returned.
      *
@@ -487,7 +537,8 @@ public class SzGrpcServerOptions {
     /**
      * Sets the log level with which to initialize the core Senzing SDK.
      * This is set as an integer, which currently translates into a boolean
-     * for {@link com.senzing.sdk.core.SzCoreEnvironment.Builder#verboseLogging(boolean)}
+     * for
+     * {@link com.senzing.sdk.core.SzCoreEnvironment.Builder#verboseLogging(boolean)}
      * that is <code>true</code> for non-zero values and <code>false</code>
      * for zero (0).
      *
@@ -504,10 +555,11 @@ public class SzGrpcServerOptions {
 
     /**
      * Gets the explicit configuration ID with which to initialize the core
-     * Senzing SDK via {@link com.senzing.sdk.core.SzCoreEnvironment.Builder#configId(Long)}
+     * Senzing SDK via
+     * {@link com.senzing.sdk.core.SzCoreEnvironment.Builder#configId(Long)}
      * This method returns <code>null</code> if the gRPC server should use
-     * the current default configuration ID from the repository.  This method
-     * returns <code>null</code> if the value has not been {@linkplain 
+     * the current default configuration ID from the repository. This method
+     * returns <code>null</code> if the value has not been {@linkplain
      * #setCoreConfigurationId(Long) explicitly set}.
      *
      * @return The explicit configuration ID with which to initialize the
@@ -522,8 +574,9 @@ public class SzGrpcServerOptions {
 
     /**
      * Sets the explicit configuration ID with which to initialize the core
-     * Senzing SDK via {@link com.senzing.sdk.core.SzCoreEnvironment.Builder#configId(Long)}.
-     * Set the value to <code>null</code> if the gRPC server should use the 
+     * Senzing SDK via
+     * {@link com.senzing.sdk.core.SzCoreEnvironment.Builder#configId(Long)}.
+     * Set the value to <code>null</code> if the gRPC server should use the
      * current default configuration ID from the entity repository.
      *
      * @param configId The explicit configuration ID with which to initialize
@@ -557,12 +610,12 @@ public class SzGrpcServerOptions {
      * <code>null</code> if the API server should use {@link
      * SzGrpcServerConstants#DEFAULT_REFRESH_CONFIG_SECONDS}.
      * Use zero (0) to indicate that the configuration should only
-     * be refreshed in reaction to detecting it is out of sync 
+     * be refreshed in reaction to detecting it is out of sync
      * after a failure and a negative integer to disable configuration
      * refresh entirely.
      *
      * @param seconds The number of seconds between periodic automatic
-     *                refresh of the configuration, zero (0) to only 
+     *                refresh of the configuration, zero (0) to only
      *                refresh reactively, and a negative integer to
      *                never refresh.
      *
@@ -571,7 +624,8 @@ public class SzGrpcServerOptions {
     @Option(REFRESH_CONFIG_SECONDS)
     public SzGrpcServerOptions setRefreshConfigSeconds(Long seconds) {
         this.refreshConfigSeconds = (seconds == null)
-            ? DEFAULT_REFRESH_CONFIG_SECONDS : seconds;
+                ? DEFAULT_REFRESH_CONFIG_SECONDS
+                : seconds;
         return this;
     }
 
@@ -682,7 +736,7 @@ public class SzGrpcServerOptions {
     }
 
     /**
-     * Gets the {@link ProcessingRate} that the {@link 
+     * Gets the {@link ProcessingRate} that the {@link
      * com.senzing.datamart.SzReplicator} would use to balance between
      * quickly processing messages in order to stay closely in sync
      * with the entity repository and delaying in order to batch a
@@ -696,24 +750,24 @@ public class SzGrpcServerOptions {
     }
 
     /**
-     * Sets the {@link ProcessingRate} to determine how the 
+     * Sets the {@link ProcessingRate} to determine how the
      * {@link com.senzing.datamart.SzReplicator} should balance between quickly
      * processing messages in order to stay closely in sync
      * with the entity repository and delaying in order to
      * batch a larger number of messages and conserve system
      * resources.
      *
-     * @param rate The {@link ProcessingRate} for the 
+     * @param rate The {@link ProcessingRate} for the
      *             {@link com.senzing.datamart.SzReplicator}, or <code>null</code>
      *             if {@link ProcessingRate#STANDARD} should be used.
      *
      * @return A reference to this instance.
      */
     @Option(DATA_MART_RATE)
-    public SzGrpcServerOptions setDataMartRate(ProcessingRate rate) 
-    {
-        this.dataMartProcessingRate = (rate == null) 
-            ? ProcessingRate.STANDARD : rate;
+    public SzGrpcServerOptions setDataMartRate(ProcessingRate rate) {
+        this.dataMartProcessingRate = (rate == null)
+                ? ProcessingRate.STANDARD
+                : rate;
         return this;
     }
 
@@ -728,9 +782,8 @@ public class SzGrpcServerOptions {
     @Option(DATA_MART_DATABASE_URI)
     public SzGrpcServerOptions setDataMartDatabaseUri(ConnectionUri uri) {
         if (!((uri instanceof PostgreSqlUri)
-              || (uri instanceof SQLiteUri)
-              || (uri instanceof SzCoreSettingsUri)))
-        {
+                || (uri instanceof SQLiteUri)
+                || (uri instanceof SzCoreSettingsUri))) {
             throw new IllegalArgumentException("Unsupported URI type: " + uri);
         }
         this.dataMartDatabaseUri = uri;
@@ -745,8 +798,7 @@ public class SzGrpcServerOptions {
      *         values for initializing an {@link SzGrpcServer} instance
      */
     @SuppressWarnings("rawtypes")
-    protected Map<CommandLineOption, Object> buildOptionsMap() 
-    {
+    protected Map<CommandLineOption, Object> buildOptionsMap() {
         Map<CommandLineOption, Object> map = new HashMap<>();
         GETTER_METHODS.forEach((option, method) -> {
             try {
@@ -770,16 +822,15 @@ public class SzGrpcServerOptions {
      * Sets the options on the specified instance using the
      * specified {@link Map} of options to values.
      * 
-     * @param options The {@link SzGrpcServerOptions} on which to
-     *                set the option values.
+     * @param options    The {@link SzGrpcServerOptions} on which to
+     *                   set the option values.
      * @param optionsMap The {@link Map} of {@link SzGrpcServerOption}
      *                   keys to {@link Object} values.
      */
     @SuppressWarnings("rawtypes")
     protected static void setOptions(
-        SzGrpcServerOptions             options,
-        Map<CommandLineOption, Object>  optionsMap) 
-    {
+            SzGrpcServerOptions options,
+            Map<CommandLineOption, Object> optionsMap) {
         optionsMap.forEach((option, value) -> {
             Method method = SETTER_METHODS.get(option);
             if (method != null) {
@@ -809,10 +860,9 @@ public class SzGrpcServerOptions {
      * @param value  The {@link Object} value.
      */
     @SuppressWarnings("rawtypes")
-    private static void put(Map<CommandLineOption, Object>  map,
-                            SzGrpcServerOption              option,
-                            Object                          value) 
-    {
+    private static void put(Map<CommandLineOption, Object> map,
+            SzGrpcServerOption option,
+            Object value) {
         if (value != null) {
             map.put(option, value);
         }
@@ -831,13 +881,11 @@ public class SzGrpcServerOptions {
             }
             // check if the setter or getter
             if ((method.getReturnType() == SzGrpcServerOptions.class)
-                && (method.getParameterTypes().length == 1))
-            {
+                    && (method.getParameterTypes().length == 1)) {
                 setterMap.put(option.value(), method);
 
             } else if ((method.getReturnType() != Void.class)
-                && (method.getParameterTypes().length == 0))
-            {
+                    && (method.getParameterTypes().length == 0)) {
                 getterMap.put(option.value(), method);
             }
         }
