@@ -35,8 +35,7 @@ import static com.senzing.util.SzUtilities.*;
  */
 @SuppressWarnings("rawtypes")
 public enum SzGrpcServerOption
-    implements CommandLineOption<SzGrpcServerOption, SzGrpcServerOption> 
-{
+        implements CommandLineOption<SzGrpcServerOption, SzGrpcServerOption> {
     /**
      * <p>
      * Option for displaying help/usage for the gRPC Server. This option can
@@ -66,7 +65,7 @@ public enum SzGrpcServerOption
     /**
      * <p>
      * Option for ignoring environment variables when setting the values for
-     * other command-line options.  A single parameter may optionally be
+     * other command-line options. A single parameter may optionally be
      * specified as <code>true</code> or <code>false</code> with
      * <code>false</code> simulating the absence of the option.
      * <p>
@@ -75,9 +74,9 @@ public enum SzGrpcServerOption
      * <li>Command Line: <code>--ignore-environment [true|false]</code></li>
      * </ul>
      */
-    IGNORE_ENVIRONMENT("--ignore-environment", 
-                       null, 0,
-                        "false"),
+    IGNORE_ENVIRONMENT("--ignore-environment",
+            null, 0,
+            "false"),
 
     /**
      * <p>
@@ -95,7 +94,7 @@ public enum SzGrpcServerOption
      * </ul>
      */
     GRPC_PORT("--grpc-port", ENV_PREFIX + "GRPC_PORT",
-              1, DEFAULT_PORT_PARAM),
+            1, DEFAULT_PORT_PARAM),
 
     /**
      * <p>
@@ -115,7 +114,24 @@ public enum SzGrpcServerOption
      * </ul>
      */
     BIND_ADDRESS("--bind-address", ENV_PREFIX + "BIND_ADDRESS",
-                   1, DEFAULT_BIND_ADDRESS_PARAM),
+            1, DEFAULT_BIND_ADDRESS_PARAM),
+
+    /**
+     * <p>
+     * This option is used to enable the CORS
+     * <code>Access-Control-Allow-Origin</code>
+     * header for all endpoints. If not present then CORS is disabled.
+     * </p>
+     * <p>
+     * This option can be specified in the following ways:
+     * <ul>
+     * <li>Command Line: <code>--allowed-origins {url-domain}</code></li>
+     * <li>Environment:
+     * <code>SENZING_TOOLS_ALLOWED_ORIGINS="{url-domain}"</code></li>
+     * </ul>
+     */
+    ALLOWED_ORIGINS("--allowed-origins",
+            ENV_PREFIX + "ALLOWED_ORIGINS", 1, -1),
 
     /**
      * <p>
@@ -131,14 +147,12 @@ public enum SzGrpcServerOption
      * <code>SENZING_TOOLS_CORE_INSTANCE_NAME="{module-name}"</code></li>
      * </ul>
      */
-    CORE_INSTANCE_NAME("--core-instance-name", 
-                       ENV_PREFIX + "CORE_INSTANCE_NAME",
-                       1, DEFAULT_INSTANCE_NAME),
+    CORE_INSTANCE_NAME("--core-instance-name", ENV_PREFIX + "CORE_INSTANCE_NAME", 1, DEFAULT_INSTANCE_NAME),
 
     /**
      * <p>
      * Option for specifying the core settings JSON with which to initialize
-     * the Core Senzing SDK.  The parameter to this option should be the
+     * the Core Senzing SDK. The parameter to this option should be the
      * settings as a JSON object <b>or</b> the path to a file containing the
      * settings JSON.
      * <p>
@@ -149,43 +163,40 @@ public enum SzGrpcServerOption
      * <code>SENZING_TOOLS_CORE_SETTINGS="[{file-path}|{json-text}]"</code></li>
      * </ul>
      */
-    CORE_SETTINGS("--core-settings",
-                  ENV_PREFIX + "CORE_SETTINGS",
-                  List.of("SENZING_ENGINE_CONFIGURATION_JSON"),
-                  true, 1),
+    CORE_SETTINGS("--core-settings", ENV_PREFIX + "CORE_SETTINGS", List.of("SENZING_ENGINE_CONFIGURATION_JSON"), true,
+            1),
 
     /**
      * <p>
      * This option is used in place of {@link #CORE_SETTINGS} as a basis
-     * to create a basic settings.  The parameter to this option should be
-     * a database URI that is legal for the Senzing core environment settings. 
+     * to create a basic settings. The parameter to this option should be
+     * a database URI that is legal for the Senzing core environment settings.
      * <p>
      * This option can be specified in the following ways:
      * <ul>
      * <li>Command Line: <code>--core-database-uri {database-uri}</code></li>
-     * <li>Environment: <code>SENZING_TOOLS_CORE_DATABASE_URI="{database-uri}"</code></li>
+     * <li>Environment:
+     * <code>SENZING_TOOLS_CORE_DATABASE_URI="{database-uri}"</code></li>
      * </ul>
      */
-    CORE_DATABASE_URI("--core-database-uri",
-                      ENV_PREFIX + "CORE_DATABASE_URI",
-                      null, true, 1),
-        
+    CORE_DATABASE_URI("--core-database-uri", ENV_PREFIX + "CORE_DATABASE_URI", null, true, 1),
+
     /**
      * <p>
      * This option is used along with {@link #CORE_DATABASE_URI} to add a license
-     * to the basic settings.  The parameter to this option should be a base-64
-     * encoded Senzing license string. 
+     * to the basic settings. The parameter to this option should be a base-64
+     * encoded Senzing license string.
      * <p>
      * This option can be specified in the following ways:
      * <ul>
-     * <li>Command Line: <code>--license-string-base64 {base64-encoded-license}</code></li>
-     * <li>Environment: <code>SENZING_TOOLS_LICENSE_STRING_BASE64="{base64-encoded-license}"</code></li>
+     * <li>Command Line:
+     * <code>--license-string-base64 {base64-encoded-license}</code></li>
+     * <li>Environment:
+     * <code>SENZING_TOOLS_LICENSE_STRING_BASE64="{base64-encoded-license}"</code></li>
      * </ul>
      */
-    LICENSE_STRING_BASE64("--license-string-base64",
-                          ENV_PREFIX + "LICENSE_STRING_BASE64",
-                          null, 1),
-    
+    LICENSE_STRING_BASE64("--license-string-base64", ENV_PREFIX + "LICENSE_STRING_BASE64", null, 1),
+
     /**
      * <p>
      * This option is used with {@link #CORE_SETTINGS} to force a specific
@@ -198,8 +209,7 @@ public enum SzGrpcServerOption
      * <li>Environment: <code>SENZING_TOOLS_CORE_CONFIG_ID="{config-id}"</code></li>
      * </ul>
      */
-    CORE_CONFIG_ID("--core-config-id",
-                   ENV_PREFIX + "CORE_CONFIG_ID", 1),
+    CORE_CONFIG_ID("--core-config-id", ENV_PREFIX + "CORE_CONFIG_ID", 1),
 
     /**
      * <p>
@@ -222,9 +232,7 @@ public enum SzGrpcServerOption
      * <code>SENZING_TOOLS_CORE_LOG_LEVEL="[muted|verbose|{integer}]"</code></li>
      * </ul>
      */
-    CORE_LOG_LEVEL("--core-log-level",
-                   ENV_PREFIX + "CORE_LOG_LEVEL",
-                   0, "muted"),
+    CORE_LOG_LEVEL("--core-log-level", ENV_PREFIX + "CORE_LOG_LEVEL", 0, "muted"),
 
     /**
      * <p>
@@ -240,9 +248,7 @@ public enum SzGrpcServerOption
      * <code>SENZING_TOOLS_CORE_CONCURRENCY="{thread-count}"</code></li>
      * </ul>
      */
-    CORE_CONCURRENCY("--core-concurrency",
-                     ENV_PREFIX + "CORE_CONCURRENCY",
-                     1, DEFAULT_CORE_CONCURRENCY_PARAM),
+    CORE_CONCURRENCY("--core-concurrency", ENV_PREFIX + "CORE_CONCURRENCY", 1, DEFAULT_CORE_CONCURRENCY_PARAM),
 
     /**
      * <p>
@@ -258,9 +264,7 @@ public enum SzGrpcServerOption
      * <code>SENZING_TOOLS_CORE_CONCURRENCY="{thread-count}"</code></li>
      * </ul>
      */
-    GRPC_CONCURRENCY("--grpc-concurrency",
-                     ENV_PREFIX + "GRPC_CONCURRENCY",
-                     1, DEFAULT_GRPC_CONCURRENCY_PARAM),
+    GRPC_CONCURRENCY("--grpc-concurrency", ENV_PREFIX + "GRPC_CONCURRENCY", 1, DEFAULT_GRPC_CONCURRENCY_PARAM),
 
     /**
      * <p>
@@ -292,9 +296,8 @@ public enum SzGrpcServerOption
      * <code>SENZING_TOOLS_REFRESH_CONFIG_SECONDS="{integer}"</code></li>
      * </ul>
      */
-    REFRESH_CONFIG_SECONDS("--refresh-config-seconds",
-                           ENV_PREFIX + "REFRESH_CONFIG_SECONDS",
-                           1, DEFAULT_REFRESH_CONFIG_SECONDS_PARAM),
+    REFRESH_CONFIG_SECONDS("--refresh-config-seconds", ENV_PREFIX + "REFRESH_CONFIG_SECONDS", 1,
+            DEFAULT_REFRESH_CONFIG_SECONDS_PARAM),
 
     /**
      * <p>
@@ -314,9 +317,7 @@ public enum SzGrpcServerOption
      * <code>SENZING_TOOLS_LOG_STATS_SECONDS="{seconds}"</code></li>
      * </ul>
      */
-    LOG_STATS_SECONDS("--log-stats-seconds",
-                      ENV_PREFIX + "LOG_STATS_SECONDS",
-                      1, DEFAULT_LOG_STATS_SECONDS_PARAM),
+    LOG_STATS_SECONDS("--log-stats-seconds", ENV_PREFIX + "LOG_STATS_SECONDS", 1, DEFAULT_LOG_STATS_SECONDS_PARAM),
 
     /**
      * <p>
@@ -333,9 +334,7 @@ public enum SzGrpcServerOption
      * <code>SENZING_TOOLS_SKIP_STARTUP_PERF="{true|false}"</code></li>
      * </ul>
      */
-    SKIP_STARTUP_PERF("--skip-startup-perf",
-                      ENV_PREFIX + "SKIP_STARTUP_PERF",
-                      0, "false"),
+    SKIP_STARTUP_PERF("--skip-startup-perf", ENV_PREFIX + "SKIP_STARTUP_PERF", 0, "false"),
 
     /**
      * The presence of this option causes the API Server to skip priming the
@@ -350,32 +349,30 @@ public enum SzGrpcServerOption
      * <code>SENZING_TOOLS_SKIP_ENGINE_PRIMING="{true|false}"</code></li>
      * </ul>
      */
-    SKIP_ENGINE_PRIMING("--skip-engine-priming",
-                        ENV_PREFIX + "SKIP_ENGINE_PRIMING",
-                        0, "false"),
+    SKIP_ENGINE_PRIMING("--skip-engine-priming", ENV_PREFIX + "SKIP_ENGINE_PRIMING", 0, "false"),
 
     /**
      * This option is used to specify the database connection for the data mart,
-     * if omitted then the data mart will <b>NOT</b> enabled.  If provided, then
+     * if omitted then the data mart will <b>NOT</b> enabled. If provided, then
      * the single parameter to this option is the SQLite or PostgreSQL database
-     * URI specifying the database connection.  Possible database URI formats are:
+     * URI specifying the database connection. Possible database URI formats are:
      * <ul>
-     *   <li><code>{@value com.senzing.datamart.PostgreSqlUri#SUPPORTED_FORMAT_1}</code></li>
-     *   <li><code>{@value com.senzing.datamart.PostgreSqlUri#SUPPORTED_FORMAT_2}</code></li>
-     *   <li><code>{@value com.senzing.datamart.SQLiteUri#SUPPORTED_FORMAT_1}</code></li>
-     *   <li><code>{@value com.senzing.datamart.SQLiteUri#SUPPORTED_FORMAT_2}</code></li>
-     *   <li><code>{@value com.senzing.datamart.SQLiteUri#SUPPORTED_FORMAT_3}</code></li>
+     * <li><code>{@value com.senzing.datamart.PostgreSqlUri#SUPPORTED_FORMAT_1}</code></li>
+     * <li><code>{@value com.senzing.datamart.PostgreSqlUri#SUPPORTED_FORMAT_2}</code></li>
+     * <li><code>{@value com.senzing.datamart.SQLiteUri#SUPPORTED_FORMAT_1}</code></li>
+     * <li><code>{@value com.senzing.datamart.SQLiteUri#SUPPORTED_FORMAT_2}</code></li>
+     * <li><code>{@value com.senzing.datamart.SQLiteUri#SUPPORTED_FORMAT_3}</code></li>
      * </ul>
-     * <b>NOTE:</b> The PostgreSQL or SQLite URI can also be obtained from the 
+     * <b>NOTE:</b> The PostgreSQL or SQLite URI can also be obtained from the
      * {@link #CORE_SETTINGS} by using a special URI in the following format:
      * <ul>
-     *   <li><code>{@value com.senzing.datamart.SzCoreSettingsUri#SUPPORTED_FORMAT}</code></li>
+     * <li><code>{@value com.senzing.datamart.SzCoreSettingsUri#SUPPORTED_FORMAT}</code></li>
      * </ul>
      * For example,
      * <code>{@value com.senzing.datamart.SzReplicatorConstants#DEFAULT_CORE_SETTINGS_DATABASE_URI}</code>
      * will obtain the primary SQL connection from the {@linkplain #CORE_SETTINGS
      * Senzing Core SDK settings}.
-     * <b>NOTE:</b> The PostgreSQL or SQLite URI can also be obtained from the 
+     * <b>NOTE:</b> The PostgreSQL or SQLite URI can also be obtained from the
      * {@link #CORE_SETTINGS} by using a special URI in the following format:
      * <p>
      * This option can be specified in the following ways:
@@ -385,9 +382,7 @@ public enum SzGrpcServerOption
      * <code>SENZING_TOOLS_DATA_MART_DATABASE_URI="{uri}"</code></li>
      * </ul>
      */
-    DATA_MART_DATABASE_URI("--data-mart-database-uri",
-                           ENV_PREFIX + "DATA_MART_DATABASE_URI",
-                           null, 1),
+    DATA_MART_DATABASE_URI("--data-mart-database-uri", ENV_PREFIX + "DATA_MART_DATABASE_URI", null, 1),
 
     /**
      * <p>
@@ -396,16 +391,17 @@ public enum SzGrpcServerOption
      * repository and less frequent batch processing to conserve system resources.
      * The value to this option is one of the following:
      * <ul>
-     * <li><code>leisurely</code> -- This setting allows for longer gaps between 
+     * <li><code>leisurely</code> -- This setting allows for longer gaps between
      * updating the data mart, favoring less frequent batch processing in order to
      * conserve system resources.</li>
      * 
-     * <li><code>standard</code> -- This is the default and is balance between 
+     * <li><code>standard</code> -- This is the default and is balance between
      * conserving system resources and keeping the data mart updated in a reasonably
      * timely manner.</li>
      * 
-     * <li><code>aggressive</code> -- This setting uses more system resources to 
-     * aggressively consume and process incoming messages to keep the data mart closely
+     * <li><code>aggressive</code> -- This setting uses more system resources to
+     * aggressively consume and process incoming messages to keep the data mart
+     * closely
      * in sync with the least time delay.</li>
      * 
      * </ul>
@@ -418,24 +414,22 @@ public enum SzGrpcServerOption
      * <code>SENZING_TOOLS_REFRESH_CONFIG_SECONDS="{integer}"</code></li>
      * </ul>
      */
-    DATA_MART_RATE("--data-mart-rate", ENV_PREFIX + "PROCESSING_RATE", null,
-                    1, ProcessingRate.STANDARD.toString().toLowerCase());
-    
+    DATA_MART_RATE("--data-mart-rate", ENV_PREFIX + "PROCESSING_RATE", null, 1,
+            ProcessingRate.STANDARD.toString().toLowerCase());
+
     /**
      * The {@link Map} of {@link SzGrpcServerOption} keys to unmodifiable
      * {@link Set} values containing the {@link SzGrpcServerOption} values that
      * conflict with the key {@link SzGrpcServerOption} value.
      */
-    private static final Map<SzGrpcServerOption, Set<CommandLineOption>> 
-        CONFLICTING_OPTIONS;
+    private static final Map<SzGrpcServerOption, Set<CommandLineOption>> CONFLICTING_OPTIONS;
 
     /**
      * The {@link Map} of {@link SzGrpcServerOption} keys to <b>unmodifiable</b>
      * {@link Set} values containing the {@link SzGrpcServerOption} values that
      * are alternatives to the key {@link SzGrpcServerOption} value.
      */
-    private static final Map<SzGrpcServerOption, Set<SzGrpcServerOption>> 
-        ALTERNATIVE_OPTIONS;
+    private static final Map<SzGrpcServerOption, Set<SzGrpcServerOption>> ALTERNATIVE_OPTIONS;
 
     /**
      * The {@link Map} of {@link String} option flags to their corresponding
@@ -448,8 +442,7 @@ public enum SzGrpcServerOption
      * {@link Set} values containing alternative {@link Set}'s of {@link
      * SzGrpcServerOption} that the key option is dependent on if specified.
      */
-    private static final Map<SzGrpcServerOption, Set<Set<CommandLineOption>>>
-        DEPENDENCIES;
+    private static final Map<SzGrpcServerOption, Set<Set<CommandLineOption>>> DEPENDENCIES;
 
     /**
      * Flag indicating if this option is considered a "primary" option.
@@ -502,32 +495,47 @@ public enum SzGrpcServerOption
             String cmdLineFlag,
             Set<String> synonymFlags,
             boolean primary,
-            int parameterCount)
-    {
+            int parameterCount) {
         this(cmdLineFlag,
-             synonymFlags,
-             null,
-             null,
-             primary,
-             parameterCount,
-             Collections.emptyList(),
-             false);
+                synonymFlags,
+                null,
+                null,
+                primary,
+                parameterCount,
+                Collections.emptyList(),
+                false);
     }
-    
+
     SzGrpcServerOption(
             String cmdLineFlag,
             String envVariable,
             int parameterCount,
-            String... defaultParams) 
-    {
+            String... defaultParams) {
         this(cmdLineFlag,
-             Collections.emptySet(),
-             envVariable,
-             null,
-             false,
-             parameterCount,
-             List.of(defaultParams),
-             false);
+                Collections.emptySet(),
+                envVariable,
+                null,
+                false,
+                parameterCount,
+                List.of(defaultParams),
+                false);
+    }
+
+    SzGrpcServerOption(
+            String cmdLineFlag,
+            String envVariable,
+            int minParamCount,
+            int maxParamCount,
+            String... defaultParams) {
+        this(cmdLineFlag,
+                Collections.emptySet(),
+                envVariable,
+                null,
+                false,
+                minParamCount,
+                maxParamCount,
+                List.of(defaultParams),
+                false);
     }
 
     SzGrpcServerOption(
@@ -535,16 +543,15 @@ public enum SzGrpcServerOption
             String envVariable,
             List<String> envFallbacks,
             int parameterCount,
-            String... defaultParams) 
-    {
+            String... defaultParams) {
         this(cmdLineFlag,
-             Collections.emptySet(),
-             envVariable,
-             envFallbacks,
-             false,
-             parameterCount,
-             List.of(defaultParams),
-             false);
+                Collections.emptySet(),
+                envVariable,
+                envFallbacks,
+                false,
+                parameterCount,
+                List.of(defaultParams),
+                false);
     }
 
     SzGrpcServerOption(String cmdLineFlag,
@@ -553,48 +560,46 @@ public enum SzGrpcServerOption
             boolean primary,
             int parameterCount) {
         this(cmdLineFlag,
-             Collections.emptySet(),
-             envVariable,
-             envFallbacks,
-             primary,
-             parameterCount < 0 ? 0 : parameterCount,
-             parameterCount,
-             Collections.emptyList(),
-             false);
+                Collections.emptySet(),
+                envVariable,
+                envFallbacks,
+                primary,
+                parameterCount < 0 ? 0 : parameterCount,
+                parameterCount,
+                Collections.emptyList(),
+                false);
     }
 
     SzGrpcServerOption(
-            String          cmdLineFlag,
-            Set<String>     synonymFlags,
-            String          envVariable,
-            List<String>    envFallbacks,
-            boolean         primary,
-            int             parameterCount,
-            List<String>    defaultParameters,
-            boolean         deprecated) 
-    {
-        this(cmdLineFlag, 
-             synonymFlags,
-             envVariable,
-             envFallbacks,
-             primary,
-             parameterCount,
-             parameterCount,
-             defaultParameters,
-             deprecated);
+            String cmdLineFlag,
+            Set<String> synonymFlags,
+            String envVariable,
+            List<String> envFallbacks,
+            boolean primary,
+            int parameterCount,
+            List<String> defaultParameters,
+            boolean deprecated) {
+        this(cmdLineFlag,
+                synonymFlags,
+                envVariable,
+                envFallbacks,
+                primary,
+                parameterCount,
+                parameterCount,
+                defaultParameters,
+                deprecated);
     }
 
     SzGrpcServerOption(
-            String          cmdLineFlag,
-            Set<String>     synonymFlags,
-            String          envVariable,
-            List<String>    envFallbacks,
-            boolean         primary,
-            int             minParameterCount,
-            int             maxParameterCount,
-            List<String>    defaultParameters,
-            boolean         deprecated) 
-    {
+            String cmdLineFlag,
+            Set<String> synonymFlags,
+            String envVariable,
+            List<String> envFallbacks,
+            boolean primary,
+            int minParameterCount,
+            int maxParameterCount,
+            List<String> defaultParameters,
+            boolean deprecated) {
         this.cmdLineFlag = cmdLineFlag;
         this.synonymFlags = Set.copyOf(synonymFlags);
         this.envVariable = envVariable;
@@ -693,8 +698,8 @@ public enum SzGrpcServerOption
     }
 
     /**
-     * Gets the alternative options for this option when there 
-     * are several options that allow different ways to specify 
+     * Gets the alternative options for this option when there
+     * are several options that allow different ways to specify
      * a similar thing and only one can be specified.
      * 
      * @return The <b>unmodifiable</b> {@link Set} of alternative
@@ -714,12 +719,12 @@ public enum SzGrpcServerOption
     }
 
     /**
-     * Finds the {@link SzGrpcServerOption} corresponding to the 
-     * specified command-line flag.  This returns <code>null</code>
+     * Finds the {@link SzGrpcServerOption} corresponding to the
+     * specified command-line flag. This returns <code>null</code>
      * if none is found.
      * 
-     * @param commandLineFlag The command-line flag for which the 
-     *                        {@link SzGrpcServerOption} is being 
+     * @param commandLineFlag The command-line flag for which the
+     *                        {@link SzGrpcServerOption} is being
      *                        requested.
      * 
      * @return The corresponding {@link SzGrpcServerOption} or
@@ -807,7 +812,7 @@ public enum SzGrpcServerOption
                     int port = Integer.parseInt(params.get(0));
                     if (port < 0) {
                         throw new IllegalArgumentException(
-                            "Negative port numbers are not allowed: " + port);
+                                "Negative port numbers are not allowed: " + port);
                     }
                     return port;
                 }
@@ -830,6 +835,13 @@ public enum SzGrpcServerOption
                     }
                     return addr;
 
+                case ALLOWED_ORIGINS:
+                    List<String> origins = new LinkedList<>();
+                    for (String param : params) {
+                        origins.add(param.trim());
+                    }
+                    return origins;
+
                 case CORE_INSTANCE_NAME:
                 case LICENSE_STRING_BASE64:
                     return params.get(0).trim();
@@ -847,8 +859,8 @@ public enum SzGrpcServerOption
                         } catch (Exception e) {
                             throw new IllegalArgumentException(
                                     multilineFormat(
-                                       "Core settings is not valid JSON: ",
-                                        paramVal));
+                                            "Core settings is not valid JSON: ",
+                                            paramVal));
                         }
                     } else {
                         File initFile = new File(paramVal);
@@ -864,7 +876,7 @@ public enum SzGrpcServerOption
                             throw new RuntimeException(
                                     multilineFormat(
                                             "Failed to read JSON initialization file: "
-                                                + initFile,
+                                                    + initFile,
                                             "",
                                             "Cause: " + e.getMessage()));
                         }
@@ -882,11 +894,11 @@ public enum SzGrpcServerOption
                     String coreDatabaseUri = params.get(0);
                     if (!startsWithDatabaseUriPrefix(coreDatabaseUri)) {
                         throw new IllegalArgumentException(
-                            "The specified core database URI does not appear to be "
-                            + "a supported core database URI: " + coreDatabaseUri);
+                                "The specified core database URI does not appear to be "
+                                        + "a supported core database URI: " + coreDatabaseUri);
                     }
                     return coreDatabaseUri;
-                
+
                 case CORE_CONFIG_ID:
                     try {
                         return Long.parseLong(params.get(0));
@@ -908,11 +920,11 @@ public enum SzGrpcServerOption
                             return 0;
                         default:
                             throw new IllegalArgumentException(
-                                "The specified core log level is not recognized; " + paramVal);
+                                    "The specified core log level is not recognized; " + paramVal);
                     }
                 }
 
-                case CORE_CONCURRENCY: 
+                case CORE_CONCURRENCY:
                 case GRPC_CONCURRENCY: {
                     int threadCount;
                     try {
@@ -937,7 +949,7 @@ public enum SzGrpcServerOption
                                         + option.getCommandLineFlag() + " must be an integer: "
                                         + params.get(0));
                     }
-                
+
                 case LOG_STATS_SECONDS: {
                     long statsInterval;
                     try {
@@ -997,25 +1009,25 @@ public enum SzGrpcServerOption
      * This instance will only handle instances of {@link CommandLineOption}
      * instances of type {@link SzGrpcServerOption}.
      */
-    public static final ParameterProcessor PARAMETER_PROCESSOR 
-        = new ParamProcessor();
-        
+    public static final ParameterProcessor PARAMETER_PROCESSOR = new ParamProcessor();
+
     /**
-     * Convenience method to parse the command line via 
+     * Convenience method to parse the command line via
      * {@link CommandLineUtilities#parseCommandLine(Class, String[], ParameterProcessor, CommandLineOption, List)}
      * and convert the result to a {@link Map} with keys typed on
      * {@link SzGrpcServerOption}.
      * 
-     * @param args The arguments to parse.
+     * @param args                The arguments to parse.
      * @param deprecationWarnings The {@link List} to be populated with any
      *                            {@link DeprecatedOptionWarning} instances that
      *                            are generated, or <code>null</code> if the
      *                            caller is not interested in deprecation
      *                            warnings.
-     * @param jsonBuilder If not <code>null</code> then this {@link JsonObjectBuilder}
-     *                    is populated with startup option information.
+     * @param jsonBuilder         If not <code>null</code> then this
+     *                            {@link JsonObjectBuilder}
+     *                            is populated with startup option information.
      *
-     * @return The {@link Map} of {@link SzGrpcServerOption} keys to 
+     * @return The {@link Map} of {@link SzGrpcServerOption} keys to
      *         {@link Object} values representing the values for
      *         those options.
      *
@@ -1023,21 +1035,18 @@ public enum SzGrpcServerOption
      * 
      */
     public static Map<CommandLineOption, Object> parseCommandLine(
-            String[]                        args,
-            List<DeprecatedOptionWarning>   deprecationWarnings,
-            JsonObjectBuilder               jsonBuilder)            
-        throws CommandLineException
-    {
-        Map<CommandLineOption, CommandLineValue> optionValues 
-            = CommandLineUtilities.parseCommandLine(
+            String[] args,
+            List<DeprecatedOptionWarning> deprecationWarnings,
+            JsonObjectBuilder jsonBuilder)
+            throws CommandLineException {
+        Map<CommandLineOption, CommandLineValue> optionValues = CommandLineUtilities.parseCommandLine(
                 SzGrpcServerOption.class,
                 args, SzGrpcServerOption.PARAMETER_PROCESSOR,
                 IGNORE_ENVIRONMENT, deprecationWarnings);
 
-        Map<CommandLineOption, Object> processedValues
-            = CommandLineUtilities.processCommandLine(
+        Map<CommandLineOption, Object> processedValues = CommandLineUtilities.processCommandLine(
                 optionValues, null, jsonBuilder, null);
-        
+
         return processedValues;
     }
 
