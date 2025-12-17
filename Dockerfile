@@ -20,10 +20,10 @@ RUN apt-get update \
 # Stage: builder
 # -----------------------------------------------------------------------------
 FROM ${IMAGE_BUILDER} AS builder
-ENV REFRESHED_AT=2025-12-15
+ENV REFRESHED_AT=2025-12-17
 LABEL Name="senzing/java-builder" \
        Maintainer="support@senzing.com" \
-       Version="0.3.0"
+       Version="0.4.0"
 
 # Run as "root" for system installation.
 
@@ -57,9 +57,9 @@ RUN apt-get update \
        && apt-get install -y --no-install-recommends temurin-17-jdk \
        && rm -rf /var/lib/apt/lists/*
 
-RUN wget https://downloads.apache.org/maven/maven-3/3.9.11/binaries/apache-maven-3.9.11-bin.tar.gz -P /opt \
+RUN wget https://archive.apache.org/dist/maven/maven-3/3.9.12/binaries/apache-maven-3.9.12-bin.tar.gz -P /opt \
        && tar xf /opt/apache-maven-*.tar.gz -C /opt \
-       && ln -s /opt/apache-maven-3.9.11 /opt/maven
+       && ln -s /opt/apache-maven-3.9.12 /opt/maven
 
 ENV M2_HOME=/opt/maven
 ENV MAVEN_HOME=/opt/maven
@@ -89,10 +89,10 @@ RUN mvn -ntp -DskipTests=true package
 # -----------------------------------------------------------------------------
 
 FROM ${IMAGE_FINAL} AS final
-ENV REFRESHED_AT=2025-12-15
+ENV REFRESHED_AT=2025-12-17
 LABEL Name="senzing/sz-sdk-grpc-java" \
        Maintainer="support@senzing.com" \
-       Version="0.3.0"
+       Version="0.4.0"
 #HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD ["/app/healthcheck.sh"]
 HEALTHCHECK CMD ["echo hello"]
 USER root
