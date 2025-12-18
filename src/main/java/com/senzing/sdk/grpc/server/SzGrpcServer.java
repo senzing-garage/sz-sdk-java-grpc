@@ -422,6 +422,34 @@ public class SzGrpcServer {
             }
         }
 
+        // create a CORS decorator if we need to decorate the server
+        // NOTE: we decorate the ENTIRE server rather than the GrpcService or
+        // AnnotatedService individually, because redirects (especially regarding
+        // paths ending "/") can lead to one path supporting CORS while the other
+        // does not. By using the decorator on the whole server, then all paths
+        // support CORS.
+        Function<? super HttpService, ? extends HttpService> corsDecorator = null;
+
+        List<String> allowedOrigins = options.getAllowedOrigins();
+        if (allowedOrigins != null && allowedOrigins.size() > 0) {
+            if (allowedOrigins.contains("*")) {
+                corsDecorator = CorsService.builderForAnyOrigin()
+                        .allowRequestMethods(GET, HEAD, POST, PUT, DELETE, OPTIONS)
+                        .allowAllRequestHeaders(true)
+                        .exposeHeaders("*")
+                        .maxAge(3600)
+                        .newDecorator();
+            } else {
+                corsDecorator = CorsService.builder(allowedOrigins)
+                        .allowRequestMethods(GET, HEAD, POST, PUT, DELETE, OPTIONS)
+                        .allowAllRequestHeaders(true)
+                        .allowCredentials()
+                        .exposeHeaders("*")
+                        .maxAge(3600)
+                        .newDecorator();
+            }
+        }
+
         // build the GRPC service
         GrpcService grpcService = GrpcService.builder()
                 .useBlockingTaskExecutor(true)
@@ -435,31 +463,12 @@ public class SzGrpcServer {
         // create the server builder
         ServerBuilder serverBuilder = Server.builder()
                 .http(new InetSocketAddress(bindAddress, port))
-                .blockingTaskExecutor(concurrency);
-
-        Function<? super HttpService, ? extends HttpService> corsDecorator = null;
-
-        List<String> allowedOrigins = options.getAllowedOrigins();
-        if (allowedOrigins != null && allowedOrigins.size() > 0) {
-            if (allowedOrigins.contains("*")) {
-                corsDecorator = CorsService.builderForAnyOrigin()
-                        .allowRequestMethods(GET, HEAD, POST, PUT, DELETE, OPTIONS)
-                        .allowAllRequestHeaders(true)
-                        .newDecorator();
-            } else {
-                corsDecorator = CorsService.builder(allowedOrigins)
-                        .allowRequestMethods(GET, HEAD, POST, PUT, DELETE, OPTIONS)
-                        .allowAllRequestHeaders(true)
-                        .allowCredentials()
-                        .newDecorator();
-            }
-        }
+                .blockingTaskExecutor(concurrency)
+                .service(grpcService);
 
         // decorate the GRPC service with the CORS decorator if we have one
         if (corsDecorator != null) {
-            serverBuilder.service(grpcService, corsDecorator);
-        } else {
-            serverBuilder.service(grpcService);
+            serverBuilder.decoratorUnder("/", corsDecorator);
         }
 
         // check if we need to build with data mart services
@@ -478,11 +487,6 @@ public class SzGrpcServer {
                             new JacksonRequestConverterFunction(this.objectMapper))
                     .responseConverters(
                             new JacksonResponseConverterFunction(this.objectMapper));
-
-            // conditionally decorate for CORS
-            if (corsDecorator != null) {
-                builder.decorator(corsDecorator);
-            }
 
             // now build the annotated service and bind it to the server builder
             builder.build(dataMartReports);
