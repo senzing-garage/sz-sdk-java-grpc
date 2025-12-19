@@ -11,3 +11,4 @@ and this project adheres to [Semantic Versioning].
 
 - Initial stable pre-release version.
 - Adds handling core CORS `Access-Control-Allow-Origins` header.
+- Updated dependencies.
