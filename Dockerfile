@@ -20,7 +20,7 @@ RUN apt-get update \
 # Stage: builder
 # -----------------------------------------------------------------------------
 FROM ${IMAGE_BUILDER} AS builder
-ENV REFRESHED_AT=2025-12-17
+ENV REFRESHED_AT=2025-12-19
 LABEL Name="senzing/java-builder" \
        Maintainer="support@senzing.com" \
        Version="0.4.0"
@@ -69,6 +69,7 @@ ENV PATH=${PATH}:${M2_HOME}/bin
 
 # COPY ./rootfs /
 COPY . /sz-sdk-java-grpc
+#COPY --from=m2repo . /root/.m2/repository
 
 # Set path to Senzing libs.
 
@@ -89,7 +90,7 @@ RUN mvn -ntp -DskipTests=true package
 # -----------------------------------------------------------------------------
 
 FROM ${IMAGE_FINAL} AS final
-ENV REFRESHED_AT=2025-12-17
+ENV REFRESHED_AT=2025-12-19
 LABEL Name="senzing/sz-sdk-grpc-java" \
        Maintainer="support@senzing.com" \
        Version="0.4.0"
