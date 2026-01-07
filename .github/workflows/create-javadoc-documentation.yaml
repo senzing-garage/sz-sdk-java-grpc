@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        senzingsdk-version: [production-v4]
         include:
           - java-version: "21"
             java-distribution: "temurin"
