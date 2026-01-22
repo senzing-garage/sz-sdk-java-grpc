@@ -22,10 +22,12 @@ import com.senzing.sdk.SzRecordKey;
 import com.senzing.sdk.core.SzCoreEnvironment;
 import com.senzing.sdk.grpc.server.SzGrpcServer;
 import com.senzing.sdk.SzException;
+import com.senzing.sdk.test.SdkTest;
 import com.senzing.sdk.test.StandardTestDataLoader;
 import com.senzing.sdk.test.SzEngineWriteTest;
 import com.senzing.sdk.test.SzRecord;
 import com.senzing.sdk.test.TestDataLoader;
+import com.senzing.util.SemanticVersion;
 
 import io.grpc.ManagedChannel;
 
@@ -51,6 +53,8 @@ public class EngineWriteTest
 
     private TestData testData = new TestData();
 
+    private SemanticVersion senzingVersion = null;
+
     @Override
     public TestData getTestData() {
         return this.testData;
@@ -59,6 +63,11 @@ public class EngineWriteTest
     @Override
     public SzEngine getEngine() throws SzException {
         return this.env.getEngine();
+    }
+
+    @Override
+    public SemanticVersion getSenzingVersion() {
+        return this.senzingVersion;
     }
 
     @BeforeAll
@@ -88,6 +97,8 @@ public class EngineWriteTest
                                                  .verboseLogging(false)
                                                  .build();
         try {
+            this.senzingVersion = SdkTest.getSenzingVersion(env);
+
             TestDataLoader loader = new StandardTestDataLoader(env);
         
             this.testData.loadData(loader);
