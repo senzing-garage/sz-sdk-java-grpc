@@ -4,7 +4,7 @@
 
 ARG IMAGE_BUILDER=debian:13.2-slim@sha256:18764e98673c3baf1a6f8d960b5b5a1ec69092049522abac4e24a7726425b016
 #ARG IMAGE_FINAL=senzing/senzingsdk-tools:4.1.0@sha256:89a7285056f820ca56048527c4df022e0e4db407e13dcc0d2f321e69f76d5b9c
-ARG IMAGE_FINAL=senzing/senzingsdk-runtime:4.1.0@sha256:e57d751dc0148bb8eeafedb7accf988413f50b54a7e46f25dfe4559d240063e5
+ARG IMAGE_FINAL=senzing/senzingsdk-runtime:4.2.0@sha256:072ff062d9d3ee224e68848e8a37b9f4d6db9ada016fdd0313c3a5bd946df8b9
 
 # -----------------------------------------------------------------------------
 # Stage: senzingsdk_runtime
@@ -20,7 +20,7 @@ RUN apt-get update \
 # Stage: builder
 # -----------------------------------------------------------------------------
 FROM ${IMAGE_BUILDER} AS builder
-ENV REFRESHED_AT=2026-01-07
+ENV REFRESHED_AT=2026-02-03
 LABEL Name="senzing/java-builder" \
        Maintainer="support@senzing.com" \
        Version="0.4.1"
@@ -90,7 +90,7 @@ RUN mvn -ntp -DskipTests=true package
 # -----------------------------------------------------------------------------
 
 FROM ${IMAGE_FINAL} AS final
-ENV REFRESHED_AT=2026-01-07
+ENV REFRESHED_AT=2026-02-03
 LABEL Name="senzing/sz-sdk-grpc-java" \
        Maintainer="support@senzing.com" \
        Version="0.4.1"
