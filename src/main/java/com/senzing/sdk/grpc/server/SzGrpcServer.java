@@ -2,28 +2,16 @@ package com.senzing.sdk.grpc.server;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.LinkedHashMap;
 
 import javax.json.Json;
-import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 
@@ -35,48 +23,22 @@ import com.senzing.datamart.ProcessingRate;
 import com.senzing.datamart.SQLiteUri;
 import com.senzing.datamart.SzCoreSettingsUri;
 import com.senzing.datamart.SzReplicationProvider;
-import com.senzing.datamart.SzReplicator;
-import com.senzing.datamart.SzReplicatorOptions;
 import com.senzing.listener.communication.sql.SQLConsumer;
-import com.senzing.sdk.SzBadInputException;
 import com.senzing.sdk.SzConfig;
 import com.senzing.sdk.SzConfigManager;
-import com.senzing.sdk.SzConfigurationException;
 import com.senzing.sdk.SzEnvironment;
 import com.senzing.sdk.SzException;
-import com.senzing.sdk.SzLicenseException;
-import com.senzing.sdk.SzNotFoundException;
-import com.senzing.sdk.SzNotInitializedException;
-import com.senzing.sdk.SzProduct;
-import com.senzing.sdk.SzReplaceConflictException;
-import com.senzing.sdk.SzRetryTimeoutExceededException;
-import com.senzing.sdk.SzRetryableException;
-import com.senzing.sdk.SzUnknownDataSourceException;
-import com.senzing.sdk.core.SzCoreEnvironment;
-import com.senzing.sdk.core.SzCoreUtilities;
 import com.senzing.sdk.core.auto.SzAutoCoreEnvironment;
 import com.senzing.sql.SQLUtilities;
 import com.senzing.sql.SQLiteConnector;
 import com.senzing.util.JsonUtilities;
-import com.senzing.util.LoggingUtilities;
-import com.senzing.datamart.reports.DataMartReportsServices;
-import io.grpc.StatusRuntimeException;
-import io.grpc.Status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.GeneratedMessage;
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.linecorp.armeria.server.AnnotatedServiceBindingBuilder;
 import com.linecorp.armeria.server.HttpService;
 import com.linecorp.armeria.server.Server;
 import com.linecorp.armeria.server.ServerBuilder;
-import com.linecorp.armeria.server.annotation.JacksonRequestConverterFunction;
-import com.linecorp.armeria.server.annotation.JacksonResponseConverterFunction;
 import com.linecorp.armeria.server.cors.CorsService;
-import com.linecorp.armeria.server.grpc.GrpcService;
 
-import static com.senzing.reflect.ReflectionUtilities.restrictedProxy;
 import static com.senzing.sdk.grpc.server.SzGrpcServerConstants.DEFAULT_BIND_ADDRESS;
 import static com.senzing.sdk.grpc.server.SzGrpcServerOption.*;
 import static com.senzing.util.JsonUtilities.parseJsonObject;
@@ -84,11 +46,14 @@ import static com.senzing.util.JsonUtilities.toJsonText;
 import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.util.SzUtilities.basicSettingsFromDatabaseUri;
 import static com.senzing.util.SzUtilities.ensureSenzingSQLiteSchema;
-import static com.senzing.sdk.grpc.SzGrpcEnvironment.*;
 import static com.linecorp.armeria.common.HttpMethod.*;
 
 /**
- * The Senzing SDK gRPC server class.
+ * The Senzing SDK gRPC server class.  This class pairs an
+ * {@link SzGrpcServices} instance with an Armeria {@link Server}
+ * and manages the full lifecycle.  For embedding Senzing gRPC
+ * services into an existing Armeria server, use {@link SzGrpcServices}
+ * directly.
  */
 public class SzGrpcServer {
     // must be in static initializer before ANY Armeria usage
@@ -98,14 +63,10 @@ public class SzGrpcServer {
 
     /**
      * The data mart path prefix for the reports URL's.
+     * @deprecated Use {@link SzGrpcServices#DATA_MART_PREFIX} instead.
      */
-    public static final String DATA_MART_PREFIX = "/data-mart";
-
-    /**
-     * The number of milliseconds to provide advance warning of an expiring
-     * license.
-     */
-    private static final long EXPIRATION_WARNING_MILLIS = Duration.ofDays(30).toMillis();
+    @Deprecated
+    public static final String DATA_MART_PREFIX = SzGrpcServices.DATA_MART_PREFIX;
 
     /**
      * The {@link SzEnvironment} to use.
@@ -113,15 +74,20 @@ public class SzGrpcServer {
     private SzEnvironment environment = null;
 
     /**
-     * The proxied {@link SzEnvironment} to prevent calling of
-     * {@link #destroy()}.
-     */
-    private SzEnvironment proxyEnvironment = null;
-
-    /**
      * The flag indicating if this instance should manage the {@link SzEnvironment}.
      */
     private boolean manageEnv = false;
+
+    /**
+     * The {@link SzGrpcServices} that provides the composable Senzing
+     * gRPC services.
+     */
+    private SzGrpcServices services = null;
+
+    /**
+     * The Armeria {@link ServerBuilder} for building the gRPC server.
+     */
+    private ServerBuilder grpcServerBuilder = null;
 
     /**
      * The underlying gRPC server.
@@ -144,36 +110,19 @@ public class SzGrpcServer {
     private boolean destroyed;
 
     /**
-     * The {@link SzReplicator} if the data mart has been configured.
-     */
-    private SzReplicator replicator = null;
-
-    /**
-     * The {@link ObjectMapper} for converting the response objects
-     * for HTTP to JSON text.
-     */
-    private ObjectMapper objectMapper = null;
-
-    /**
-     * The {@link DateFormat} to use for parsing the license
-     * expiration date.
-     */
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK);
-
-    /**
      * Creates a new instance of {@link SzAutoCoreEnvironment} using
      * the specified options.
-     * 
+     *
      * @param options The {@link SzGrpcServerOptions} to use.
      * @return The {@link SzAutoCoreEnvironment} that was created using the
      *         specified options.
-     * 
+     *
      * @throws IllegalStateException If there is already an active instance of
      *                               {@link com.senzing.sdk.core.SzCoreEnvironment}.
      */
-    protected static SzAutoCoreEnvironment createSzAutoCoreEnvironment(
-            SzGrpcServerOptions options)
-            throws IllegalStateException {
+    protected static SzAutoCoreEnvironment createSzAutoCoreEnvironment(SzGrpcServerOptions options)
+        throws IllegalStateException
+    {
         JsonObject coreSettings = options.getCoreSettings();
         String coreDatabaseUri = null;
         boolean bootstrapRepo = false;
@@ -210,10 +159,10 @@ public class SzGrpcServer {
                         bootstrapRepo = ensureSenzingSQLiteSchema(conn);
 
                     } catch (SQLException e) {
-                        System.err.println(e.getMessage());
-                        System.err.println(formatStackTrace(e.getStackTrace()));
+                        logError(e, "Failed to install Senzing SQLite schema");
                         throw new IllegalStateException(
                                 "Failed to install Senzing SQLite schema", e);
+
                     } finally {
                         // check if it is a memory database
                         if (!sqliteUri.isMemory()) {
@@ -270,35 +219,22 @@ public class SzGrpcServer {
     }
 
     /**
-     * A constant for the {@link SzEnvironment#destroy()} method.
-     */
-    private static final Method DESTROY_METHOD;
-    static {
-        Method method = null;
-        try {
-            method = SzEnvironment.class.getMethod("destroy");
-        } catch (NoSuchMethodException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-        DESTROY_METHOD = method;
-    }
-
-    /**
      * Constructs with the specified {@link SzGrpcServerOptions}.
      * The server will be started upon construction.
-     * 
+     *
      * <b>NOTE:</b> This will initialize the Senzing Core SDK via
      * {@link SzAutoCoreEnvironment} and only one active instance of
      * {@link com.senzing.sdk.core.SzCoreEnvironment} is allowed in a
      * process at any given time.
-     * 
+     *
      * @param options The {@link SzGrpcServerOptions} for this instance.
-     * 
+     *
      * @throws IllegalStateException If another instance of Senzing Core SDK
      *                               is already actively initialized.
      */
     public SzGrpcServer(SzGrpcServerOptions options)
-            throws IllegalStateException {
+            throws IllegalStateException
+    {
         this(options, true);
     }
 
@@ -306,17 +242,17 @@ public class SzGrpcServer {
      * Constructs with the specified {@link SzGrpcServerOptions},
      * optionally {@linkplain #start() starting} the server upon
      * construction.
-     * 
+     *
      * <b>NOTE:</b> This will initialize the Senzing Core SDK via
      * {@link SzAutoCoreEnvironment} and only one active instance of
      * {@link com.senzing.sdk.core.SzCoreEnvironment} is allowed in a
      * process at any given time.
-     * 
+     *
      * @param options     The {@link SzGrpcServerOptions} for this instance.
-     * 
+     *
      * @param startServer <code>true</code> if the server should be started
      *                    upon construction, otherwise <code>false</code>
-     * 
+     *
      * @throws IllegalStateException If another instance of Senzing Core SDK
      *                               is already actively initialized.
      */
@@ -329,7 +265,7 @@ public class SzGrpcServer {
      * {@link SzGrpcServerOptions}. The server will be started upon
      * construction. This protected constructor is provided so that derived
      * classes may use an alternate {@link SzEnvironment} implementation.
-     * 
+     *
      * <b>NOTE:</b> Some options specified in {@link SzGrpcServerOptions}
      * pertain to the {@link SzEnvironment} used. The default implementation
      * depends on {@link #createSzAutoCoreEnvironment(SzGrpcServerOptions)}
@@ -337,7 +273,7 @@ public class SzGrpcServer {
      * The onus is on the implementer of any derived class to manage how
      * an implementation with an alternate {@link SzEnvironment} will handle
      * the specified options that normally pertain to {@link SzAutoCoreEnvironment}.
-     * 
+     *
      * @param env         The {@link SzEnvironment} to use.
      * @param manageEnv   <code>true</code> if the constructed instance should
      *                    manage
@@ -347,10 +283,11 @@ public class SzGrpcServer {
      * @param startServer <code>true</code> if the server should be started
      *                    upon construction, otherwise <code>false</code>
      */
-    protected SzGrpcServer(SzEnvironment env,
-            boolean manageEnv,
-            SzGrpcServerOptions options,
-            boolean startServer) {
+    protected SzGrpcServer(SzEnvironment        env,
+                           boolean              manageEnv,
+                           SzGrpcServerOptions  options,
+                           boolean              startServer)
+    {
         int concurrency = options.getGrpcConcurrency();
         int port = options.getGrpcPort();
         InetAddress bindAddress = options.getBindAddress();
@@ -364,17 +301,12 @@ public class SzGrpcServer {
         this.environment = env;
         this.manageEnv = manageEnv;
 
-        // proxy the environment
-        this.proxyEnvironment = (SzEnvironment) restrictedProxy(this.environment, DESTROY_METHOD);
-
-        // build the replicator
+        // resolve the data mart URI if configured
         ConnectionUri dataMartUri = options.getDataMartDatabaseUri();
+        ConnectionUri resolvedUri = null;
+        ProcessingRate processingRate = null;
         if (dataMartUri != null) {
-            ProcessingRate processingRate = options.getProcessingRate();
-            SzReplicatorOptions replicatorOptions = new SzReplicatorOptions();
-            replicatorOptions.setUsingDatabaseQueue(true);
-            replicatorOptions.setProcessingRate(processingRate);
-
+            processingRate = options.getProcessingRate();
             // check if we have an SzCoreSettingsUri
             if (dataMartUri instanceof SzCoreSettingsUri) {
                 // get the core settings
@@ -386,41 +318,20 @@ public class SzGrpcServer {
                                     + "have not been provided.");
                 }
                 SzCoreSettingsUri coreSettingsUri = (SzCoreSettingsUri) dataMartUri;
-                ConnectionUri resolvedUri = coreSettingsUri.resolveUri(coreSettings);
+                resolvedUri = coreSettingsUri.resolveUri(coreSettings);
                 if (resolvedUri == null) {
                     throw new IllegalArgumentException(
                             "Unable to resolve " + dataMartUri + " Data Mart URI using "
                                     + "the provided core settings: "
                                     + toJsonText(coreSettings, true));
                 }
-                try {
-                    replicatorOptions.setDatabaseUri(resolvedUri);
-                } catch (Exception e) {
-                    throw new IllegalArgumentException(
-                            "Resolved data mart database URI (" + resolvedUri
-                                    + ") from core settings (" + dataMartUri + ") is not "
-                                    + "suitable for data mart",
-                            e);
-                }
             } else {
-                replicatorOptions.setDatabaseUri(dataMartUri);
-            }
-
-            // create the replicator
-            try {
-                this.replicator = new SzReplicator(this.proxyEnvironment,
-                        replicatorOptions,
-                        false);
-            } catch (RuntimeException e) {
-                System.err.println(e.toString());
-                System.err.println(formatStackTrace(e.getStackTrace()));
-                throw e;
-            } catch (Exception e) {
-                System.err.println(e.toString());
-                System.err.println(formatStackTrace(e.getStackTrace()));
-                throw new RuntimeException("Failed to initialize data mart", e);
+                resolvedUri = dataMartUri;
             }
         }
+
+        // create the composable services
+        this.services = new SzGrpcServices(env, resolvedUri, processingRate);
 
         // create a CORS decorator if we need to decorate the server
         // NOTE: we decorate the ENTIRE server rather than the GrpcService or
@@ -450,97 +361,75 @@ public class SzGrpcServer {
             }
         }
 
-        // build the GRPC service
-        GrpcService grpcService = GrpcService.builder()
-                .useBlockingTaskExecutor(true)
-                .addService(new SzGrpcProductImpl(this))
-                .addService(new SzGrpcConfigImpl(this))
-                .addService(new SzGrpcConfigManagerImpl(this))
-                .addService(new SzGrpcDiagnosticImpl(this))
-                .addService(new SzGrpcEngineImpl(this))
-                .build();
-
         // create the server builder
-        ServerBuilder serverBuilder = Server.builder()
+        this.grpcServerBuilder = Server.builder()
                 .http(new InetSocketAddress(bindAddress, port))
-                .blockingTaskExecutor(concurrency)
-                .service(grpcService);
+                .blockingTaskExecutor(concurrency);
 
-        // decorate the GRPC service with the CORS decorator if we have one
+        // configure Senzing services onto the server builder
+        this.services.configureServer(this.grpcServerBuilder);
+
+        // decorate with CORS if configured
         if (corsDecorator != null) {
-            serverBuilder.decoratorUnder("/", corsDecorator);
+            this.grpcServerBuilder.decoratorUnder("/", corsDecorator);
         }
-
-        // check if we need to build with data mart services
-        if (this.replicator != null) {
-            SzReplicationProvider provider = this.replicator.getReplicationProvider();
-
-            DataMartReportsServices dataMartReports = new DataMartReportsServices(this.proxyEnvironment,
-                    provider.getConnectionProvider());
-
-            this.objectMapper = new ObjectMapper();
-
-            // get a "binding builder" for the annotated service for data mart reports
-            AnnotatedServiceBindingBuilder builder = serverBuilder.annotatedService()
-                    .pathPrefix(DATA_MART_PREFIX)
-                    .requestConverters(
-                            new JacksonRequestConverterFunction(this.objectMapper))
-                    .responseConverters(
-                            new JacksonResponseConverterFunction(this.objectMapper));
-
-            // now build the annotated service and bind it to the server builder
-            builder.build(dataMartReports);
-        }
-
-        // build the server
-        this.grpcServer = serverBuilder.build();
 
         // optionally, start the server
         if (startServer) {
-            if (this.replicator != null) {
-                this.replicator.start();
-            }
+            // build the server
+            this.grpcServer = this.grpcServerBuilder.build();
+
+            this.services.start();
             this.grpcServer.start().join();
             this.started = true;
         }
     }
 
     /**
+     * Gets the {@link SzGrpcServices} used by this instance.
+     * This allows callers to access the composable Senzing services
+     * independently of the Armeria server lifecycle.
+     *
+     * @return The {@link SzGrpcServices} used by this instance.
+     */
+    protected SzGrpcServices getServices() {
+        return this.services;
+    }
+
+    /**
      * Gets the {@link SzReplicationProvider} for this instance
      * if the data mart has been enabled. This returns
      * <code>null</code> if the data mart is not enabled.
-     * 
+     *
      * @return The {@link SzReplicationProvider} for this instance,
      *         or <code>null</code> if data mart replication is not
      *         enabled.
      */
     public SzReplicationProvider getReplicationProvider() {
-        return (this.replicator == null) ? null
-                : this.replicator.getReplicationProvider();
+        return this.services.getReplicationProvider();
     }
 
     /**
      * Gets the {@link SQLConsumer.MessageQueue} for enqueuing INFO
      * messages for consumption by the data mart. This returns
      * <code>null</code> if the data mart is not enabled.
-     * 
+     *
      * @return The {@link SQLConsumer.MessageQueue} for enqueuing INFO
      *         messages for consumption by the data mart, or
      *         <code>null</code> if the data mart is not enabled.
-     * 
+     *
      */
     public SQLConsumer.MessageQueue getDataMartMessageQueue() {
-        return (this.replicator == null) ? null
-                : this.replicator.getDatabaseMessageQueue();
+        return this.services.getDataMartMessageQueue();
     }
 
     /**
      * Gets the port number on which this {@link SzGrpcServer} is
      * actively listening.
-     * 
+     *
      * @return The port number on which this {@link SzGrpcServer} is
      *         actively listening.
-     * 
+     *
      * @throws IllegalStateException If this {@link SzGrpcServer} has
      *                               not been started or has been destroyed
      *                               and is <b>not</b> actively listening
@@ -558,7 +447,7 @@ public class SzGrpcServer {
     /**
      * Starts the server so it begins servicing requests.
      * If the server has previously been started then this method has no effect.
-     * 
+     *
      * @throws IllegalStateException If the server has already been
      *                               {@linkplain #destroy()
      *                               destroyed}.
@@ -568,10 +457,13 @@ public class SzGrpcServer {
             throw new IllegalStateException(
                     "This instance has already been destroyed");
         }
+
         if (!this.started) {
-            if (this.replicator != null) {
-                this.replicator.start();
+            if (this.grpcServer == null) {
+                this.grpcServer = this.grpcServerBuilder.build();
             }
+
+            this.services.start();
             this.grpcServer.start().join();
             this.started = true;
         }
@@ -579,11 +471,11 @@ public class SzGrpcServer {
 
     /**
      * Destroys this instance.
-     * 
+     *
      * This will stop the server (if running and it has not already been stopped)
      * and will usually {@linkplain SzEnvironment#destroy() destroy} the
      * {@link SzEnvironment} (assuming it is not being managed externally).
-     * 
+     *
      */
     public synchronized void destroy() {
         if (this.destroyed) {
@@ -591,34 +483,33 @@ public class SzGrpcServer {
         }
         if (this.started && !this.stopped) {
             this.grpcServer.stop().join(); // stop incoming requests first
-            if (this.replicator != null) {
-                this.replicator.shutdown(); // shutdown the data mart
-            }
+            this.services.destroy(); // destroy the services (data mart, etc.)
             this.stopped = true;
         }
         if (this.manageEnv) {
             this.environment.destroy();
         }
         this.destroyed = true;
+        this.notifyAll();
     }
 
     /**
      * Gets the {@link SzEnvironment} used by this instance.
-     * 
+     *
      * The returned instance is a {@link java.lang.reflect.Proxy} that
      * will not allow the caller to invoke {@link SzEnvironment#destroy()}.
-     * 
+     *
      * @return The {@link SzEnvironment} used by this instance.
      */
     public synchronized SzEnvironment getEnvironment() {
-        return this.proxyEnvironment;
+        return this.services.getEnvironment();
     }
 
     /**
      * Checks if the gRPC server is running. This returns <code>true</code>
      * if and only if the instance was previously {@linkplain #start() started}
      * (which may happen when constructed) and has not been destroyed.
-     * 
+     *
      * @return <code>true</code> if the gRPC server is running, otherwise
      *         <code>false</code>.
      */
@@ -628,7 +519,7 @@ public class SzGrpcServer {
 
     /**
      * Checks if this instance has been destroyed.
-     * 
+     *
      * @return <code>true</code> if this instance has been destroyed,
      *         otherwise <code>false</code>.
      */
@@ -638,7 +529,7 @@ public class SzGrpcServer {
 
     /**
      * Main function for command-line execution.
-     * 
+     *
      * @param args The command-line arguments.
      */
     @SuppressWarnings("rawtypes")
@@ -667,10 +558,7 @@ public class SzGrpcServer {
 
         } catch (Exception e) {
             if (!isLastLoggedException(e)) {
-                System.err.println();
-                System.err.println(e.getMessage());
-                System.err.println();
-                System.err.println(LoggingUtilities.formatStackTrace(e.getStackTrace()));
+                logError(e, "Failed to parse command-line arguments");
             }
             System.exit(1);
         }
@@ -717,61 +605,15 @@ public class SzGrpcServer {
             finalServer.destroy();
         }));
 
-        final DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
-                .withZone(ZoneId.systemDefault());
-
-        // create a thread to monitor the license expiration date
-        Thread thread = new Thread(() -> {
-            while (!finalServer.isDestroyed()) {
-                try {
-                    SzProduct product = finalServer.getEnvironment().getProduct();
-
-                    String license = product.getLicense();
-
-                    JsonObject jsonObject = JsonUtilities.parseJsonObject(license);
-
-                    String dateText = JsonUtilities.getString(jsonObject, "expireDate");
-
-                    Date expireDate = (dateText == null) ? null : DATE_FORMAT.parse(dateText);
-
-                    if (expireDate != null) {
-                        long now = System.currentTimeMillis();
-
-                        Instant expiration = expireDate.toInstant();
-
-                        long diff = expireDate.getTime() - now;
-
-                        // check if within the expiration warning period
-                        if (diff < 0L) {
-                            System.err.println(
-                                    "WARNING: License expired -- was valid through "
-                                            + formatter.format(expiration) + ".");
-
-                        } else if (diff < EXPIRATION_WARNING_MILLIS) {
-                            System.err.println(
-                                    "WARNING: License expiring soon -- valid through "
-                                            + formatter.format(expiration) + ".");
-                        }
-                    }
-                    try {
-                        synchronized (finalServer) {
-                            // sleep for six hours
-                            finalServer.wait(Duration.ofHours(6).toMillis());
-                        }
-                    } catch (InterruptedException ignore) {
-                        // do nothing
-                    }
-
-                } catch (Exception failure) {
-                    break;
+        // block until the server is destroyed (e.g., via shutdown hook)
+        try {
+            synchronized (finalServer) {
+                while (!finalServer.isDestroyed()) {
+                    finalServer.wait();
                 }
             }
-        });
-        thread.start();
-        try {
-            thread.join();
         } catch (InterruptedException e) {
-            System.err.println("WARNING: Interrupted while joining thread before exit.");
+            logWarning("WARNING: Interrupted while waiting for server shutdown.");
         }
     }
 
@@ -804,18 +646,17 @@ public class SzGrpcServer {
 
     /**
      * Exit on error after reporting the specified {@link Throwable}.
-     * 
+     *
      * @param t The {@link Throwable} to report.
      */
     private static void exitOnError(Throwable t) {
-        System.err.println(t.getMessage());
-        System.err.println(LoggingUtilities.formatStackTrace(t.getStackTrace()));
+        logError(t, "Exiting due to error");
         System.exit(1);
     }
 
     /**
      * Gets the usage message to report on the command-line.
-     * 
+     *
      * @return The usage message to report on the command line.
      */
     public static String getUsageMessage() {
@@ -824,7 +665,7 @@ public class SzGrpcServer {
 
     /**
      * Gets the version message to report on the command-line.
-     * 
+     *
      * @return The version message to report on the command line.
      */
     public static String getVersionMessage() {
@@ -832,199 +673,20 @@ public class SzGrpcServer {
     }
 
     /**
-     * Provides a mapping of exception class types to {@link Status}
-     * values.
-     */
-    private static final Map<Class<?>, Status> STATUS_MAP;
-
-    static {
-        Map<Class<?>, Status> map = new LinkedHashMap<>();
-        map.put(UnsupportedOperationException.class, Status.UNIMPLEMENTED);
-        map.put(NullPointerException.class, Status.INTERNAL);
-        map.put(SzNotFoundException.class, Status.NOT_FOUND);
-        map.put(SzUnknownDataSourceException.class, Status.NOT_FOUND);
-        map.put(IllegalArgumentException.class, Status.INVALID_ARGUMENT);
-        map.put(SzBadInputException.class, Status.INVALID_ARGUMENT);
-        map.put(IllegalStateException.class, Status.FAILED_PRECONDITION);
-        map.put(SzConfigurationException.class, Status.FAILED_PRECONDITION);
-        map.put(SzReplaceConflictException.class, Status.FAILED_PRECONDITION);
-        map.put(SzNotInitializedException.class, Status.FAILED_PRECONDITION);
-        map.put(SzRetryTimeoutExceededException.class, Status.DEADLINE_EXCEEDED);
-        map.put(SzLicenseException.class, Status.RESOURCE_EXHAUSTED);
-        map.put(SzRetryableException.class, Status.OUT_OF_RANGE);
-        map.put(SzException.class, Status.INTERNAL);
-
-        STATUS_MAP = Collections.unmodifiableMap(map);
-    }
-
-    /**
-     * Attempt to infer the {@link Status} from the {@link Throwable}.
-     * If it cannot be inferred then {@link Status#UNKNOWN} is returned.
-     * 
-     * @param t The {@link Throwable} from which to refer the {@link Status}.
-     * @return The inferred {@link Status}.
-     */
-    protected static io.grpc.Status inferStatus(Throwable t) {
-        if (t == null) {
-            return Status.UNKNOWN;
-        }
-        for (Map.Entry<Class<?>, Status> entry : STATUS_MAP.entrySet()) {
-            if (entry.getKey().isInstance(t)) {
-                return entry.getValue();
-            }
-        }
-        return Status.UNKNOWN;
-    }
-
-    /**
-     * Creates a {@link StatusRuntimeException} from the optionally-specified
-     * {@link Status} and the specified {@link Throwable}.
-     * 
-     * @param t The {@link Throwable} instance to use as a basis.
-     * 
-     * @return The {@link StatusRuntimeException} that was created.
-     */
-    protected static StatusRuntimeException toStatusRuntimeException(Throwable t) {
-        return toStatusRuntimeException(inferStatus(t), t);
-    }
-
-    /**
-     * Creates a {@link StatusRuntimeException} from the optionally-specified
-     * {@link Status} and the specified {@link Throwable}.
-     * 
-     * @param status The explicit {@link Status} or <code>null</code> if the
-     *               {@link Status} should be inferred from the {@link Throwable}.
-     * 
-     * @param t      The {@link Throwable} instance to use as a basis.
-     * 
-     * @return The {@link StatusRuntimeException} that was created.
-     */
-    protected static StatusRuntimeException toStatusRuntimeException(Status status,
-            Throwable t) {
-        // check if the throwable is null
-        if (t == null) {
-            status = (status == null) ? Status.UNKNOWN : status;
-            return status.asRuntimeException();
-        }
-
-        // check if status is null and infer it if so
-        if (status == null) {
-            status = inferStatus(t);
-        }
-
-        // setup the fields for the JSON error
-        String reason = null;
-
-        // check if we have an SzException
-        if (t instanceof SzException) {
-            SzException sze = (SzException) t;
-
-            String prefix = REASON_PREFIX + sze.getErrorCode()
-                    + REASON_SPLITTER;
-            String message = sze.getMessage();
-
-            if (message.startsWith(prefix)) {
-                reason = message;
-            } else {
-                reason = prefix + message;
-            }
-        }
-
-        // get the other fields
-        StackTraceElement[] stackFrames = t.getStackTrace();
-
-        StackTraceElement relevantFrame = null;
-        for (StackTraceElement ste : stackFrames) {
-            if (ste.getClassName().startsWith("com.senzing")) {
-                String className = ste.getClassName();
-                String methodName = ste.getMethodName();
-                if (className == null || methodName == null) {
-                    continue;
-                }
-                // skip the utility method for creating exceptions
-                if (className.equals(SzCoreUtilities.class.getName())
-                        && methodName.equals("createSzException")) {
-                    continue;
-                }
-                // skip the core env method for handling return codes
-                if (className.equals(SzCoreEnvironment.class.getName())
-                        && methodName.equals("handleReturnCode")) {
-                    continue;
-                }
-
-                // any other senzing method, assume it is relevant
-                relevantFrame = ste;
-                break;
-            }
-        }
-
-        // format the relevant frame
-        String function = (relevantFrame == null)
-                ? null
-                : LoggingUtilities.formatStackFrame(relevantFrame);
-
-        // get the stack trace list
-        List<String> stackTrace = new ArrayList<>(stackFrames.length);
-        for (StackTraceElement frame : stackFrames) {
-            stackTrace.add(LoggingUtilities.formatStackFrame(frame));
-        }
-
-        // get the text for the original exception
-        String text = t.toString();
-
-        // set the fields
-        JsonObjectBuilder job = Json.createObjectBuilder();
-        if (reason != null) {
-            job.add(REASON_FIELD_KEY, reason);
-        }
-        if (text != null) {
-            job.add(TEXT_FIELD_KEY, text);
-        }
-        if (function != null) {
-            job.add(FUNCTION_FIELD_KEY, function);
-        }
-        if (stackTrace != null) {
-            JsonArrayBuilder jab = Json.createArrayBuilder();
-            for (String frame : stackTrace) {
-                jab.add(frame);
-            }
-            job.add(STACK_TRACE_FIELD_KEY, jab);
-        }
-        JsonObjectBuilder wrapper = Json.createObjectBuilder();
-        wrapper.add(ERROR_FIELD_KEY, job);
-
-        String jsonError = toJsonText(wrapper);
-
-        // create the exception
-        return status.withDescription(jsonError)
-                .withCause(t)
-                .asRuntimeException();
-    }
-
-    /**
      * Gets a {@link String} field value from a message that may be
      * absent. If the field value is absent then <code>null</code>
      * is returned, otherwise the field value is returned.
-     * 
+     *
      * @param message   The {@link GeneratedMessage} from which the
      *                  value is being extracted.
      * @param fieldName The name of the field for which the value
      *                  is being extracted.
      * @return The value of the field or <code>null</code> if the value
      *         has not been explicitly set.
+     * @deprecated Use {@link SzGrpcServices#getString(GeneratedMessage, String)} instead.
      */
+    @Deprecated
     public static String getString(GeneratedMessage message, String fieldName) {
-        Descriptor descriptor = message.getDescriptorForType();
-        FieldDescriptor fieldDesc = descriptor.findFieldByName(fieldName);
-        if (fieldDesc == null) {
-            throw new IllegalArgumentException(
-                    "Field (" + fieldName + ") not recognized for type: "
-                            + message.getClass().getName());
-        }
-        if (!message.hasField(fieldDesc)) {
-            return null;
-        }
-        Object result = message.getField(fieldDesc);
-        return (result == null) ? null : result.toString();
+        return SzGrpcServices.getString(message, fieldName);
     }
 }

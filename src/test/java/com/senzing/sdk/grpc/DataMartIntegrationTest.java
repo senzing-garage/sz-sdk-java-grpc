@@ -27,19 +27,15 @@ import com.senzing.datamart.ProcessingRate;
 import com.senzing.datamart.SQLiteUri;
 import com.senzing.datamart.SzCoreSettingsUri;
 import com.senzing.datamart.reports.EntitySizeReports;
-import com.senzing.datamart.reports.EntitySizeReportsService;
 
 import io.grpc.ManagedChannel;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.Inet4Address;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLConnection;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +49,7 @@ import static com.senzing.datamart.SzReplicatorConstants.DEFAULT_CORE_SETTINGS_D
 import static com.senzing.io.IOUtilities.UTF_8;
 import static com.senzing.sql.SQLUtilities.close;
 import static com.senzing.datamart.reports.EntitySizeReportsService.*;
+import static com.senzing.util.LoggingUtilities.*;
 
 /**
  * 
@@ -322,8 +319,6 @@ public class DataMartIntegrationTest extends AbstractGrpcTest {
                 assertEquals(expected, breakdown, "Entity size breakdown obtained over HTTP "
                         + "does not match object obtained directly from database");
                 
-                System.err.println();
-                System.err.println("************ BREAKDOWN: " + breakdown);
                 List<SzEntitySizeCount> counts = breakdown.getEntitySizeCounts();
 
                 assertEquals(2, counts.size(), "Unexpected number of distinct entity size counts");

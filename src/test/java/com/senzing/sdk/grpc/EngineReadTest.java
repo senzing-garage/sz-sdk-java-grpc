@@ -18,7 +18,6 @@ import com.senzing.sdk.SzEngine;
 import com.senzing.sdk.SzFlag;
 import com.senzing.sdk.SzRecordKey;
 import com.senzing.sdk.core.SzCoreEnvironment;
-import com.senzing.sdk.core.auto.SzAutoCoreEnvironment;
 import com.senzing.sdk.grpc.server.SzGrpcServer;
 import com.senzing.sdk.SzException;
 import com.senzing.sdk.test.StandardTestDataLoader;
@@ -64,7 +63,9 @@ public class EngineReadTest
         this.beginTests();
         this.initializeTestEnvironment();
 
+        System.err.println("** GOT HERE 1");
         this.server = this.createServer();
+        System.err.println("** GOT HERE 2");
         
         this.channel = this.createChannel(this.server.getActivePort());
 

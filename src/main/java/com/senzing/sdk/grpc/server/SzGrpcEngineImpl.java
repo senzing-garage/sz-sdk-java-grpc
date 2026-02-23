@@ -25,40 +25,40 @@ import static com.senzing.sdk.SzFlag.SZ_WITH_INFO;
 import static com.senzing.sdk.grpc.proto.SzEngineGrpc.*;
 import static com.senzing.sdk.grpc.proto.SzEngineProto.*;
 import static com.senzing.sdk.SzFlagUsageGroup.*;
-import static com.senzing.sdk.grpc.server.SzGrpcServer.*;
-import static com.senzing.util.LoggingUtilities.formatStackTrace;
+import static com.senzing.sdk.grpc.server.SzGrpcServices.*;
+import static com.senzing.util.LoggingUtilities.*;
 
 /**
  * Provides the gRPC server-side implementation for {@link SzEngine}.
  */
 public class SzGrpcEngineImpl extends SzEngineImplBase {
     /**
-     * The {@link SzGrpcServer} to use.
+     * The {@link SzGrpcServices} to use.
      */
-    private SzGrpcServer server = null;
+    private SzGrpcServices services = null;
 
     /**
-     * Constructs with the {@link SzGrpcServer}.
-     * 
-     * @param server The {@link SzGrpcServer} to use.
+     * Constructs with the {@link SzGrpcServices}.
+     *
+     * @param services The {@link SzGrpcServices} to use.
      */
-    protected SzGrpcEngineImpl(SzGrpcServer server) {
-        Objects.requireNonNull(server, "The environment cannot be null");
-        if (server.isDestroyed()) {
+    protected SzGrpcEngineImpl(SzGrpcServices services) {
+        Objects.requireNonNull(services, "The services cannot be null");
+        if (services.isDestroyed()) {
             throw new IllegalArgumentException(
-                "The specified SzCoreEnvironment has already been destroyed");
+                "The specified SzGrpcServices has already been destroyed");
         }
-        this.server = server;
+        this.services = services;
     }
 
     /**
      * Gets the {@link SzEnvironment} to use from the backing
-     * {@link SzGrpcServer}.
-     * 
-     * @return The {@link SzEnvironment} for the backing server.
+     * {@link SzGrpcServices}.
+     *
+     * @return The {@link SzEnvironment} for the backing services.
      */
     protected SzEnvironment getEnvironment() {
-        return this.server.getEnvironment();
+        return this.services.getEnvironment();
     }
 
     /**
@@ -69,7 +69,7 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
      *         to a queue, otherwise <code>false</code>.
      */
     protected boolean isPublishingInfo() {
-        return (this.server.getDataMartMessageQueue() != null);
+        return (this.services.getDataMartMessageQueue() != null);
     }
 
     /**
@@ -121,19 +121,16 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
             "The message cannot be null if publishing INFO messages");
         
         try {
-            this.server.getDataMartMessageQueue().enqueueMessage(message);
+            this.services.getDataMartMessageQueue().enqueueMessage(message);
 
             return true;
 
         } catch (Exception e) {
-            System.err.println();
-            System.err.println("- - - - - - - - - - - - - - - - - - - ");
-            System.err.println("WARNING: Failed to enqueue INFO message for data mart: ");
-            System.err.println(message);
-            System.err.println("CAUSE: " + e.getMessage());
-            System.err.println(formatStackTrace(e.getStackTrace()));
-            System.err.println("- - - - - - - - - - - - - - - - - - - ");
-            System.err.println();
+            logWarning(e, "", "- - - - - - - - - - - - - - - - - - - ",
+                       "WARNING: Failed to enqueue INFO message for data mart: ",
+                       message,
+                       "- - - - - - - - - - - - - - - - - - - ",
+                       "");
             return false;
         }
     }

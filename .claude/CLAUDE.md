@@ -94,6 +94,7 @@ The codebase follows a clean separation between client and server:
 **Server-side** (`com.senzing.sdk.grpc.server` package):
 
 - `SzGrpcServer` - Main server class using Armeria framework
+- `SzGrpcServer` can be constructed with an existing `SzEnvironment` or can create one from settings — the `manageEnv` flag controls whether the server destroys the environment on shutdown
 - `SzGrpcEngineImpl`, `SzGrpcConfigImpl`, etc. - Service implementations that receive gRPC requests and delegate to native Senzing Core SDK
 - `WrapperMain` - Entry point for standalone server execution
 - Server implementations translate gRPC requests to Core SDK calls and handle exception mapping
@@ -105,6 +106,7 @@ The codebase follows a clean separation between client and server:
 - `SzGrpcEnvironment` uses a state machine (`ACTIVE`, `DESTROYING`, `DESTROYED`) with read-write locks
 - The `execute()` method ensures operations complete before destruction
 - Client never destroys the gRPC channel - it's externally managed
+- Server creates a restricted proxy of `SzEnvironment` (via `restrictedProxy()`) that prevents gRPC service implementations from destroying the actual environment — only the server controls destruction
 
 **Exception Mapping**:
 
@@ -123,6 +125,17 @@ The codebase follows a clean separation between client and server:
 - `SzGrpcEnvironment.Builder` for client initialization
 - `SzGrpcServerOptions` for server configuration with command-line parsing support
 
+**Data Mart Replication** (optional):
+
+- Server can be configured with `--data-mart-uri` to enable data mart replication via `SzReplicator`
+- When enabled, data mart REST report endpoints are exposed at the `/data-mart` path prefix using Armeria's `AnnotatedService`
+- Uses Jackson for JSON request/response conversion on the data mart endpoints
+
+**CORS Support**:
+
+- Server supports `--allowed-origins` for Cross-Origin Resource Sharing
+- CORS decorator is applied to the entire server (not individual services) to handle path redirects consistently
+
 ### Generated Code
 
 **Protocol Buffers** are compiled during build:
@@ -140,16 +153,20 @@ Tests inherit from `AbstractGrpcTest` which:
 - Provides shared test data and utilities
 - Manages server lifecycle
 - Tests are organized by SDK interface: `ConfigTest`, `EngineBasicsTest`, `EngineGraphTest`, etc.
+- The `maven-compiler-plugin` excludes tests from the `sz-sdk-java` submodule (`com/senzing/sdk/core/**`) to prevent duplicate execution of core SDK tests
 
 ## Development Guidelines
 
 ### Dependencies and Shading
 
-The server JAR uses extensive dependency shading to avoid classpath conflicts:
+The build produces two JARs via `maven-shade-plugin`:
 
-- All third-party packages relocated to `com.senzing.sdk.grpc.shaded.*`
-- Exception: `sz-sdk` interfaces are NOT shaded (required for API compatibility)
-- Netty native transports are excluded (using NIO transport via `com.linecorp.armeria.transportType=nio`)
+- **Server JAR** (`sz-sdk-grpc-server.jar`): Fat JAR bundling all dependencies (no package relocation). `sz-sdk` interfaces are excluded from the bundle (required on the classpath separately). Netty native transports are excluded (NIO transport is forced via system property).
+- **Client JAR** (`sz-sdk-grpc.jar`): Contains only `com.senzing.sdk.grpc` classes, excluding the `server` subpackage.
+
+### Armeria NIO Transport
+
+The system property `com.linecorp.armeria.transportType=nio` must be set in a **static initializer** before any Armeria class is loaded. See `SzGrpcServer.java` lines 94-96 and `AbstractGrpcTest.java` lines 21-24. This is critical when adding new classes that use Armeria.
 
 ### When Adding New gRPC Methods
 
@@ -201,6 +218,9 @@ Key server options (from `SzGrpcServerOption`):
 - `--bind-address` - Network interface to bind
 - `--concurrency` - Thread pool size for request handling
 - `--grpc-concurrency` - gRPC executor concurrency
+- `--allowed-origins` - CORS allowed origins (use `*` for any)
+- `--data-mart-uri` / `--data-mart-database-uri` - Data mart database connection
+- `--data-mart-processing-rate` - Data mart replication processing rate
 
 ## Project Structure Notes
 
