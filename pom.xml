@@ -4,7 +4,7 @@
   <groupId>com.senzing</groupId>
   <artifactId>sz-sdk-grpc</artifactId>
   <packaging>jar</packaging>
-  <version>0.5.0</version>
+  <version>0.5.1</version>
   <name>Senzing Java GRPC SDK</name>
   <description>The Java GRPC Client SDK for Senzing.  This requires a compatible GRPC server at runtime.</description>
   <url>http://github.com/senzing-garage/sz-sdk-java-grpc</url>

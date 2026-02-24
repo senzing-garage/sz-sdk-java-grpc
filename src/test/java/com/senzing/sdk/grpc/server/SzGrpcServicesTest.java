@@ -472,9 +472,9 @@ public class SzGrpcServicesTest {
         com.linecorp.armeria.server.ServerBuilder builder
             = com.linecorp.armeria.server.Server.builder()
                 .http(0);
-        services.configureServer(builder);
+        services.configureServer(builder, "/data-mart");
         assertThrows(IllegalStateException.class,
-                     () -> services.configureServer(builder),
+                     () -> services.configureServer(builder, "/data-mart"),
                      "Second configureServer() call should throw "
                      + "IllegalStateException");
         services.destroy();
@@ -499,7 +499,7 @@ public class SzGrpcServicesTest {
             = com.linecorp.armeria.server.Server.builder()
                 .http(0);
         assertThrows(IllegalStateException.class,
-                     () -> services.configureServer(builder),
+                     () -> services.configureServer(builder, "/data-mart"),
                      "configureServer() after destroy() should throw "
                      + "IllegalStateException");
     }

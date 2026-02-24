@@ -62,11 +62,9 @@ public class SzGrpcServer {
     }
 
     /**
-     * The data mart path prefix for the reports URL's.
-     * @deprecated Use {@link SzGrpcServices#DATA_MART_PREFIX} instead.
+     * The default data mart path prefix for the reports URL's.
      */
-    @Deprecated
-    public static final String DATA_MART_PREFIX = SzGrpcServices.DATA_MART_PREFIX;
+    public static final String DATA_MART_PREFIX = "/data-mart";
 
     /**
      * The {@link SzEnvironment} to use.
@@ -367,7 +365,8 @@ public class SzGrpcServer {
                 .blockingTaskExecutor(concurrency);
 
         // configure Senzing services onto the server builder
-        this.services.configureServer(this.grpcServerBuilder);
+        this.services.configureServer(this.grpcServerBuilder,
+                                      DATA_MART_PREFIX);
 
         // decorate with CORS if configured
         if (corsDecorator != null) {

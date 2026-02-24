@@ -85,10 +85,9 @@ import static com.senzing.util.LoggingUtilities.*;
  */
 public class SzGrpcServices {
 
-    /**
-     * The data mart path prefix for the reports URL's.
-     */
-    public static final String DATA_MART_PREFIX = "/data-mart";
+    // no DATA_MART_PREFIX here — the caller provides the path prefix
+    // via configureServer(). See SzGrpcServer.DATA_MART_PREFIX for the
+    // default used by the standalone server.
 
     /**
      * A constant for the {@link SzEnvironment#destroy()} method.
@@ -166,7 +165,7 @@ public class SzGrpcServices {
     private ObjectMapper objectMapper = null;
 
     /**
-     * Tracks if {@link #configureServer(ServerBuilder)} has been called.
+     * Tracks if {@link #configureServer(ServerBuilder, String)} has been called.
      */
     private boolean configured = false;
 
@@ -247,15 +246,28 @@ public class SzGrpcServices {
      * Configures all Senzing services onto the provided
      * {@link ServerBuilder}. This adds the gRPC service and, if data
      * mart replication is configured, the data mart report endpoints
-     * under the {@link #DATA_MART_PREFIX} path.
+     * under the specified path prefix.
      *
      * <p>This method does <b>not</b> configure port, bind address,
      * concurrency, or CORS &mdash; those concerns belong to the owner of
      * the {@link ServerBuilder}.</p>
      *
      * @param builder The {@link ServerBuilder} to configure.
+     * @param dataMartPathPrefix The path prefix for data mart report
+     *        endpoints (e.g. {@code "/data-mart"}).  If data mart
+     *        replication is configured and this is {@code null}, an
+     *        {@link IllegalArgumentException} is thrown.  If data mart
+     *        replication is <b>not</b> configured, this parameter is
+     *        ignored.
+     *
+     * @throws IllegalArgumentException If data mart replication is
+     *         configured and {@code dataMartPathPrefix} is {@code null}.
+     * @throws IllegalStateException If this instance has already been
+     *         destroyed or has already configured a server.
      */
-    public synchronized void configureServer(ServerBuilder builder) {
+    public synchronized void configureServer(ServerBuilder builder,
+                                             String dataMartPathPrefix)
+    {
         if (this.destroyed) {
             throw new IllegalStateException(
                 "This instance has already been destroyed");
@@ -271,6 +283,11 @@ public class SzGrpcServices {
 
         // add data mart report services if configured
         if (this.replicator != null) {
+            if (dataMartPathPrefix == null) {
+                throw new IllegalArgumentException(
+                    "Data mart replication is configured but no "
+                    + "dataMartPathPrefix was provided");
+            }
             SzReplicationProvider provider = this.replicator.getReplicationProvider();
 
             DataMartReportsServices dataMartReports = new DataMartReportsServices(
@@ -280,7 +297,7 @@ public class SzGrpcServices {
             this.objectMapper = new ObjectMapper();
 
             AnnotatedServiceBindingBuilder serviceBuilder = builder.annotatedService()
-                    .pathPrefix(DATA_MART_PREFIX)
+                    .pathPrefix(dataMartPathPrefix)
                     .requestConverters(
                             new JacksonRequestConverterFunction(this.objectMapper))
                     .responseConverters(
@@ -343,13 +360,13 @@ public class SzGrpcServices {
     /**
      * Starts the data mart replicator (if configured) and the license
      * expiration monitoring thread.  This should be called after
-     * {@link #configureServer(ServerBuilder)} and after the Armeria
-     * server has been started.
+     * {@link #configureServer(ServerBuilder, String)} and after the
+     * Armeria server has been started.
      *
      * <p><b>NOTE:</b> This method may be called without
-     * {@link #configureServer(ServerBuilder)} having been called if the
-     * caller only needs the replicator and license monitoring without
-     * gRPC services registered on a server.</p>
+     * {@link #configureServer(ServerBuilder, String)} having been called
+     * if the caller only needs the replicator and license monitoring
+     * without gRPC services registered on a server.</p>
      *
      * @throws IllegalStateException If this instance has already been
      *                               destroyed.
