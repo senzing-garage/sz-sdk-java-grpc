@@ -20,10 +20,10 @@ RUN apt-get update \
 # Stage: builder
 # -----------------------------------------------------------------------------
 FROM ${IMAGE_BUILDER} AS builder
-ENV REFRESHED_AT=2026-02-03
+ENV REFRESHED_AT=2026-02-24
 LABEL Name="senzing/java-builder" \
        Maintainer="support@senzing.com" \
-       Version="0.4.1"
+       Version="0.5.0"
 
 # Run as "root" for system installation.
 
@@ -90,10 +90,10 @@ RUN mvn -ntp -DskipTests=true package
 # -----------------------------------------------------------------------------
 
 FROM ${IMAGE_FINAL} AS final
-ENV REFRESHED_AT=2026-02-03
+ENV REFRESHED_AT=2026-02-24
 LABEL Name="senzing/sz-sdk-grpc-java" \
        Maintainer="support@senzing.com" \
-       Version="0.4.1"
+       Version="0.5.0"
 #HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD ["/app/healthcheck.sh"]
 HEALTHCHECK CMD ["echo hello"]
 USER root

@@ -10,39 +10,39 @@ import io.grpc.stub.StreamObserver;
 
 import static com.senzing.sdk.grpc.proto.SzConfigGrpc.*;
 import static com.senzing.sdk.grpc.proto.SzConfigProto.*;
-import static com.senzing.sdk.grpc.server.SzGrpcServer.*;
+import static com.senzing.sdk.grpc.server.SzGrpcServices.*;
 
 /**
  * Provides the gRPC server-side implementation for {@link SzConfig}.
  */
 public class SzGrpcConfigImpl extends SzConfigImplBase {
     /**
-     * The {@link SzGrpcServer} to use.
+     * The {@link SzGrpcServices} to use.
      */
-    private SzGrpcServer server = null;
+    private SzGrpcServices services = null;
 
     /**
-     * Constructs with the {@link SzGrpcServer}.
-     * 
-     * @param server The {@link SzGrpcServer}.
+     * Constructs with the {@link SzGrpcServices}.
+     *
+     * @param services The {@link SzGrpcServices}.
      */
-    protected SzGrpcConfigImpl(SzGrpcServer server) {
-        Objects.requireNonNull(server, "The server cannot be null");
-        if (server.isDestroyed()) {
+    protected SzGrpcConfigImpl(SzGrpcServices services) {
+        Objects.requireNonNull(services, "The services cannot be null");
+        if (services.isDestroyed()) {
             throw new IllegalArgumentException(
-                "The specified SzCoreEnvironment has already been destroyed");
+                "The specified SzGrpcServices has already been destroyed");
         }
-        this.server = server;
+        this.services = services;
     }
 
     /**
      * Gets the {@link SzEnvironment} to use from the backing
-     * {@link SzGrpcServer}.
-     * 
-     * @return The {@link SzEnvironment} for the backing server.
+     * {@link SzGrpcServices}.
+     *
+     * @return The {@link SzEnvironment} for the backing services.
      */
     protected SzEnvironment getEnvironment() {
-        return this.server.getEnvironment();
+        return this.services.getEnvironment();
     }
 
     /**
