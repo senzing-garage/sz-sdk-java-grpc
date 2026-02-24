@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
@@ -204,6 +205,8 @@ public class SzGrpcServices {
                           ConnectionUri    dataMartUri,
                           ProcessingRate   processingRate)
     {
+        Objects.requireNonNull(env, "The environment cannot be null");
+
         // proxy the environment to prevent destroy() calls
         this.proxyEnvironment = (SzEnvironment) restrictedProxy(env, DESTROY_METHOD);
 
@@ -253,6 +256,10 @@ public class SzGrpcServices {
      * @param builder The {@link ServerBuilder} to configure.
      */
     public synchronized void configureServer(ServerBuilder builder) {
+        if (this.destroyed) {
+            throw new IllegalStateException(
+                "This instance has already been destroyed");
+        }
         if (this.configured) {
             throw new IllegalStateException(
                 "This instance has already configured a server");
@@ -335,8 +342,14 @@ public class SzGrpcServices {
 
     /**
      * Starts the data mart replicator (if configured) and the license
-     * expiration monitoring thread.  This should be called after the
-     * Armeria server has been started.
+     * expiration monitoring thread.  This should be called after
+     * {@link #configureServer(ServerBuilder)} and after the Armeria
+     * server has been started.
+     *
+     * <p><b>NOTE:</b> This method may be called without
+     * {@link #configureServer(ServerBuilder)} having been called if the
+     * caller only needs the replicator and license monitoring without
+     * gRPC services registered on a server.</p>
      *
      * @throws IllegalStateException If this instance has already been
      *                               destroyed.
@@ -414,6 +427,7 @@ public class SzGrpcServices {
                 }
             }
         });
+        monitorThread.setName("sz-license-monitor");
         monitorThread.setDaemon(true);
         monitorThread.start();
     }
@@ -562,13 +576,11 @@ public class SzGrpcServices {
         if (function != null) {
             job.add(FUNCTION_FIELD_KEY, function);
         }
-        if (stackTrace != null) {
-            JsonArrayBuilder jab = Json.createArrayBuilder();
-            for (String frame : stackTrace) {
-                jab.add(frame);
-            }
-            job.add(STACK_TRACE_FIELD_KEY, jab);
+        JsonArrayBuilder jab = Json.createArrayBuilder();
+        for (String frame : stackTrace) {
+            jab.add(frame);
         }
+        job.add(STACK_TRACE_FIELD_KEY, jab);
         JsonObjectBuilder wrapper = Json.createObjectBuilder();
         wrapper.add(ERROR_FIELD_KEY, job);
 

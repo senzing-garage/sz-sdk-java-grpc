@@ -107,7 +107,7 @@ public class SzGrpcServer {
     /**
      * Tracks if the gRPC server has been destroyed.
      */
-    private boolean destroyed;
+    private boolean destroyed = false;
 
     /**
      * Creates a new instance of {@link SzAutoCoreEnvironment} using

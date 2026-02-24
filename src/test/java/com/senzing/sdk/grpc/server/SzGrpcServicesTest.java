@@ -482,6 +482,30 @@ public class SzGrpcServicesTest {
 
     @Test
     @Order(48)
+    public void testNullEnvironmentThrows() {
+        assertThrows(NullPointerException.class,
+                     () -> new SzGrpcServices(null),
+                     "Constructor with null environment should throw "
+                     + "NullPointerException");
+    }
+
+    @Test
+    @Order(49)
+    public void testConfigureAfterDestroyThrows() {
+        SzEnvironment env = createStubEnvironment();
+        SzGrpcServices services = new SzGrpcServices(env);
+        services.destroy();
+        com.linecorp.armeria.server.ServerBuilder builder
+            = com.linecorp.armeria.server.Server.builder()
+                .http(0);
+        assertThrows(IllegalStateException.class,
+                     () -> services.configureServer(builder),
+                     "configureServer() after destroy() should throw "
+                     + "IllegalStateException");
+    }
+
+    @Test
+    @Order(50)
     public void testNoReplicationByDefault() {
         SzEnvironment env = createStubEnvironment();
         SzGrpcServices services = new SzGrpcServices(env);
