@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning].
 - **Breaking:** Changed `SzGrpcServices.configureServer(ServerBuilder)` to
   `configureServer(ServerBuilder, String)` — callers must now pass a data mart
   path prefix (e.g. `"/data-mart"`).
+- **Breaking:** Removed `SzGrpcServices.DATA_MART_PREFIX`; use
+  `SzGrpcServer.DATA_MART_PREFIX` instead.  
 - Made data mart path prefix configurable so callers can mount data mart
   endpoints at a custom path (e.g. `/api/senzing/data-mart`). The default
   `/data-mart` prefix is defined on `SzGrpcServer.DATA_MART_PREFIX`.
