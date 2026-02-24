@@ -5,14 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], [markdownlint],
 and this project adheres to [Semantic Versioning].
 
-## [0.5.1] - 2026-02-24
+## [0.6.0] - 2026-02-24
 
-### Changes/Additions/Fixes in version 0.5.1
+### Changes/Additions/Fixes in version 0.6.0
 
-- Made data mart path prefix configurable in `SzGrpcServices.configureServer()`
-  so callers can mount data mart endpoints at a custom path (e.g.
-  `/api/senzing/data-mart`). The default `/data-mart` prefix is now defined on
-  `SzGrpcServer.DATA_MART_PREFIX`.
+- **Breaking:** Changed `SzGrpcServices.configureServer(ServerBuilder)` to
+  `configureServer(ServerBuilder, String)` — callers must now pass a data mart
+  path prefix (e.g. `"/data-mart"`).
+- Made data mart path prefix configurable so callers can mount data mart
+  endpoints at a custom path (e.g. `/api/senzing/data-mart`). The default
+  `/data-mart` prefix is defined on `SzGrpcServer.DATA_MART_PREFIX`.
 
 ## [0.5.0] - 2026-02-24
 

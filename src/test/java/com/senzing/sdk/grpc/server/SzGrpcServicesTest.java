@@ -506,6 +506,21 @@ public class SzGrpcServicesTest {
 
     @Test
     @Order(50)
+    public void testConfigureWithNullPrefixNoReplicator() {
+        SzEnvironment env = createStubEnvironment();
+        SzGrpcServices services = new SzGrpcServices(env);
+        com.linecorp.armeria.server.ServerBuilder builder
+            = com.linecorp.armeria.server.Server.builder()
+                .http(0);
+        // null prefix is fine when no replicator is configured
+        services.configureServer(builder, null);
+        assertFalse(services.isDestroyed(),
+                    "Should not be destroyed after configureServer()");
+        services.destroy();
+    }
+
+    @Test
+    @Order(51)
     public void testNoReplicationByDefault() {
         SzEnvironment env = createStubEnvironment();
         SzGrpcServices services = new SzGrpcServices(env);

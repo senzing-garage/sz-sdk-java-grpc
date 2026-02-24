@@ -276,6 +276,19 @@ public class SzGrpcServices {
             throw new IllegalStateException(
                 "This instance has already configured a server");
         }
+        // validate arguments before mutating state
+        if (this.replicator != null) {
+            if (dataMartPathPrefix == null) {
+                throw new IllegalArgumentException(
+                    "Data mart replication is configured but no "
+                    + "dataMartPathPrefix was provided");
+            }
+            if (!dataMartPathPrefix.startsWith("/")) {
+                throw new IllegalArgumentException(
+                    "dataMartPathPrefix must start with '/': "
+                    + dataMartPathPrefix);
+            }
+        }
         this.configured = true;
 
         // add the gRPC service
@@ -283,11 +296,6 @@ public class SzGrpcServices {
 
         // add data mart report services if configured
         if (this.replicator != null) {
-            if (dataMartPathPrefix == null) {
-                throw new IllegalArgumentException(
-                    "Data mart replication is configured but no "
-                    + "dataMartPathPrefix was provided");
-            }
             SzReplicationProvider provider = this.replicator.getReplicationProvider();
 
             DataMartReportsServices dataMartReports = new DataMartReportsServices(

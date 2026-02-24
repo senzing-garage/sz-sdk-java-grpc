@@ -23,7 +23,7 @@ FROM ${IMAGE_BUILDER} AS builder
 ENV REFRESHED_AT=2026-02-24
 LABEL Name="senzing/java-builder" \
        Maintainer="support@senzing.com" \
-       Version="0.5.1"
+       Version="0.6.0"
 
 # Run as "root" for system installation.
 
@@ -93,7 +93,7 @@ FROM ${IMAGE_FINAL} AS final
 ENV REFRESHED_AT=2026-02-24
 LABEL Name="senzing/sz-sdk-grpc-java" \
        Maintainer="support@senzing.com" \
-       Version="0.5.1"
+       Version="0.6.0"
 #HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD ["/app/healthcheck.sh"]
 HEALTHCHECK CMD ["echo hello"]
 USER root
