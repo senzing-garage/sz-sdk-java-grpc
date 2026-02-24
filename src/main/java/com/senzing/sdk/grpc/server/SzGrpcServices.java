@@ -144,7 +144,7 @@ public class SzGrpcServices {
     private SzEnvironment proxyEnvironment = null;
 
     /**
-     * The built {@link GrpcService} containing all Senzing service impls.
+     * The built {@link GrpcService} containing all Senzing service implementations.
      */
     private GrpcService grpcService = null;
 
