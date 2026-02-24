@@ -1,16 +1,15 @@
 package com.senzing.sdk.grpc.server;
 
 import java.lang.reflect.Method;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -52,8 +51,6 @@ import com.senzing.sdk.SzUnknownDataSourceException;
 import com.senzing.sdk.core.SzCoreEnvironment;
 import com.senzing.sdk.core.SzCoreUtilities;
 import com.senzing.util.JsonUtilities;
-import com.senzing.util.LoggingUtilities;
-
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
@@ -131,11 +128,11 @@ public class SzGrpcServices {
     private static final long EXPIRATION_WARNING_MILLIS = Duration.ofDays(30).toMillis();
 
     /**
-     * The {@link DateFormat} to use for parsing the license
+     * The {@link DateTimeFormatter} to use for parsing the license
      * expiration date.
      */
-    private static final DateFormat DATE_FORMAT
-        = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK);
+    private static final DateTimeFormatter DATE_FORMAT
+        = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK);
 
     /**
      * The proxied {@link SzEnvironment} to prevent calling of
@@ -158,6 +155,11 @@ public class SzGrpcServices {
      * for HTTP to JSON text.
      */
     private ObjectMapper objectMapper = null;
+
+    /**
+     * Tracks if this instance has been started.
+     */
+    private boolean started = false;
 
     /**
      * Tracks if this instance has been destroyed.
@@ -325,6 +327,10 @@ public class SzGrpcServices {
             throw new IllegalStateException(
                     "This instance has already been destroyed");
         }
+        if (this.started) {
+            return;
+        }
+        this.started = true;
         if (this.replicator != null) {
             this.replicator.start();
         }
@@ -343,12 +349,13 @@ public class SzGrpcServices {
                         = JsonUtilities.parseJsonObject(license);
                     String dateText = JsonUtilities.getString(
                         jsonObject, "expireDate");
-                    Date expireDate = (dateText == null)
-                        ? null : DATE_FORMAT.parse(dateText);
+                    LocalDateTime expireDateTime = (dateText == null)
+                        ? null : LocalDateTime.parse(dateText, DATE_FORMAT);
 
-                    if (expireDate != null) {
-                        Instant expiration = expireDate.toInstant();
-                        long diff = expireDate.getTime()
+                    if (expireDateTime != null) {
+                        Instant expiration
+                            = expireDateTime.toInstant(ZoneOffset.UTC);
+                        long diff = expiration.toEpochMilli()
                             - System.currentTimeMillis();
 
                         if (diff < 0L) {
@@ -372,7 +379,19 @@ public class SzGrpcServices {
                 } catch (InterruptedException ignore) {
                     // do nothing
                 } catch (Exception failure) {
-                    break;
+                    logWarning(failure,
+                        "License monitoring encountered an error; "
+                        + "will retry");
+                    try {
+                        synchronized (this) {
+                            if (!this.isDestroyed()) {
+                                this.wait(
+                                    Duration.ofMinutes(30).toMillis());
+                            }
+                        }
+                    } catch (InterruptedException ignore) {
+                        // do nothing
+                    }
                 }
             }
         });
@@ -388,11 +407,14 @@ public class SzGrpcServices {
         if (this.destroyed) {
             return;
         }
-        if (this.replicator != null) {
-            this.replicator.shutdown();
+        try {
+            if (this.replicator != null) {
+                this.replicator.shutdown();
+            }
+        } finally {
+            this.destroyed = true;
+            this.notifyAll();
         }
-        this.destroyed = true;
-        this.notifyAll();
     }
 
     /**
@@ -476,7 +498,7 @@ public class SzGrpcServices {
             if (ste.getClassName().startsWith("com.senzing")) {
                 String className = ste.getClassName();
                 String methodName = ste.getMethodName();
-                if (className == null || methodName == null) {
+                if (methodName == null) {
                     continue;
                 }
                 // skip the utility method for creating exceptions
@@ -499,12 +521,12 @@ public class SzGrpcServices {
         // format the relevant frame
         String function = (relevantFrame == null)
                 ? null
-                : LoggingUtilities.formatStackFrame(relevantFrame);
+                : formatStackFrame(relevantFrame);
 
         // get the stack trace list
         List<String> stackTrace = new ArrayList<>(stackFrames.length);
         for (StackTraceElement frame : stackFrames) {
-            stackTrace.add(LoggingUtilities.formatStackFrame(frame));
+            stackTrace.add(formatStackFrame(frame));
         }
 
         // get the text for the original exception

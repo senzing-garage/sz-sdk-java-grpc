@@ -481,16 +481,19 @@ public class SzGrpcServer {
         if (this.destroyed) {
             return;
         }
-        if (this.started && !this.stopped) {
-            this.grpcServer.stop().join(); // stop incoming requests first
-            this.services.destroy(); // destroy the services (data mart, etc.)
-            this.stopped = true;
+        try {
+            if (this.started && !this.stopped) {
+                this.grpcServer.stop().join();
+                this.stopped = true;
+            }
+            this.services.destroy();
+            if (this.manageEnv) {
+                this.environment.destroy();
+            }
+        } finally {
+            this.destroyed = true;
+            this.notifyAll();
         }
-        if (this.manageEnv) {
-            this.environment.destroy();
-        }
-        this.destroyed = true;
-        this.notifyAll();
     }
 
     /**
@@ -598,6 +601,11 @@ public class SzGrpcServer {
 
         // make a final reference to the server
         final SzGrpcServer finalServer = server;
+
+        // guard against null if System.exit() was blocked
+        if (finalServer == null) {
+            return;
+        }
 
         // make sure we cleanup if exiting by CTRL-C or due to an exception
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
