@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning].
 
 ### Changes/Additions/Fixes in version 0.5.0
 
-- Refactored `SzGrpcServices` from `SzGrpcServer` to enable composition of the GRPC server in
-  an existing Armeria server.
+- Refactored `SzGrpcServices` from `SzGrpcServer` to enable composition of the
+  GRPC server in an existing Armeria server.
 - Updated `data-mart-replicator` and `senzing-commons` dependencies.
 
 ## [0.4.0] - 2026-01-07
