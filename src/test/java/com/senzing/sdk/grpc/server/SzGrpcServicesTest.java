@@ -35,6 +35,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
 import static com.senzing.sdk.grpc.SzGrpcEnvironment.*;
+import static com.senzing.sdk.grpc.server.SzGrpcServer.DATA_MART_PREFIX;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -472,9 +473,9 @@ public class SzGrpcServicesTest {
         com.linecorp.armeria.server.ServerBuilder builder
             = com.linecorp.armeria.server.Server.builder()
                 .http(0);
-        services.configureServer(builder, "/data-mart");
+        services.configureServer(builder, DATA_MART_PREFIX);
         assertThrows(IllegalStateException.class,
-                     () -> services.configureServer(builder, "/data-mart"),
+                     () -> services.configureServer(builder, DATA_MART_PREFIX),
                      "Second configureServer() call should throw "
                      + "IllegalStateException");
         services.destroy();
@@ -499,7 +500,7 @@ public class SzGrpcServicesTest {
             = com.linecorp.armeria.server.Server.builder()
                 .http(0);
         assertThrows(IllegalStateException.class,
-                     () -> services.configureServer(builder, "/data-mart"),
+                     () -> services.configureServer(builder, DATA_MART_PREFIX),
                      "configureServer() after destroy() should throw "
                      + "IllegalStateException");
     }

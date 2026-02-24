@@ -82,12 +82,14 @@ import static com.senzing.util.LoggingUtilities.*;
  * you must set {@code com.linecorp.armeria.transportType} to {@code "nio"}
  * in a static initializer <b>before</b> any Armeria class is loaded.
  * {@link SzGrpcServer} handles this automatically.</p>
+ *
+ * <p><b>NOTE:</b> The data mart path prefix is not defined on this
+ * class &mdash; callers provide it via
+ * {@link #configureServer(ServerBuilder, String)}.  See
+ * {@link SzGrpcServer#DATA_MART_PREFIX} for the default used by the
+ * standalone server.</p>
  */
 public class SzGrpcServices {
-
-    // no DATA_MART_PREFIX here — the caller provides the path prefix
-    // via configureServer(). See SzGrpcServer.DATA_MART_PREFIX for the
-    // default used by the standalone server.
 
     /**
      * A constant for the {@link SzEnvironment#destroy()} method.
