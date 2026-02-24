@@ -45,7 +45,7 @@ ServerBuilder builder = Server.builder()
     .http(8261)
     .blockingTaskExecutor(10);
 
-services.configureServer(builder);
+services.configureServer(builder, "/data-mart");
 
 Server server = builder.build();
 server.start().join();
