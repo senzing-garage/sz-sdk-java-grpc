@@ -464,6 +464,22 @@ public class SzGrpcServicesTest {
 
     @Test
     @Order(47)
+    public void testDoubleConfigureThrows() {
+        SzEnvironment env = createStubEnvironment();
+        SzGrpcServices services = new SzGrpcServices(env);
+        com.linecorp.armeria.server.ServerBuilder builder
+            = com.linecorp.armeria.server.Server.builder()
+                .http(0);
+        services.configureServer(builder);
+        assertThrows(IllegalStateException.class,
+                     () -> services.configureServer(builder),
+                     "Second configureServer() call should throw "
+                     + "IllegalStateException");
+        services.destroy();
+    }
+
+    @Test
+    @Order(48)
     public void testNoReplicationByDefault() {
         SzEnvironment env = createStubEnvironment();
         SzGrpcServices services = new SzGrpcServices(env);

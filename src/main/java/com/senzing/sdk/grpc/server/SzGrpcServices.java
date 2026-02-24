@@ -157,6 +157,11 @@ public class SzGrpcServices {
     private ObjectMapper objectMapper = null;
 
     /**
+     * Tracks if {@link #configureServer(ServerBuilder)} has been called.
+     */
+    private boolean configured = false;
+
+    /**
      * Tracks if this instance has been started.
      */
     private boolean started = false;
@@ -239,7 +244,13 @@ public class SzGrpcServices {
      *
      * @param builder The {@link ServerBuilder} to configure.
      */
-    public void configureServer(ServerBuilder builder) {
+    public synchronized void configureServer(ServerBuilder builder) {
+        if (this.configured) {
+            throw new IllegalStateException(
+                "This instance has already configured a server");
+        }
+        this.configured = true;
+
         // add the gRPC service
         builder.service(this.grpcService);
 
