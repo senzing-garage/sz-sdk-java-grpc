@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning].
   gRPC server in an existing Armeria server.
 - Updated `data-mart-replicator` and `senzing-commons` dependencies.
 
-## [0.4.0] - 2026-01-07
+## [0.4.1] - 2026-01-07
 
 ### Changes/Additions/Fixes in version 0.4.1
 

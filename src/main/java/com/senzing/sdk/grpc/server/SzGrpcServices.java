@@ -36,7 +36,6 @@ import com.senzing.datamart.SzReplicator;
 import com.senzing.datamart.SzReplicatorOptions;
 import com.senzing.datamart.reports.DataMartReportsServices;
 import com.senzing.listener.communication.sql.SQLConsumer;
-import com.senzing.sdk.SzProduct;
 import com.senzing.sdk.SzBadInputException;
 import com.senzing.sdk.SzConfigurationException;
 import com.senzing.sdk.SzEnvironment;
@@ -44,6 +43,7 @@ import com.senzing.sdk.SzException;
 import com.senzing.sdk.SzLicenseException;
 import com.senzing.sdk.SzNotFoundException;
 import com.senzing.sdk.SzNotInitializedException;
+import com.senzing.sdk.SzProduct;
 import com.senzing.sdk.SzReplaceConflictException;
 import com.senzing.sdk.SzRetryTimeoutExceededException;
 import com.senzing.sdk.SzRetryableException;
@@ -73,6 +73,14 @@ import static com.senzing.util.LoggingUtilities.*;
  * should configure an appropriate
  * {@link ServerBuilder#blockingTaskExecutor(int)} on their
  * {@link ServerBuilder}.</p>
+ *
+ * <p><b>NOTE:</b> When using this class outside of {@link SzGrpcServer}
+ * (e.g. embedding into an existing Armeria server), ensure that the
+ * Armeria transport is configured appropriately for your environment.
+ * If Netty native transports (Epoll, io_uring) are not on the classpath,
+ * you must set {@code com.linecorp.armeria.transportType} to {@code "nio"}
+ * in a static initializer <b>before</b> any Armeria class is loaded.
+ * {@link SzGrpcServer} handles this automatically.</p>
  */
 public class SzGrpcServices {
 

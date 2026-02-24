@@ -5,8 +5,6 @@ import java.lang.reflect.Proxy;
 import javax.json.Json;
 import javax.json.JsonObject;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -51,6 +49,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @Execution(ExecutionMode.SAME_THREAD)
 @TestMethodOrder(OrderAnnotation.class)
 public class SzGrpcServicesTest {
+    // must be set before ANY Armeria class is loaded
+    static {
+        System.setProperty("com.linecorp.armeria.transportType", "nio");
+    }
 
     /**
      * Creates a minimal {@link SzEnvironment} proxy that returns
