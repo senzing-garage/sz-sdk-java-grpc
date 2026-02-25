@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], [markdownlint],
 and this project adheres to [Semantic Versioning].
 
+## [0.6.1] - 2026-02-25
+
+### Changes/Additions/Fixes in version 0.6.1
+
+- Fixed parsing of license expiration date to be tolerant of dates and timestamps.
+
 ## [0.6.0] - 2026-02-24
 
 ### Changes/Additions/Fixes in version 0.6.0
