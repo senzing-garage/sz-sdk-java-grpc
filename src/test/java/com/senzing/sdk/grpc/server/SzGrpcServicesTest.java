@@ -535,6 +535,46 @@ public class SzGrpcServicesTest {
     }
 
     // ---------------------------------------------------------------
+    // DATE_FORMAT tests
+    // ---------------------------------------------------------------
+
+    @Test
+    @Order(60)
+    public void testDateFormatDateOnly() {
+        java.time.LocalDateTime result
+            = java.time.LocalDateTime.parse(
+                "2027-02-04", SzGrpcServices.DATE_FORMAT);
+        assertEquals(java.time.LocalDateTime.of(2027, 2, 4, 0, 0, 0),
+                     result,
+                     "Date-only string should parse with time "
+                     + "defaulting to midnight");
+    }
+
+    @Test
+    @Order(61)
+    public void testDateFormatDateTimeNoMillis() {
+        java.time.LocalDateTime result
+            = java.time.LocalDateTime.parse(
+                "2027-02-04T12:30:45", SzGrpcServices.DATE_FORMAT);
+        assertEquals(java.time.LocalDateTime.of(2027, 2, 4, 12, 30, 45),
+                     result,
+                     "Date-time without millis should parse correctly");
+    }
+
+    @Test
+    @Order(62)
+    public void testDateFormatDateTimeWithMillisAndZ() {
+        java.time.LocalDateTime result
+            = java.time.LocalDateTime.parse(
+                "2027-02-04T12:30:45.123Z", SzGrpcServices.DATE_FORMAT);
+        assertEquals(java.time.LocalDateTime.of(
+                         2027, 2, 4, 12, 30, 45, 123_000_000),
+                     result,
+                     "Full timestamp with millis and Z should parse "
+                     + "correctly");
+    }
+
+    // ---------------------------------------------------------------
     // Helper methods
     // ---------------------------------------------------------------
 

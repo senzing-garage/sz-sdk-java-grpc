@@ -7,7 +7,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.FormatStyle;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -141,8 +143,22 @@ public class SzGrpcServices {
      * The {@link DateTimeFormatter} to use for parsing the license
      * expiration date.
      */
-    private static final DateTimeFormatter DATE_FORMAT
-        = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.UK);
+    static final DateTimeFormatter DATE_FORMAT
+        = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd")
+            .optionalStart()
+            .appendPattern("'T'HH:mm:ss")
+            .optionalStart()
+            .appendPattern(".SSS")
+            .optionalEnd()
+            .optionalStart()
+            .appendLiteral('Z')
+            .optionalEnd()
+            .optionalEnd()
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(Locale.UK);
 
     /**
      * The proxied {@link SzEnvironment} to prevent calling of
