@@ -143,7 +143,7 @@ public class SzGrpcServices {
      * The {@link DateTimeFormatter} to use for parsing the license
      * expiration date.
      */
-    private static final DateTimeFormatter DATE_FORMAT
+    static final DateTimeFormatter DATE_FORMAT
         = new DateTimeFormatterBuilder()
             .appendPattern("yyyy-MM-dd")
             .optionalStart()
