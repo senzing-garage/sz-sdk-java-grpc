@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning].
 ### Changes/Additions/Fixes in version 0.6.1
 
 - Fixed parsing of license expiration date to be tolerant of dates and timestamps.
+- Updated dependency for `sz-sdk-auto` to version `0.5.1`
+- Updated dependency for `data-mart-replicator` to version `2.0.0-beta.2.1`
+- Updated dependency for `armeria-bom` to version `1.36.0`
 
 ## [0.6.0] - 2026-02-24
 
