@@ -528,9 +528,44 @@ public class SzGrpcServicesTest {
         assertNull(services.getReplicationProvider(),
                    "Replication provider should be null when no "
                    + "data mart is configured");
-        assertNull(services.getDataMartMessageQueue(),
-                   "Data mart message queue should be null when no "
-                   + "data mart is configured");
+        assertNull(services.getInfoMessageConsumer(),
+                   "Info message consumer should be null when no "
+                   + "data mart or consumer is configured");
+        services.destroy();
+    }
+
+    // ---------------------------------------------------------------
+    // Info message consumer tests
+    // ---------------------------------------------------------------
+
+    @Test
+    @Order(52)
+    public void testInfoMessageConsumerConstructor() {
+        SzEnvironment env = createStubEnvironment();
+        java.util.List<String> received = new java.util.ArrayList<>();
+        SzGrpcServices services
+            = new SzGrpcServices(env, received::add);
+        assertNotNull(services.getInfoMessageConsumer(),
+                      "Info message consumer should not be null "
+                      + "when provided via constructor");
+        services.getInfoMessageConsumer().accept("test-message");
+        assertEquals(1, received.size(),
+                     "Consumer should have received one message");
+        assertEquals("test-message", received.get(0),
+                     "Consumer should have received the correct "
+                     + "message");
+        services.destroy();
+    }
+
+    @Test
+    @Order(53)
+    public void testInfoMessageConsumerNullYieldsNull() {
+        SzEnvironment env = createStubEnvironment();
+        SzGrpcServices services
+            = new SzGrpcServices(env, (java.util.function.Consumer<String>) null);
+        assertNull(services.getInfoMessageConsumer(),
+                   "Info message consumer should be null when "
+                   + "null consumer is provided");
         services.destroy();
     }
 

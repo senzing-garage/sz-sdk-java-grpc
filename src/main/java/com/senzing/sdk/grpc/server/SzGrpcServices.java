@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
@@ -177,6 +178,13 @@ public class SzGrpcServices {
     private SzReplicator replicator = null;
 
     /**
+     * The {@link Consumer} for publishing INFO messages. This may
+     * wrap the data mart message queue, an externally provided
+     * consumer, or a composite of both.
+     */
+    private Consumer<String> infoMsgConsumer = null;
+
+    /**
      * The {@link ObjectMapper} for converting the response objects
      * for HTTP to JSON text.
      */
@@ -199,12 +207,27 @@ public class SzGrpcServices {
 
     /**
      * Constructs with the specified {@link SzEnvironment} and no
-     * data mart replication.
+     * data mart replication or info message consumer.
      *
      * @param env The {@link SzEnvironment} to use.
      */
     public SzGrpcServices(SzEnvironment env) {
-        this(env, null, null);
+        this(env, null, null, null);
+    }
+
+    /**
+     * Constructs with the specified {@link SzEnvironment} and an
+     * info message consumer for receiving INFO messages produced
+     * by the Senzing engine.
+     *
+     * @param env               The {@link SzEnvironment} to use.
+     * @param infoMsgConsumer   The {@link Consumer} to receive INFO
+     *                          messages, or {@code null} if not needed.
+     */
+    public SzGrpcServices(SzEnvironment      env,
+                          Consumer<String>   infoMsgConsumer)
+    {
+        this(env, null, null, infoMsgConsumer);
     }
 
     /**
@@ -222,12 +245,36 @@ public class SzGrpcServices {
                           ConnectionUri    dataMartUri,
                           ProcessingRate   processingRate)
     {
+        this(env, dataMartUri, processingRate, null);
+    }
+
+    /**
+     * Constructs with the specified {@link SzEnvironment}, optional data
+     * mart replication, and optional info message consumer.  If both a
+     * data mart URI and an info message consumer are provided, both will
+     * receive INFO messages.
+     *
+     * @param env               The {@link SzEnvironment} to use.
+     * @param dataMartUri       The resolved {@link ConnectionUri} for the
+     *                          data mart database, or {@code null} if data
+     *                          mart replication is not desired.
+     * @param processingRate    The {@link ProcessingRate} for data mart
+     *                          replication, or {@code null} for the default.
+     * @param infoMsgConsumer   An additional {@link Consumer} to receive
+     *                          INFO messages, or {@code null} if not needed.
+     */
+    protected SzGrpcServices(SzEnvironment      env,
+                             ConnectionUri      dataMartUri,
+                             ProcessingRate     processingRate,
+                             Consumer<String>   infoMsgConsumer)
+    {
         Objects.requireNonNull(env, "The environment cannot be null");
 
         // proxy the environment to prevent destroy() calls
         this.proxyEnvironment = (SzEnvironment) restrictedProxy(env, DESTROY_METHOD);
 
         // build the replicator if data mart is configured
+        Consumer<String> dataMartConsumer = null;
         if (dataMartUri != null) {
             SzReplicatorOptions replicatorOptions = new SzReplicatorOptions();
             replicatorOptions.setUsingDatabaseQueue(true);
@@ -247,6 +294,47 @@ public class SzGrpcServices {
                 logError(e, "Failed to initialize replicator with URI: " + dataMartUri);
                 throw new RuntimeException("Failed to initialize data mart", e);
             }
+
+            SQLConsumer.MessageQueue queue
+                = this.replicator.getDatabaseMessageQueue();
+            dataMartConsumer = (msg) -> {
+                try {
+                    queue.enqueueMessage(msg);
+                } catch (RuntimeException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            };
+        }
+
+        // build the composite info message consumer
+        if (dataMartConsumer != null && infoMsgConsumer != null) {
+            Consumer<String> dmConsumer = dataMartConsumer;
+            this.infoMsgConsumer = (msg) -> {
+                RuntimeException firstFailure = null;
+                try {
+                    dmConsumer.accept(msg);
+                } catch (RuntimeException e) {
+                    firstFailure = e;
+                }
+                try {
+                    infoMsgConsumer.accept(msg);
+                } catch (RuntimeException e) {
+                    if (firstFailure != null) {
+                        firstFailure.addSuppressed(e);
+                    } else {
+                        firstFailure = e;
+                    }
+                }
+                if (firstFailure != null) {
+                    throw firstFailure;
+                }
+            };
+        } else if (dataMartConsumer != null) {
+            this.infoMsgConsumer = dataMartConsumer;
+        } else {
+            this.infoMsgConsumer = infoMsgConsumer;
         }
 
         // build the gRPC service with all Senzing service implementations
@@ -360,17 +448,16 @@ public class SzGrpcServices {
     }
 
     /**
-     * Gets the {@link SQLConsumer.MessageQueue} for enqueuing INFO
-     * messages for consumption by the data mart. This returns
-     * {@code null} if the data mart is not enabled.
+     * Gets the {@link Consumer} for publishing INFO messages. This
+     * returns {@code null} if no info message consumer has been
+     * configured (neither via data mart replication nor via an
+     * externally provided consumer).
      *
-     * @return The {@link SQLConsumer.MessageQueue} for enqueuing INFO
-     *         messages for consumption by the data mart, or
-     *         {@code null} if the data mart is not enabled.
+     * @return The {@link Consumer} for publishing INFO messages,
+     *         or {@code null} if none is configured.
      */
-    public SQLConsumer.MessageQueue getDataMartMessageQueue() {
-        return (this.replicator == null) ? null
-                : this.replicator.getDatabaseMessageQueue();
+    public Consumer<String> getInfoMessageConsumer() {
+        return this.infoMsgConsumer;
     }
 
     /**

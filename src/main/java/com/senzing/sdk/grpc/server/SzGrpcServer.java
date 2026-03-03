@@ -3,6 +3,7 @@ package com.senzing.sdk.grpc.server;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -23,7 +24,6 @@ import com.senzing.datamart.ProcessingRate;
 import com.senzing.datamart.SQLiteUri;
 import com.senzing.datamart.SzCoreSettingsUri;
 import com.senzing.datamart.SzReplicationProvider;
-import com.senzing.listener.communication.sql.SQLConsumer;
 import com.senzing.sdk.SzConfig;
 import com.senzing.sdk.SzConfigManager;
 import com.senzing.sdk.SzEnvironment;
@@ -409,17 +409,15 @@ public class SzGrpcServer {
     }
 
     /**
-     * Gets the {@link SQLConsumer.MessageQueue} for enqueuing INFO
-     * messages for consumption by the data mart. This returns
-     * <code>null</code> if the data mart is not enabled.
+     * Gets the {@link Consumer} for publishing INFO messages.
+     * This returns {@code null} if no info message consumer has
+     * been configured.
      *
-     * @return The {@link SQLConsumer.MessageQueue} for enqueuing INFO
-     *         messages for consumption by the data mart, or
-     *         <code>null</code> if the data mart is not enabled.
-     *
+     * @return The {@link Consumer} for publishing INFO messages,
+     *         or {@code null} if none is configured.
      */
-    public SQLConsumer.MessageQueue getDataMartMessageQueue() {
-        return this.services.getDataMartMessageQueue();
+    public Consumer<String> getInfoMessageConsumer() {
+        return this.services.getInfoMessageConsumer();
     }
 
     /**
