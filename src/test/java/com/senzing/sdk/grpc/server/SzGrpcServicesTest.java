@@ -2,6 +2,9 @@ package com.senzing.sdk.grpc.server;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 import javax.json.Json;
 import javax.json.JsonObject;
 
@@ -528,10 +531,150 @@ public class SzGrpcServicesTest {
         assertNull(services.getReplicationProvider(),
                    "Replication provider should be null when no "
                    + "data mart is configured");
-        assertNull(services.getDataMartMessageQueue(),
-                   "Data mart message queue should be null when no "
-                   + "data mart is configured");
+        assertNull(services.getInfoMessageConsumer(),
+                   "Info message consumer should be null when no "
+                   + "data mart or consumer is configured");
         services.destroy();
+    }
+
+    // ---------------------------------------------------------------
+    // Info message consumer tests
+    // ---------------------------------------------------------------
+
+    @Test
+    @Order(52)
+    public void testInfoMessageConsumerConstructor() {
+        SzEnvironment env = createStubEnvironment();
+        List<String> received = new ArrayList<>();
+        SzGrpcServices services
+            = new SzGrpcServices(env, received::add);
+        assertNotNull(services.getInfoMessageConsumer(),
+                      "Info message consumer should not be null "
+                      + "when provided via constructor");
+        services.getInfoMessageConsumer().accept("test-message");
+        assertEquals(1, received.size(),
+                     "Consumer should have received one message");
+        assertEquals("test-message", received.get(0),
+                     "Consumer should have received the correct "
+                     + "message");
+        services.destroy();
+    }
+
+    @Test
+    @Order(53)
+    public void testInfoMessageConsumerNullYieldsNull() {
+        SzEnvironment env = createStubEnvironment();
+        SzGrpcServices services
+            = new SzGrpcServices(env, (Consumer<String>) null);
+        assertNull(services.getInfoMessageConsumer(),
+                   "Info message consumer should be null when "
+                   + "null consumer is provided");
+        services.destroy();
+    }
+
+    // ---------------------------------------------------------------
+    // chainConsumers() tests
+    // ---------------------------------------------------------------
+
+    @Test
+    @Order(54)
+    public void testChainConsumersBothNull() {
+        assertNull(SzGrpcServices.chainConsumers(null, null),
+                   "Both null should yield null");
+    }
+
+    @Test
+    @Order(55)
+    public void testChainConsumersFirstOnly() {
+        List<String> received = new ArrayList<>();
+        Consumer<String> result
+            = SzGrpcServices.chainConsumers(received::add, null);
+        assertNotNull(result, "First-only should not be null");
+        result.accept("hello");
+        assertEquals(1, received.size(),
+                     "First consumer should have received one message");
+    }
+
+    @Test
+    @Order(56)
+    public void testChainConsumersSecondOnly() {
+        List<String> received = new ArrayList<>();
+        Consumer<String> result
+            = SzGrpcServices.chainConsumers(null, received::add);
+        assertNotNull(result, "Second-only should not be null");
+        result.accept("hello");
+        assertEquals(1, received.size(),
+                     "Second consumer should have received one "
+                     + "message");
+    }
+
+    @Test
+    @Order(57)
+    public void testChainConsumersBothReceive() {
+        List<String> first = new ArrayList<>();
+        List<String> second = new ArrayList<>();
+        Consumer<String> result
+            = SzGrpcServices.chainConsumers(first::add, second::add);
+        assertNotNull(result, "Composite should not be null");
+        result.accept("msg");
+        assertEquals(1, first.size(),
+                     "First consumer should have received one message");
+        assertEquals("msg", first.get(0),
+                     "First consumer should have received the "
+                     + "correct message");
+        assertEquals(1, second.size(),
+                     "Second consumer should have received one "
+                     + "message");
+        assertEquals("msg", second.get(0),
+                     "Second consumer should have received the "
+                     + "correct message");
+    }
+
+    @Test
+    @Order(58)
+    public void testChainConsumersFirstFailsSecondStillCalled() {
+        List<String> second = new ArrayList<>();
+        Consumer<String> failing = (msg) -> {
+            throw new RuntimeException("first failed");
+        };
+        Consumer<String> result
+            = SzGrpcServices.chainConsumers(failing, second::add);
+        RuntimeException thrown = assertThrows(
+            RuntimeException.class,
+            () -> result.accept("msg"),
+            "Should throw from first consumer");
+        assertEquals("first failed", thrown.getMessage(),
+                     "Exception message should be from first "
+                     + "consumer");
+        assertEquals(1, second.size(),
+                     "Second consumer should still have received "
+                     + "the message");
+    }
+
+    @Test
+    @Order(59)
+    public void testChainConsumersBothFailSuppressed() {
+        Consumer<String> first = (msg) -> {
+            throw new RuntimeException("first failed");
+        };
+        Consumer<String> secondConsumer = (msg) -> {
+            throw new RuntimeException("second failed");
+        };
+        Consumer<String> result
+            = SzGrpcServices.chainConsumers(first, secondConsumer);
+        RuntimeException thrown = assertThrows(
+            RuntimeException.class,
+            () -> result.accept("msg"),
+            "Should throw from first consumer");
+        assertEquals("first failed", thrown.getMessage(),
+                     "Primary exception should be from first "
+                     + "consumer");
+        assertEquals(1, thrown.getSuppressed().length,
+                     "Second exception should be suppressed");
+        assertEquals("second failed",
+                     thrown.getSuppressed()[0].getMessage(),
+                     "Suppressed exception should be from second "
+                     + "consumer");
     }
 
     // ---------------------------------------------------------------

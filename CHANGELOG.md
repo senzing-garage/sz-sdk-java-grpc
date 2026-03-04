@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], [markdownlint],
 and this project adheres to [Semantic Versioning].
 
+## [0.7.0] - 2026-03-02
+
+### Changes/Additions/Fixes in version 0.7.0
+
+- **Breaking:** Replaced `SzGrpcServices.getDataMartMessageQueue()` with
+  `getInfoMessageConsumer()` returning `Consumer<String>`.
+- **Breaking:** Replaced `SzGrpcServer.getDataMartMessageQueue()` with
+  `getInfoMessageConsumer()`.
+- Added new public constructor `SzGrpcServices(SzEnvironment, Consumer<String>)`
+  allowing an external info message consumer to receive INFO messages without
+  requiring data mart infrastructure.
+- When both a data mart URI and an external info message consumer are provided
+  (via the protected 4-argument constructor), both receive INFO messages.
+- Updated maven central publishing to use `central-publishing-maven-plugin`
+  version 0.10.0.
+
 ## [0.6.1] - 2026-02-25
 
 ### Changes/Additions/Fixes in version 0.6.1

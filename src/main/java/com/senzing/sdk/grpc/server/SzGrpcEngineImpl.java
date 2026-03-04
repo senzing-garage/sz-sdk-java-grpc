@@ -64,28 +64,28 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     /**
      * Checks if we are required to publish INFO messages regardless
      * of what flags are specified by the caller.
-     * 
-     * @return <code>true</code> if always publishing INFO messages 
-     *         to a queue, otherwise <code>false</code>.
+     *
+     * @return <code>true</code> if always publishing INFO messages
+     *         via an info message consumer, otherwise <code>false</code>.
      */
     protected boolean isPublishingInfo() {
-        return (this.services.getDataMartMessageQueue() != null);
+        return (this.services.getInfoMessageConsumer() != null);
     }
 
     /**
      * If this instance {@linkplain #isPublishingInfo() is publishing
-     * INFO messages} to a message queue <b>and</b> the specified
-     * {@link Set} of {@link SzFlag} instances does <b>not</b> contain
-     * {@link SzFlag#SZ_WITH_INFO} then a copy of the specified 
-     * {@link Set} that also includes {@link SzFlag#SZ_WITH_INFO} is
-     * created and returned, otherwise the specified {@link Set} is
-     * returned.
-     * 
+     * INFO messages} via an info message consumer <b>and</b> the
+     * specified {@link Set} of {@link SzFlag} instances does
+     * <b>not</b> contain {@link SzFlag#SZ_WITH_INFO} then a copy of
+     * the specified {@link Set} that also includes
+     * {@link SzFlag#SZ_WITH_INFO} is created and returned, otherwise
+     * the specified {@link Set} is returned.
+     *
      * @param flagSet The original flag set.
-     * 
+     *
      * @return The specified {@link Set} of {@link SzFlag} instances
      *         if no enhancement was required, otherwise a copy of
-     *         the specified {@link Set} that includes {@link 
+     *         the specified {@link Set} that includes {@link
      *         SzFlag#SZ_WITH_INFO}.
      */
     protected Set<SzFlag> enhanceFlags(Set<SzFlag> flagSet) {
@@ -98,17 +98,17 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Publishes the specified message to any configured message queues.
-     * This method does nothing if there are no configured message queues
-     * for publishing the specified message.
-     * 
-     * @param message The message to publish, which may only be 
-     *                <code>null</code> if there are no configured message
-     *                queues.
-     * 
-     * @return <code>true</code>> if a message was published, otherwise
+     * Publishes the specified message via the configured info message
+     * consumer. This method does nothing if no info message consumer
+     * is configured.
+     *
+     * @param message The message to publish, which may only be
+     *                <code>null</code> if no info message consumer
+     *                is configured.
+     *
+     * @return <code>true</code> if a message was published, otherwise
      *         <code>false</code>.
-     * 
+     *
      * @throws NullPointerException If the specified message is <code>null</code>
      *                              and {@link #isPublishingInfo()} returns
      *                              <code>true</code>.
@@ -121,13 +121,13 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
             "The message cannot be null if publishing INFO messages");
         
         try {
-            this.services.getDataMartMessageQueue().enqueueMessage(message);
+            this.services.getInfoMessageConsumer().accept(message);
 
             return true;
 
         } catch (Exception e) {
             logWarning(e, "", "- - - - - - - - - - - - - - - - - - - ",
-                       "WARNING: Failed to enqueue INFO message for data mart: ",
+                       "WARNING: Failed to publish info message: ",
                        message,
                        "- - - - - - - - - - - - - - - - - - - ",
                        "");
