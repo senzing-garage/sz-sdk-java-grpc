@@ -309,33 +309,8 @@ public class SzGrpcServices {
         }
 
         // build the composite info message consumer
-        if (dataMartConsumer != null && infoMsgConsumer != null) {
-            Consumer<String> dmConsumer = dataMartConsumer;
-            this.infoMsgConsumer = (msg) -> {
-                RuntimeException firstFailure = null;
-                try {
-                    dmConsumer.accept(msg);
-                } catch (RuntimeException e) {
-                    firstFailure = e;
-                }
-                try {
-                    infoMsgConsumer.accept(msg);
-                } catch (RuntimeException e) {
-                    if (firstFailure != null) {
-                        firstFailure.addSuppressed(e);
-                    } else {
-                        firstFailure = e;
-                    }
-                }
-                if (firstFailure != null) {
-                    throw firstFailure;
-                }
-            };
-        } else if (dataMartConsumer != null) {
-            this.infoMsgConsumer = dataMartConsumer;
-        } else {
-            this.infoMsgConsumer = infoMsgConsumer;
-        }
+        this.infoMsgConsumer = chainConsumers(dataMartConsumer,
+                                              infoMsgConsumer);
 
         // build the gRPC service with all Senzing service implementations
         this.grpcService = GrpcService.builder()
@@ -582,6 +557,50 @@ public class SzGrpcServices {
 
     /**
      * Attempt to infer the {@link Status} from the {@link Throwable}.
+     * Chains two {@link Consumer} instances into a single composite
+     * consumer that calls both.  If either is {@code null}, the other
+     * is returned (or {@code null} if both are {@code null}).  When
+     * both are non-null, both are always attempted even if the first
+     * throws; if both throw, the second exception is added as
+     * {@linkplain Throwable#addSuppressed(Throwable) suppressed} on
+     * the first.
+     *
+     * @param first  The first consumer, or {@code null}.
+     * @param second The second consumer, or {@code null}.
+     * @return A composite consumer, one of the inputs, or {@code null}.
+     */
+    static Consumer<String> chainConsumers(Consumer<String> first,
+                                           Consumer<String> second)
+    {
+        if (first != null && second != null) {
+            return (msg) -> {
+                RuntimeException firstFailure = null;
+                try {
+                    first.accept(msg);
+                } catch (RuntimeException e) {
+                    firstFailure = e;
+                }
+                try {
+                    second.accept(msg);
+                } catch (RuntimeException e) {
+                    if (firstFailure != null) {
+                        firstFailure.addSuppressed(e);
+                    } else {
+                        firstFailure = e;
+                    }
+                }
+                if (firstFailure != null) {
+                    throw firstFailure;
+                }
+            };
+        } else if (first != null) {
+            return first;
+        } else {
+            return second;
+        }
+    }
+
+    /**
      * If it cannot be inferred then {@link Status#UNKNOWN} is returned.
      *
      * @param t The {@link Throwable} from which to refer the {@link Status}.
