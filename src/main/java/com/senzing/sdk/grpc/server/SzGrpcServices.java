@@ -556,7 +556,6 @@ public class SzGrpcServices {
     }
 
     /**
-     * Attempt to infer the {@link Status} from the {@link Throwable}.
      * Chains two {@link Consumer} instances into a single composite
      * consumer that calls both.  If either is {@code null}, the other
      * is returned (or {@code null} if both are {@code null}).  When
@@ -601,9 +600,10 @@ public class SzGrpcServices {
     }
 
     /**
+     * Attempt to infer the {@link Status} from the {@link Throwable}.
      * If it cannot be inferred then {@link Status#UNKNOWN} is returned.
      *
-     * @param t The {@link Throwable} from which to refer the {@link Status}.
+     * @param t The {@link Throwable} from which to infer the {@link Status}.
      * @return The inferred {@link Status}.
      */
     protected static io.grpc.Status inferStatus(Throwable t) {
