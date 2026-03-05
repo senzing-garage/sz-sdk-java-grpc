@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], [markdownlint],
 and this project adheres to [Semantic Versioning].
 
+## [0.7.1] - 2026-03-05
+
+### Changes/Additions/Fixes in version 0.7.1
+
+- Fixed server JAR not being published to Maven Central by attaching it as a
+  classified artifact (`server` classifier).
+
 ## [0.7.0] - 2026-03-02
 
 ### Changes/Additions/Fixes in version 0.7.0

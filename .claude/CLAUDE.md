@@ -178,17 +178,19 @@ The system property `com.linecorp.armeria.transportType=nio` must be set in a **
 
 ### Exception Handling Convention
 
-Server-side exception handling in `SzGrpcServer`:
+Server-side exception handling in `SzGrpcServices`:
 
 - Map Java exception types to gRPC `Status` codes via `STATUS_MAP`
 - For `SzException`, preserve error code in reason string as `SENZ<code>|<message>`
 - Include stack trace and function information in JSON structure
+- See `SzGrpcServices.inferStatus()` and `SzGrpcServices.toStatusRuntimeException()`
 
 Client-side parsing in `SzGrpcEnvironment`:
 
 - Extract error code from reason prefix
 - Parse JSON error structure for additional context
 - Reconstruct appropriate `SzException` subclass using `SzCoreUtilities.createSzException()`
+- See `SzGrpcEnvironment.createSzException()`
 
 ### Checkstyle Suppressions
 
