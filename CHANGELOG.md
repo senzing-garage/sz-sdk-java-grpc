@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], [markdownlint],
 and this project adheres to [Semantic Versioning].
 
+## [0.7.2] - 2026-03-24
+
+### Changes/Additions/Fixes in version 0.7.2
+
+- Added Java code style and formatting settings (`checkstyle.xml`,
+  `.vscode/java-formatter.xml`, `.vscode/settings.json`).
+- Updated `checkstyle-suppressions.xml` to align with shared Senzing style
+  (added `FileLength`, `NoWhitespaceAfter`; removed `LeftCurly`, `LineLength`
+  suppressions now handled by `checkstyle.xml`).
+- Updated `com.senzing/data-mart-replicator` dependency from 2.0.0-beta.2.1 to
+  2.0.0-beta.2.2.
+- Updated `com.linecorp.armeria/armeria-bom` from 1.36.0 to 1.37.0.
+- Updated `com.fasterxml.jackson/jackson-bom` from 2.21.0 to 2.21.2.
+- Updated `org.xerial/sqlite-jdbc` from 3.51.2.0 to 3.51.3.0.
+- Updated `com.google.protobuf/protobuf-java-util` from 4.33.5 to 4.33.6.
+- Updated `org.junit.jupiter/junit-jupiter` from 6.0.2 to 6.0.3.
+- Updated `org.apache.maven.plugins/maven-surefire-plugin` from 3.5.4 to 3.5.5.
+- Updated `org.apache.maven.plugins/maven-shade-plugin` from 3.6.1 to 3.6.2.
+- Updated `org.apache.maven.plugins/maven-resources-plugin` from 3.4.0 to 3.5.0.
+
 ## [0.7.1] - 2026-03-05
 
 ### Changes/Additions/Fixes in version 0.7.1

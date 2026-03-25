@@ -109,9 +109,13 @@
   "ignorePaths": [
     ".git/**",
     ".project",
+    ".claude/**",
     "**/test/**",
+    "target/**",
     "CHANGELOG.md",
     "Makefile",
-    "pom.xml"
+    "pom.xml",
+    "checkstyle.xml",
+    "java-formatter.xml"
   ]
 }
