@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning].
 - Updated `io.netty/netty-bom` from 4.2.10.Final to 4.2.12.Final.
 - Updated `com.senzing/data-mart-replicator` from 2.0.0-beta.2.2 to 2.0.0-beta.2.4.
 - Updated `com.ibm.icu/icu4j` from 78.2 to 78.3.
+- Updated `com.senzing/sz-sdk` minimum version from 4.1.0 to 4.3.0.
 - Updated `com.github.spotbugs/spotbugs-maven-plugin` from 4.9.8.2 to 4.9.8.3.
 
 ## [0.7.2] - 2026-03-24
