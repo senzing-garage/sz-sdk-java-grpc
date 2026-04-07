@@ -5,9 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], [markdownlint],
 and this project adheres to [Semantic Versioning].
 
-## [0.7.3] - 2026-04-07
+## [0.8.0] - 2026-04-07
 
-### Changes/Additions/Fixes in version 0.7.3
+### Changes/Additions/Fixes in version 0.8.0
 
 - Updated `io.grpc/grpc-bom` from 1.79.0 to 1.80.0.
 - Updated `com.google.protobuf/protobuf-java-util` from 4.33.6 to 4.34.1.
