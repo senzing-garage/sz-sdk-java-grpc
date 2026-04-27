@@ -23,6 +23,21 @@ jobs:
           echo "repo=$(basename ${{ github.repository }})" >> "$GITHUB_OUTPUT"
         shell: bash
 
+      - name: Generate token for private submodules
+        id: app-token
+        uses: actions/create-github-app-token@v3.1.1
+        with:
+          client-id: ${{ secrets.SENZING_GITHUB_SUBMODULE_READ_APP_ID }}
+          owner: ${{ github.repository_owner }}
+          private-key: ${{ secrets.SENZING_GITHUB_SUBMODULE_READ_APP_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          submodules: recursive
+          token: ${{ steps.app-token.outputs.token }}
+
       - name: Build docker image and push to DockerHub
         uses: senzing-factory/github-action-docker-buildx-build@v2
         with:
@@ -31,6 +46,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
           push: true
           sign-image: true
+          skip-checkout: true
           username: ${{ secrets.DOCKERHUB_USERNAME }}
 
       - name: Notify Slack on failure
