@@ -42,7 +42,7 @@ jobs:
         uses: senzing-factory/github-action-install-senzing-sdk@v4
         with:
           packages-to-install: "senzingsdk-runtime senzingsdk-setup"
-          senzingsdk-version: "production-v4"
+          senzingsdk-version: "staging-v4"
 
       # Generate the dependency tree so Trivy can resolve transitive deps
       - name: Build and resolve dependencies
