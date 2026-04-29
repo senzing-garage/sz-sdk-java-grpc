@@ -21,7 +21,7 @@ RUN apt-get update \
 # Stage: builder
 # -----------------------------------------------------------------------------
 FROM ${IMAGE_BUILDER} AS builder
-ENV REFRESHED_AT=2026-04-07
+ENV REFRESHED_AT=2026-04-29
 LABEL Name="senzing/java-builder" \
        Maintainer="support@senzing.com" \
        Version="0.8.0"
@@ -91,7 +91,7 @@ RUN mvn -ntp -DskipTests=true package
 # -----------------------------------------------------------------------------
 
 FROM ${IMAGE_FINAL} AS final
-ENV REFRESHED_AT=2026-04-07
+ENV REFRESHED_AT=2026-04-29
 LABEL Name="senzing/sz-sdk-grpc-java" \
        Maintainer="support@senzing.com" \
        Version="0.8.0"
