@@ -13,6 +13,7 @@ ARG IMAGE_FINAL=senzing/senzingsdk-runtime:4.2.0@sha256:072ff062d9d3ee224e68848e
 FROM ${IMAGE_FINAL} AS senzingsdk_runtime
 
 RUN apt-get update \
+       && apt-get -y --no-install-recommends install --only-upgrade 'senzingsdk-*' \
        && apt-get -y --no-install-recommends install \
        senzingsdk-setup
 
@@ -101,6 +102,7 @@ USER root
 # Install packages via apt-get.
 
 RUN apt-get update \
+       && apt-get -y --no-install-recommends install --only-upgrade 'senzingsdk-*' \
        && apt-get -y --no-install-recommends install \
        senzingsdk-setup \
        libsqlite3-dev \
