@@ -23,6 +23,21 @@ jobs:
           echo "repo=$(basename ${{ github.repository }})" >> "$GITHUB_OUTPUT"
         shell: bash
 
+      - name: Generate token for private submodules
+        id: app-token
+        uses: actions/create-github-app-token@v3.1.1
+        with:
+          client-id: ${{ secrets.SENZING_GITHUB_SUBMODULE_READ_APP_ID }}
+          owner: ${{ github.repository_owner }}
+          private-key: ${{ secrets.SENZING_GITHUB_SUBMODULE_READ_APP_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          submodules: recursive
+          token: ${{ steps.app-token.outputs.token }}
+
       - name: Build docker image and push to DockerHub
         uses: senzing-factory/github-action-docker-buildx-build@v2
         with:
@@ -31,14 +46,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
           push: true
           sign-image: true
+          skip-checkout: true
           username: ${{ secrets.DOCKERHUB_USERNAME }}
 
-  slack-notification:
-    needs: [docker-push-containers-to-dockerhub]
-    if: ${{ always() && contains(fromJSON('["failure", "cancelled"]'), needs.docker-push-containers-to-dockerhub.result) }}
-    secrets:
-      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
-    uses: senzing-factory/build-resources/.github/workflows/build-failure-slack-notification.yaml@v4
-    with:
-      job-status: ${{ needs.docker-push-containers-to-dockerhub.result }}
+      - name: Notify Slack on failure
+        if: failure() || cancelled()
+        uses: senzing-factory/build-resources/slack-failure-notification@v4
+        with:
+          job-status: ${{ job.status }}
+          slack-channel: ${{ secrets.SLACK_CHANNEL }}
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
