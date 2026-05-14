@@ -11,18 +11,16 @@ import com.senzing.sdk.grpc.proto.SzConfigProto.RegisterDataSourceResponse;
 import com.senzing.sdk.grpc.proto.SzConfigProto.UnregisterDataSourceRequest;
 import com.senzing.sdk.grpc.proto.SzConfigProto.UnregisterDataSourceResponse;
 
-import static com.senzing.sdk.grpc.proto.SzConfigGrpc.*;
-import static com.senzing.sdk.grpc.proto.SzConfigProto.*;
-
 import java.util.Objects;
 
 /**
  * The gRPC implementation of {@link SzConfig}.
  */
-public class SzGrpcConfig implements SzConfig {
+public class SzGrpcConfig implements SzConfig
+{
     /**
-     * The result from the {@link #toString()} function if the environment
-     * is already destroyed.
+     * The result from the {@link #toString()} function if the environment is
+     * already destroyed.
      */
     static final String DESTROYED_MESSAGE = "*** DESTROYED ***";
 
@@ -52,18 +50,21 @@ public class SzGrpcConfig implements SzConfig {
      * 
      * @param environment the {@link SzGrpcEnvironment} with which to construct.
      * 
-     * @param configDefinition The {@link String} config definition describing the
-     *                         configuration represented by this instance.
+     * @param configDefinition The {@link String} config definition describing
+     *                         the configuration represented by this instance.
      *
      * @throws IllegalStateException If the specified {@link SzGrpcEnvironment}
      *                               instance has already been destroyed.
      * 
      * @throws SzException If a Senzing failure occurs during initialization.
      */
-    protected SzGrpcConfig(SzGrpcEnvironment environment, String configDefinition) 
+    protected SzGrpcConfig(SzGrpcEnvironment  environment,
+                           String              configDefinition)
         throws IllegalStateException, SzException
     {
-        Objects.requireNonNull(configDefinition, "The specified config definition cannot be null");
+        Objects.requireNonNull(
+            configDefinition,
+            "The specified config definition cannot be null");
 
         this.env = environment;
         this.configDefinition = configDefinition;
@@ -79,29 +80,34 @@ public class SzGrpcConfig implements SzConfig {
      * 
      * @return The {@link SzConfigBlockingStub} for this instance.
      */
-    protected SzConfigBlockingStub getBlockingStub() {
+    protected SzConfigBlockingStub getBlockingStub()
+    {
         return this.blockingStub;
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String export() throws SzException {
+    public String export()
+        throws SzException
+    {
         return this.configDefinition;
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String getDataSourceRegistry() throws SzException {
+    public String getDataSourceRegistry()
+        throws SzException
+    {
         return this.env.execute(() -> {
             GetDataSourceRegistryRequest request
                 = GetDataSourceRegistryRequest.newBuilder()
@@ -115,8 +121,8 @@ public class SzGrpcConfig implements SzConfig {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -141,13 +147,15 @@ public class SzGrpcConfig implements SzConfig {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public void unregisterDataSource(String dataSourceCode) throws SzException {
+    public void unregisterDataSource(String dataSourceCode)
+        throws SzException
+    {
         this.env.execute(() -> {
             UnregisterDataSourceRequest request
                 = UnregisterDataSourceRequest.newBuilder()
@@ -173,7 +181,8 @@ public class SzGrpcConfig implements SzConfig {
      * {@inheritDoc}
      */
     @Override
-    public String toString() {
+    public String toString()
+    {
         try {
             return this.export();
         } catch (SzEnvironmentDestroyedException e) {

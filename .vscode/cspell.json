@@ -13,6 +13,8 @@
     "CFCALL",
     "CFRTN",
     "CFUNC",
+    "CSOFF",
+    "CSON",
     "CODEOWNER",
     "CONFIGCHKSUM",
     "CONFIGFILE",

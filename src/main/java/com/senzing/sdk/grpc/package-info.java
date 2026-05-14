@@ -1,6 +1,5 @@
 /**
- * This package provides the gRPC client implementation of
- * the Senzing SDK.
+ * This package provides the gRPC client implementation of the Senzing SDK.
  * 
  * [TBD]: More information to follow.
  */

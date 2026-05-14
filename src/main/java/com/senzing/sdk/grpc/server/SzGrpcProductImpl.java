@@ -13,7 +13,8 @@ import static com.senzing.sdk.grpc.server.SzGrpcServices.*;
 /**
  * Provides the gRPC server-side implementation for {@link SzProduct}.
  */
-public class SzGrpcProductImpl extends SzProductImplBase {
+public class SzGrpcProductImpl extends SzProductImplBase
+{
     /**
      * The {@link SzGrpcServices} to use.
      */
@@ -24,7 +25,8 @@ public class SzGrpcProductImpl extends SzProductImplBase {
      *
      * @param services The {@link SzGrpcServices}.
      */
-    protected SzGrpcProductImpl(SzGrpcServices services) {
+    protected SzGrpcProductImpl(SzGrpcServices services)
+    {
         Objects.requireNonNull(services, "The services cannot be null");
         if (services.isDestroyed()) {
             throw new IllegalArgumentException(
@@ -39,21 +41,23 @@ public class SzGrpcProductImpl extends SzProductImplBase {
      *
      * @return The {@link SzEnvironment} for the backing services.
      */
-    protected SzEnvironment getEnvironment() {
+    protected SzEnvironment getEnvironment()
+    {
         return this.services.getEnvironment();
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzProduct#getLicense()} method.
      * 
      * @param request The gRPC request for the operation.
      * @param responseObserver The {@link StreamObserver} for the response.
      */
     @Override
-    public void getLicense(GetLicenseRequest                    request, 
-                           StreamObserver<GetLicenseResponse>   responseObserver)
+    public void getLicense(
+            GetLicenseRequest                   request,
+            StreamObserver<GetLicenseResponse>  responseObserver)
     {
         try {
             SzProduct product = this.getEnvironment().getProduct();
@@ -73,16 +77,17 @@ public class SzGrpcProductImpl extends SzProductImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzProduct#getVersion()} method.
      * 
      * @param request The gRPC request for the operation.
      * @param responseObserver The {@link StreamObserver} for the response.
      */
     @Override
-    public void getVersion(GetVersionRequest                    request, 
-                           StreamObserver<GetVersionResponse>   responseObserver) 
+    public void getVersion(
+            GetVersionRequest                   request,
+            StreamObserver<GetVersionResponse>  responseObserver)
     {
         try {
             SzProduct product = this.getEnvironment().getProduct();

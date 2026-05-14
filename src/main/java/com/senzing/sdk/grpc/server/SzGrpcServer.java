@@ -51,11 +51,11 @@ import static com.linecorp.armeria.common.HttpMethod.*;
 /**
  * The Senzing SDK gRPC server class.  This class pairs an
  * {@link SzGrpcServices} instance with an Armeria {@link Server}
- * and manages the full lifecycle.  For embedding Senzing gRPC
- * services into an existing Armeria server, use {@link SzGrpcServices}
- * directly.
+ * and manages the full lifecycle. For embedding Senzing gRPC services into an
+ * existing Armeria server, use {@link SzGrpcServices} directly.
  */
-public class SzGrpcServer {
+public class SzGrpcServer
+{
     // must be in static initializer before ANY Armeria usage
     static {
         System.setProperty("com.linecorp.armeria.transportType", "nio");
@@ -72,13 +72,14 @@ public class SzGrpcServer {
     private SzEnvironment environment = null;
 
     /**
-     * The flag indicating if this instance should manage the {@link SzEnvironment}.
+     * The flag indicating if this instance should manage
+     * the {@link SzEnvironment}.
      */
     private boolean manageEnv = false;
 
     /**
-     * The {@link SzGrpcServices} that provides the composable Senzing
-     * gRPC services.
+     * The {@link SzGrpcServices} that provides the composable Senzing gRPC
+     * services.
      */
     private SzGrpcServices services = null;
 
@@ -108,17 +109,20 @@ public class SzGrpcServer {
     private boolean destroyed = false;
 
     /**
-     * Creates a new instance of {@link SzAutoCoreEnvironment} using
-     * the specified options.
+     * Creates a new instance of {@link SzAutoCoreEnvironment} using the
+     * specified options.
      *
      * @param options The {@link SzGrpcServerOptions} to use.
      * @return The {@link SzAutoCoreEnvironment} that was created using the
-     *         specified options.
+     *             specified options.
      *
      * @throws IllegalStateException If there is already an active instance of
-     *                               {@link com.senzing.sdk.core.SzCoreEnvironment}.
+     *                               {@link
+     *                               com.senzing.sdk.core.SzCoreEnvironment}.
      */
-    protected static SzAutoCoreEnvironment createSzAutoCoreEnvironment(SzGrpcServerOptions options)
+    protected static SzAutoCoreEnvironment
+        createSzAutoCoreEnvironment(
+            SzGrpcServerOptions options)
         throws IllegalStateException
     {
         JsonObject coreSettings = options.getCoreSettings();
@@ -141,7 +145,8 @@ public class SzGrpcServer {
                 coreSettings = parseJsonObject(jsonSettings);
 
                 // check if our database URL is SQLite
-                if (coreDatabaseUri.toLowerCase().startsWith(SQLiteUri.SCHEME_PREFIX)) {
+                if (coreDatabaseUri.toLowerCase()
+                    .startsWith(SQLiteUri.SCHEME_PREFIX)) {
                     SQLiteUri sqliteUri = SQLiteUri.parse(coreDatabaseUri);
 
                     String path = (sqliteUri.isMemory())
@@ -149,7 +154,8 @@ public class SzGrpcServer {
                             : sqliteUri.getFile().toString();
                     Map<String, String> connProps = sqliteUri.getQueryOptions();
 
-                    SQLiteConnector connector = new SQLiteConnector(path, connProps);
+                    SQLiteConnector connector
+                        = new SQLiteConnector(path, connProps);
                     Connection conn = null;
                     try {
                         conn = connector.openConnection();
@@ -164,9 +170,11 @@ public class SzGrpcServer {
                     } finally {
                         // check if it is a memory database
                         if (!sqliteUri.isMemory()) {
-                            // if not a memory database then close the connection
-                            // NOTE: we leave it open if an in-memory database so it
-                            // does not get deleted
+                            // if not a memory database
+                            // then close the connection
+                            // NOTE: we leave it open if
+                            // an in-memory database so
+                            // it does not get deleted
                             SQLUtilities.close(conn);
                         }
                     }
@@ -177,8 +185,10 @@ public class SzGrpcServer {
         // check if we have no core settings
         if (coreSettings == null) {
             throw new IllegalArgumentException(
-                    "Failed to obtain core settings from gRPC server options via "
-                            + "core settings or core database URL: " + options);
+                    "Failed to obtain core settings from "
+                            + "gRPC server options via core "
+                            + "settings or core database URL: "
+                            + options);
         }
 
         String settings = JsonUtilities.toJsonText(coreSettings);
@@ -217,8 +227,8 @@ public class SzGrpcServer {
     }
 
     /**
-     * Constructs with the specified {@link SzGrpcServerOptions}.
-     * The server will be started upon construction.
+     * Constructs with the specified {@link SzGrpcServerOptions}. The server
+     * will be started upon construction.
      *
      * <b>NOTE:</b> This will initialize the Senzing Core SDK via
      * {@link SzAutoCoreEnvironment} and only one active instance of
@@ -227,8 +237,8 @@ public class SzGrpcServer {
      *
      * @param options The {@link SzGrpcServerOptions} for this instance.
      *
-     * @throws IllegalStateException If another instance of Senzing Core SDK
-     *                               is already actively initialized.
+     * @throws IllegalStateException If another instance of Senzing Core SDK is
+     *                               already actively initialized.
      */
     public SzGrpcServer(SzGrpcServerOptions options)
             throws IllegalStateException
@@ -237,9 +247,8 @@ public class SzGrpcServer {
     }
 
     /**
-     * Constructs with the specified {@link SzGrpcServerOptions},
-     * optionally {@linkplain #start() starting} the server upon
-     * construction.
+     * Constructs with the specified {@link SzGrpcServerOptions}, optionally
+     * {@linkplain #start() starting} the server upon construction.
      *
      * <b>NOTE:</b> This will initialize the Senzing Core SDK via
      * {@link SzAutoCoreEnvironment} and only one active instance of
@@ -248,13 +257,14 @@ public class SzGrpcServer {
      *
      * @param options     The {@link SzGrpcServerOptions} for this instance.
      *
-     * @param startServer <code>true</code> if the server should be started
-     *                    upon construction, otherwise <code>false</code>
+     * @param startServer <code>true</code> if the server should be started upon
+     *                    construction, otherwise <code>false</code>
      *
-     * @throws IllegalStateException If another instance of Senzing Core SDK
-     *                               is already actively initialized.
+     * @throws IllegalStateException If another instance of Senzing Core SDK is
+     *                               already actively initialized.
      */
-    public SzGrpcServer(SzGrpcServerOptions options, boolean startServer) {
+    public SzGrpcServer(SzGrpcServerOptions options, boolean startServer)
+    {
         this(createSzAutoCoreEnvironment(options), true, options, startServer);
     }
 
@@ -266,20 +276,20 @@ public class SzGrpcServer {
      *
      * <b>NOTE:</b> Some options specified in {@link SzGrpcServerOptions}
      * pertain to the {@link SzEnvironment} used. The default implementation
-     * depends on {@link #createSzAutoCoreEnvironment(SzGrpcServerOptions)}
-     * to create an instance of {@link SzAutoCoreEnvironment} accordingly.
-     * The onus is on the implementer of any derived class to manage how
-     * an implementation with an alternate {@link SzEnvironment} will handle
-     * the specified options that normally pertain to {@link SzAutoCoreEnvironment}.
+     * depends on {@link #createSzAutoCoreEnvironment(SzGrpcServerOptions)} to
+     * create an instance of {@link SzAutoCoreEnvironment} accordingly. The onus
+     * is on the implementer of any derived class to manage how an
+     * implementation with an alternate {@link SzEnvironment} will handle the
+     * specified options that normally pertain to {@link SzAutoCoreEnvironment}.
      *
      * @param env         The {@link SzEnvironment} to use.
      * @param manageEnv   <code>true</code> if the constructed instance should
-     *                    manage
-     *                    (e.g.: destroy) the specified {@link SzEnvironment}, or
-     *                    <code>false</code> if it will be managed externally.
+     *                    manage (e.g.: destroy) the specified {@link
+     *                    SzEnvironment}, or <code>false</code> if it will be
+     *                    managed externally.
      * @param options     The {@link SzGrpcServerOptions} for this instance.
-     * @param startServer <code>true</code> if the server should be started
-     *                    upon construction, otherwise <code>false</code>
+     * @param startServer <code>true</code> if the server should be started upon
+     *                    construction, otherwise <code>false</code>
      */
     protected SzGrpcServer(SzEnvironment        env,
                            boolean              manageEnv,
@@ -311,17 +321,25 @@ public class SzGrpcServer {
                 JsonObject coreSettings = options.getCoreSettings();
                 if (coreSettings == null) {
                     throw new IllegalArgumentException(
-                            "Cannot specify an " + dataMartUri.getClass().getSimpleName()
-                                    + " URI (" + dataMartUri.toString() + ") if the core settings "
+                            "Cannot specify an "
+                                    + dataMartUri.getClass()
+                                        .getSimpleName()
+                                    + " URI ("
+                                    + dataMartUri.toString()
+                                    + ") if the core settings "
                                     + "have not been provided.");
                 }
-                SzCoreSettingsUri coreSettingsUri = (SzCoreSettingsUri) dataMartUri;
+                SzCoreSettingsUri coreSettingsUri
+                    = (SzCoreSettingsUri) dataMartUri;
                 resolvedUri = coreSettingsUri.resolveUri(coreSettings);
                 if (resolvedUri == null) {
                     throw new IllegalArgumentException(
-                            "Unable to resolve " + dataMartUri + " Data Mart URI using "
+                            "Unable to resolve "
+                                    + dataMartUri
+                                    + " Data Mart URI using "
                                     + "the provided core settings: "
-                                    + toJsonText(coreSettings, true));
+                                    + toJsonText(
+                                        coreSettings, true));
                 }
             } else {
                 resolvedUri = dataMartUri;
@@ -332,25 +350,32 @@ public class SzGrpcServer {
         this.services = new SzGrpcServices(env, resolvedUri, processingRate);
 
         // create a CORS decorator if we need to decorate the server
-        // NOTE: we decorate the ENTIRE server rather than the GrpcService or
-        // AnnotatedService individually, because redirects (especially regarding
-        // paths ending "/") can lead to one path supporting CORS while the other
-        // does not. By using the decorator on the whole server, then all paths
-        // support CORS.
-        Function<? super HttpService, ? extends HttpService> corsDecorator = null;
+        // NOTE: we decorate the ENTIRE server rather
+        // than the GrpcService or AnnotatedService
+        // individually, because redirects (especially
+        // regarding paths ending "/") can lead to one
+        // path supporting CORS while the other does
+        // not. By using the decorator on the whole
+        // server, then all paths support CORS.
+        Function<? super HttpService, ? extends HttpService>
+            corsDecorator = null;
 
         List<String> allowedOrigins = options.getAllowedOrigins();
         if (allowedOrigins != null && allowedOrigins.size() > 0) {
             if (allowedOrigins.contains("*")) {
                 corsDecorator = CorsService.builderForAnyOrigin()
-                        .allowRequestMethods(GET, HEAD, POST, PUT, DELETE, OPTIONS)
+                        .allowRequestMethods(
+                            GET, HEAD, POST,
+                            PUT, DELETE, OPTIONS)
                         .allowAllRequestHeaders(true)
                         .exposeHeaders("*")
                         .maxAge(3600)
                         .newDecorator();
             } else {
                 corsDecorator = CorsService.builder(allowedOrigins)
-                        .allowRequestMethods(GET, HEAD, POST, PUT, DELETE, OPTIONS)
+                        .allowRequestMethods(
+                            GET, HEAD, POST,
+                            PUT, DELETE, OPTIONS)
                         .allowAllRequestHeaders(true)
                         .allowCredentials()
                         .exposeHeaders("*")
@@ -385,54 +410,55 @@ public class SzGrpcServer {
     }
 
     /**
-     * Gets the {@link SzGrpcServices} used by this instance.
-     * This allows callers to access the composable Senzing services
-     * independently of the Armeria server lifecycle.
+     * Gets the {@link SzGrpcServices} used by this instance. This allows
+     * callers to access the composable Senzing services independently of the
+     * Armeria server lifecycle.
      *
      * @return The {@link SzGrpcServices} used by this instance.
      */
-    protected SzGrpcServices getServices() {
+    protected SzGrpcServices getServices()
+    {
         return this.services;
     }
 
     /**
-     * Gets the {@link SzReplicationProvider} for this instance
-     * if the data mart has been enabled. This returns
+     * Gets the {@link SzReplicationProvider} for this instance if the data mart
+     * has been enabled. This returns
      * <code>null</code> if the data mart is not enabled.
      *
-     * @return The {@link SzReplicationProvider} for this instance,
-     *         or <code>null</code> if data mart replication is not
-     *         enabled.
+     * @return The {@link SzReplicationProvider} for this instance, or
+     *             <code>null</code> if data mart replication is not enabled.
      */
-    public SzReplicationProvider getReplicationProvider() {
+    public SzReplicationProvider getReplicationProvider()
+    {
         return this.services.getReplicationProvider();
     }
 
     /**
-     * Gets the {@link Consumer} for publishing INFO messages.
-     * This returns {@code null} if no info message consumer has
-     * been configured.
+     * Gets the {@link Consumer} for publishing INFO messages. This returns
+     * {@code null} if no info message consumer has been configured.
      *
-     * @return The {@link Consumer} for publishing INFO messages,
-     *         or {@code null} if none is configured.
+     * @return The {@link Consumer} for publishing INFO messages, or {@code
+     *             null} if none is configured.
      */
-    public Consumer<String> getInfoMessageConsumer() {
+    public Consumer<String> getInfoMessageConsumer()
+    {
         return this.services.getInfoMessageConsumer();
     }
 
     /**
-     * Gets the port number on which this {@link SzGrpcServer} is
-     * actively listening.
+     * Gets the port number on which this {@link SzGrpcServer} is actively
+     * listening.
      *
-     * @return The port number on which this {@link SzGrpcServer} is
-     *         actively listening.
+     * @return The port number on which this {@link SzGrpcServer} is actively
+     *             listening.
      *
-     * @throws IllegalStateException If this {@link SzGrpcServer} has
-     *                               not been started or has been destroyed
-     *                               and is <b>not</b> actively listening
-     *                               on a port.
+     * @throws IllegalStateException If this {@link SzGrpcServer} has not been
+     *                               started or has been destroyed and is
+     *                               <b>not</b> actively listening on a port.
      */
-    public synchronized int getActivePort() {
+    public synchronized int getActivePort()
+    {
         if (this.destroyed || this.stopped || !this.started) {
             throw new IllegalStateException(
                     "There is no active port because the server is not "
@@ -442,14 +468,15 @@ public class SzGrpcServer {
     }
 
     /**
-     * Starts the server so it begins servicing requests.
-     * If the server has previously been started then this method has no effect.
+     * Starts the server so it begins servicing requests. If the server has
+     * previously been started then this method has no effect.
      *
-     * @throws IllegalStateException If the server has already been
-     *                               {@linkplain #destroy()
-     *                               destroyed}.
+     * @throws IllegalStateException If the server has already been {@linkplain
+     *                               #destroy() destroyed}.
      */
-    public synchronized void start() throws IllegalStateException {
+    public synchronized void start()
+        throws IllegalStateException
+    {
         if (this.destroyed) {
             throw new IllegalStateException(
                     "This instance has already been destroyed");
@@ -469,12 +496,15 @@ public class SzGrpcServer {
     /**
      * Destroys this instance.
      *
-     * This will stop the server (if running and it has not already been stopped)
-     * and will usually {@linkplain SzEnvironment#destroy() destroy} the
-     * {@link SzEnvironment} (assuming it is not being managed externally).
+     * This will stop the server (if running and it
+     * has not already been stopped) and will usually
+     * {@linkplain SzEnvironment#destroy() destroy}
+     * the {@link SzEnvironment} (assuming it is not
+     * being managed externally).
      *
      */
-    public synchronized void destroy() {
+    public synchronized void destroy()
+    {
         if (this.destroyed) {
             return;
         }
@@ -496,34 +526,37 @@ public class SzGrpcServer {
     /**
      * Gets the {@link SzEnvironment} used by this instance.
      *
-     * The returned instance is a {@link java.lang.reflect.Proxy} that
-     * will not allow the caller to invoke {@link SzEnvironment#destroy()}.
+     * The returned instance is a {@link java.lang.reflect.Proxy} that will not
+     * allow the caller to invoke {@link SzEnvironment#destroy()}.
      *
      * @return The {@link SzEnvironment} used by this instance.
      */
-    public synchronized SzEnvironment getEnvironment() {
+    public synchronized SzEnvironment getEnvironment()
+    {
         return this.services.getEnvironment();
     }
 
     /**
-     * Checks if the gRPC server is running. This returns <code>true</code>
-     * if and only if the instance was previously {@linkplain #start() started}
+     * Checks if the gRPC server is running. This returns <code>true</code> if
+     * and only if the instance was previously {@linkplain #start() started}
      * (which may happen when constructed) and has not been destroyed.
      *
      * @return <code>true</code> if the gRPC server is running, otherwise
-     *         <code>false</code>.
+     *                           <code>false</code>.
      */
-    public synchronized boolean isRunning() {
+    public synchronized boolean isRunning()
+    {
         return (this.started && !this.stopped && !this.destroyed);
     }
 
     /**
      * Checks if this instance has been destroyed.
      *
-     * @return <code>true</code> if this instance has been destroyed,
-     *         otherwise <code>false</code>.
+     * @return <code>true</code> if this instance has been destroyed, otherwise
+     *                           <code>false</code>.
      */
-    public synchronized boolean isDestroyed() {
+    public synchronized boolean isDestroyed()
+    {
         return this.destroyed;
     }
 
@@ -533,7 +566,8 @@ public class SzGrpcServer {
      * @param args The command-line arguments.
      */
     @SuppressWarnings("rawtypes")
-    public static void main(String[] args) {
+    public static void main(String[] args)
+    {
         Map<CommandLineOption, Object> options = null;
         List<DeprecatedOptionWarning> warnings = new LinkedList<>();
         JsonObjectBuilder startupBuilder = Json.createObjectBuilder();
@@ -552,7 +586,9 @@ public class SzGrpcServer {
 
             System.err.println();
             System.err.println(
-                    "Try the " + HELP.getCommandLineFlag() + " option for help.");
+                    "Try the "
+                            + HELP.getCommandLineFlag()
+                            + " option for help.");
             System.err.println();
             System.exit(1);
 
@@ -576,11 +612,13 @@ public class SzGrpcServer {
             System.exit(0);
         }
 
+        // CSOFF: LineLength
         System.out.println("os.arch        = " + System.getProperty("os.arch"));
         System.out.println("os.name        = " + System.getProperty("os.name"));
         System.out.println("user.dir       = " + System.getProperty("user.dir"));
         System.out.println("user.home      = " + System.getProperty("user.home"));
         System.out.println("java.io.tmpdir = " + System.getProperty("java.io.tmpdir"));
+        // CSON: LineLength
 
         System.out.println(
                 "[" + (new Date()) + "] Senzing gRPC Server: "
@@ -588,7 +626,8 @@ public class SzGrpcServer {
 
         SzGrpcServer server = null;
         try {
-            SzGrpcServerOptions serverOptions = new SzGrpcServerOptions(options);
+            SzGrpcServerOptions serverOptions
+                = new SzGrpcServerOptions(options);
 
             server = new SzGrpcServer(serverOptions);
 
@@ -618,7 +657,9 @@ public class SzGrpcServer {
                 }
             }
         } catch (InterruptedException e) {
-            logWarning("WARNING: Interrupted while waiting for server shutdown.");
+            logWarning(
+                    "WARNING: Interrupted while waiting"
+                            + " for server shutdown.");
         }
     }
 
@@ -640,10 +681,14 @@ public class SzGrpcServer {
             String[] args,
             List<DeprecatedOptionWarning> deprecationWarnings,
             JsonObjectBuilder startupBuilder)
-            throws CommandLineException {
+            throws CommandLineException
+    {
         // parse and process the command-line
-        Map<CommandLineOption, Object> result = SzGrpcServerOption.parseCommandLine(
-                args, deprecationWarnings, startupBuilder);
+        Map<CommandLineOption, Object> result
+            = SzGrpcServerOption.parseCommandLine(
+                args,
+                deprecationWarnings,
+                startupBuilder);
 
         // return the result
         return result;
@@ -654,7 +699,8 @@ public class SzGrpcServer {
      *
      * @param t The {@link Throwable} to report.
      */
-    private static void exitOnError(Throwable t) {
+    private static void exitOnError(Throwable t)
+    {
         logError(t, "Exiting due to error");
         System.exit(1);
     }
@@ -664,7 +710,8 @@ public class SzGrpcServer {
      *
      * @return The usage message to report on the command line.
      */
-    public static String getUsageMessage() {
+    public static String getUsageMessage()
+    {
         return "[USAGE STRING HERE]";
     }
 
@@ -673,25 +720,29 @@ public class SzGrpcServer {
      *
      * @return The version message to report on the command line.
      */
-    public static String getVersionMessage() {
+    public static String getVersionMessage()
+    {
         return "[VERSION STRING HERE]";
     }
 
     /**
-     * Gets a {@link String} field value from a message that may be
-     * absent. If the field value is absent then <code>null</code>
-     * is returned, otherwise the field value is returned.
+     * Gets a {@link String} field value from a message that may be absent. If
+     * the field value is absent then <code>null</code> is returned, otherwise
+     * the field value is returned.
      *
-     * @param message   The {@link GeneratedMessage} from which the
-     *                  value is being extracted.
-     * @param fieldName The name of the field for which the value
-     *                  is being extracted.
-     * @return The value of the field or <code>null</code> if the value
-     *         has not been explicitly set.
-     * @deprecated Use {@link SzGrpcServices#getString(GeneratedMessage, String)} instead.
+     * @param message   The {@link GeneratedMessage} from which the value is
+     *                  being extracted.
+     * @param fieldName The name of the field for which the value is being
+     *                  extracted.
+     * @return The value of the field or <code>null</code> if the value has not
+     *             been explicitly set.
+     * @deprecated Use {@link
+     *             SzGrpcServices#getString(GeneratedMessage,
+     *             String)} instead.
      */
     @Deprecated
-    public static String getString(GeneratedMessage message, String fieldName) {
+    public static String getString(GeneratedMessage message, String fieldName)
+    {
         return SzGrpcServices.getString(message, fieldName);
     }
 }
