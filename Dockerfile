@@ -13,6 +13,7 @@ ARG IMAGE_FINAL=senzing/senzingsdk-runtime:4.2.0@sha256:072ff062d9d3ee224e68848e
 FROM ${IMAGE_FINAL} AS senzingsdk_runtime
 
 RUN apt-get update \
+       && apt-get -y --no-install-recommends install --only-upgrade 'senzingsdk-*' \
        && apt-get -y --no-install-recommends install \
        senzingsdk-setup
 
@@ -20,7 +21,7 @@ RUN apt-get update \
 # Stage: builder
 # -----------------------------------------------------------------------------
 FROM ${IMAGE_BUILDER} AS builder
-ENV REFRESHED_AT=2026-04-07
+ENV REFRESHED_AT=2026-04-29
 LABEL Name="senzing/java-builder" \
        Maintainer="support@senzing.com" \
        Version="0.8.0"
@@ -90,7 +91,7 @@ RUN mvn -ntp -DskipTests=true package
 # -----------------------------------------------------------------------------
 
 FROM ${IMAGE_FINAL} AS final
-ENV REFRESHED_AT=2026-04-07
+ENV REFRESHED_AT=2026-04-29
 LABEL Name="senzing/sz-sdk-grpc-java" \
        Maintainer="support@senzing.com" \
        Version="0.8.0"
@@ -101,6 +102,7 @@ USER root
 # Install packages via apt-get.
 
 RUN apt-get update \
+       && apt-get -y --no-install-recommends install --only-upgrade 'senzingsdk-*' \
        && apt-get -y --no-install-recommends install \
        senzingsdk-setup \
        libsqlite3-dev \
