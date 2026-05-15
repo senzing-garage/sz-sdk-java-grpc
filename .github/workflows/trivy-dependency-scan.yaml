@@ -39,7 +39,7 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: install Senzing runtime
-        uses: senzing-factory/github-action-install-senzing-sdk@v4
+        uses: senzing-factory/github-action-install-senzing-sdk@v5
         with:
           packages-to-install: "senzingsdk-runtime senzingsdk-setup"
           senzingsdk-version: "staging-v4"
@@ -53,7 +53,7 @@ jobs:
           mvn dependency:resolve -DskipTests --batch-mode
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .

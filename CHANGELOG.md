@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], [markdownlint],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Changes/Additions/Fixes
+
+- Updated `io.netty/netty-bom` from 4.2.12.Final to 4.2.13.Final
+  (addresses CVE-2026-42583, CVE-2026-42579, CVE-2026-42584,
+  CVE-2026-42587).
+- Updated `com.linecorp.armeria/armeria-bom` from 1.37.0 to 1.39.0
+  (natively bundles netty 4.2.13.Final).
+- Updated `io.grpc/grpc-bom` from 1.80.0 to 1.81.0 (required by
+  armeria 1.39.0).
+- Updated `com.fasterxml.jackson/jackson-bom` from 2.21.2 to 2.21.3
+  (required by armeria 1.39.0).
+- Updated `com.senzing/data-mart-replicator` from 2.0.0-beta.2.4 to
+  2.0.0 (brings in postgresql 42.7.11 transitively, addressing
+  CVE-2026-42198).
+- Updated `com.senzing/senzing-commons` from 4.0.0-beta.3.0 to 4.0.0.
+- Updated `org.apache.commons/commons-configuration2` from 2.13.0 to
+  2.14.0.
+
 ## [0.8.0] - 2026-04-07
 
 ### Changes/Additions/Fixes in version 0.8.0
