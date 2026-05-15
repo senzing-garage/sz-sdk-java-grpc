@@ -54,7 +54,8 @@
     "stackoverflow",
     "SZDIAGNOSTIC",
     "temurin",
-    "USERPROFILE"
+    "USERPROFILE",
+    "zizmor"
   ],
   "ignorePaths": [
     ".git/**",
