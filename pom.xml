@@ -170,7 +170,7 @@
     <dependency>
         <groupId>com.senzing</groupId>
         <artifactId>sz-sdk-auto</artifactId>
-        <version>0.5.1</version>
+        <version>1.0.0</version>
     </dependency>
     <dependency>
       <groupId>com.senzing</groupId>
