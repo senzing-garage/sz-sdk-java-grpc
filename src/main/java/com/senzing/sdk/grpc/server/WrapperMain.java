@@ -93,7 +93,7 @@ final class WrapperMain
                     + "try again.");
                 
                 // CSOFF
-                if (RUNTIME_OS_TYPE == OSType.MACOS) {
+                if (RUNTIME_OS_FAMILY == OperatingSystemFamily.MAC_OS) {
                     System.err.println();
                     System.err.println(
                         "NOTE: System Integrity Protection (SIP) on macOS will prevent the Java process from");

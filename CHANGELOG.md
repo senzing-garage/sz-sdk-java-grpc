@@ -5,10 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], [markdownlint],
 and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [1.0.0] - 2026-05-16
 
-### Changes/Additions/Fixes
+### Changes/Additions/Fixes in version 1.0.0
 
+- First stable release.
+- Applied Java coding standards and reformatted all source files
+  (Allman braces for definitions, same-line braces for control flow,
+  80-character line limit, Javadoc prose and tag reflow).
+- Added `UnusedImports` checkstyle module (with `processJavadoc=true`
+  default so Javadoc-only references count as valid usage).
+- Removed unused wildcard static imports from `SzGrpcConfig` and
+  `SzGrpcEngine`.
 - Updated `io.netty/netty-bom` from 4.2.12.Final to 4.2.13.Final
   (addresses CVE-2026-42583, CVE-2026-42579, CVE-2026-42584,
   CVE-2026-42587).
