@@ -4,6 +4,7 @@
   "words": [
     "adoptium",
     "apidocs",
+    "aquasecurity",
     "armeria",
     "Bandley",
     "barrycaceres",
@@ -13,13 +14,13 @@
     "CFCALL",
     "CFRTN",
     "CFUNC",
-    "CSOFF",
-    "CSON",
     "CODEOWNER",
     "CONFIGCHKSUM",
     "CONFIGFILE",
     "CONFIGMGR",
     "cooldown",
+    "CSOFF",
+    "CSON",
     "ctxt",
     "datamart",
     "dearmor",
@@ -106,7 +107,8 @@
     "USERPROFILE",
     "UTYPE",
     "WATCHLIST",
-    "XLITERATOR"
+    "XLITERATOR",
+    "zizmor"
   ],
   "ignorePaths": [
     ".git/**",
