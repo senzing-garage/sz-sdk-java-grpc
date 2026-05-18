@@ -45,6 +45,12 @@
     <protoc.version>4.34.1</protoc.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <!-- Upstream source files copied and repackaged from the sz-sdk-java
+         submodule by the maven-replacer-plugin. Hoisted to properties so
+         the copy-* executions and the verify-install-utilities-strip
+         antrun execution share a single source of truth. -->
+    <install.utilities.src>sz-sdk-java/src/main/java/com/senzing/sdk/core/InstallUtilities.java</install.utilities.src>
+    <operating.system.family.src>sz-sdk-java/src/main/java/com/senzing/sdk/core/OperatingSystemFamily.java</operating.system.family.src>
   </properties>
   
   <dependencyManagement>
@@ -369,7 +375,7 @@
             </goals>
             <configuration>
                 <basedir>${project.basedir}</basedir>
-                <file>sz-sdk-java/src/main/java/com/senzing/sdk/core/InstallUtilities.java</file>
+                <file>${install.utilities.src}</file>
                 <outputFile>${project.build.directory}/generated-sources/senzing/com/senzing/sdk/grpc/server/InstallUtilities.java</outputFile>
                 <regex>true</regex>
                 <regexFlags>
@@ -378,7 +384,7 @@
                 </regexFlags>
                 <replacements>
                     <replacement>
-                        <token>^package com.senzing.sdk.core;</token>
+                        <token>^package com\.senzing\.sdk\.core;</token>
                         <value>package com.senzing.sdk.grpc.server;</value>
                     </replacement>
                     <replacement>
@@ -396,7 +402,21 @@
                          NativeProduct/NativeProductJni to populate
                          RUNTIME_SENZING_VERSION. WrapperMain doesn't need
                          the runtime version; leaving the field null keeps
-                         all other references compiling. -->
+                         all other references compiling.
+
+                         FRAGILE: the token is anchored only on the literal
+                         lines "String runtimeVersion = null;" and
+                         "RUNTIME_SENZING_VERSION = runtimeVersion;" in the
+                         upstream InstallUtilities.java. If sz-sdk-java
+                         renames the local variable, restructures the
+                         initializer, or inserts a comment before the
+                         closing brace, this regex will silently fail to
+                         match and the generated source will reference the
+                         package-private NativeProductJni, breaking compile
+                         with a confusing error against generated-sources.
+                         The verify-install-utilities-strip Antrun execution
+                         below detects this and fails the build early with
+                         a clearer message. -->
                     <replacement>
                         <token>static \{\s+String runtimeVersion = null;.*?RUNTIME_SENZING_VERSION = runtimeVersion;\s+\}</token>
                         <value>static { RUNTIME_SENZING_VERSION = null; }</value>
@@ -412,15 +432,19 @@
             </goals>
             <configuration>
                 <basedir>${project.basedir}</basedir>
-                <file>sz-sdk-java/src/main/java/com/senzing/sdk/core/OperatingSystemFamily.java</file>
+                <file>${operating.system.family.src}</file>
                 <outputFile>${project.build.directory}/generated-sources/senzing/com/senzing/sdk/grpc/server/OperatingSystemFamily.java</outputFile>
                 <regex>true</regex>
+                <!-- DOTALL is not strictly required for this execution's
+                     current replacements; kept for defensive consistency
+                     with copy-install-utilities above. -->
                 <regexFlags>
                   <regexFlag>MULTILINE</regexFlag>
+                  <regexFlag>DOTALL</regexFlag>
                 </regexFlags>
                 <replacements>
                     <replacement>
-                        <token>^package com.senzing.sdk.core;</token>
+                        <token>^package com\.senzing\.sdk\.core;</token>
                         <value>package com.senzing.sdk.grpc.server;</value>
                     </replacement>
                 </replacements>
@@ -496,6 +520,45 @@ public final class Sz$1Grpc {]]></value>
      public com.google.common.util.concurrent.ListenableFuture$2 $3(]]></value>
                     </replacement>
                 </replacements>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <!-- Verifies that the maven-replacer-plugin successfully stripped
+             the RUNTIME_SENZING_VERSION static initializer from the
+             generated InstallUtilities.java. If the upstream sz-sdk-java
+             source layout changes such that the strip regex no longer
+             matches, this fails the build with a clear, actionable error
+             message rather than letting it surface as a "cannot find
+             symbol" against the package-private NativeProductJni. -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>verify-install-utilities-strip</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <loadfile property="installutils.generated.content"
+                    srcfile="${project.build.directory}/generated-sources/senzing/com/senzing/sdk/grpc/server/InstallUtilities.java"/>
+                <fail message="Generated InstallUtilities.java still contains 'new NativeProductJni(' after the maven-replacer-plugin copy-install-utilities step. The RUNTIME_SENZING_VERSION static-block strip regex did not match the current upstream source. Update the regex in pom.xml (copy-install-utilities execution) to match the new ${install.utilities.src} source.">
+                  <condition>
+                    <contains string="${installutils.generated.content}" substring="new NativeProductJni("/>
+                  </condition>
+                </fail>
+                <fail message="Generated InstallUtilities.java does not contain the expected stripped initializer 'RUNTIME_SENZING_VERSION = null;'. The maven-replacer-plugin copy-install-utilities step's static-block strip regex did not match. Update the regex in pom.xml to match the current ${install.utilities.src} source.">
+                  <condition>
+                    <not>
+                      <contains string="${installutils.generated.content}" substring="RUNTIME_SENZING_VERSION = null;"/>
+                    </not>
+                  </condition>
+                </fail>
+              </target>
             </configuration>
           </execution>
         </executions>

@@ -143,7 +143,35 @@ The codebase follows a clean separation between client and server:
 - Proto files in `sz-sdk-proto/` are compiled by `protobuf-maven-plugin`
 - Generated code goes to `target/generated-sources/protobuf/`
 - Maven replacer plugin adds Javadoc to generated gRPC service classes
-- `InstallUtilities.java` is copied from `sz-sdk-java` dependency and repackaged
+- `InstallUtilities.java` is copied from the `sz-sdk-java` submodule and
+  repackaged into `com.senzing.sdk.grpc.server` by the
+  `maven-replacer-plugin` (see the `copy-install-utilities` execution in
+  `pom.xml`). The copy applies four regex rewrites: (1) rewrite the
+  package declaration, (2) rewrite the static import for
+  `OperatingSystemFamily` to point at the repackaged copy, (3) rename
+  `public static void main` to `notMain` (to avoid a competing entry
+  point in the shaded server JAR), and (4) replace the
+  `RUNTIME_SENZING_VERSION` static initializer block — which uses the
+  package-private `NativeProduct`/`NativeProductJni` — with a simple
+  `static { RUNTIME_SENZING_VERSION = null; }`. `WrapperMain` does not
+  use the runtime-version value, so the field remains declared (for the
+  other references in `InstallUtilities`) but is always `null`. The
+  replacements are applied in `pom.xml` declaration order, and the
+  `DOTALL` regex flag is what allows the strip pattern's non-greedy
+  `.*?` to cross newlines and match the full multi-line static block.
+- `OperatingSystemFamily.java` is also copied from the submodule into
+  `com.senzing.sdk.grpc.server` by the `copy-operating-system-family`
+  execution; it only needs its `package` declaration rewritten.
+- A `maven-antrun-plugin` execution (`verify-install-utilities-strip`)
+  runs at `process-sources` to confirm the generated
+  `InstallUtilities.java` no longer contains `new NativeProductJni(`
+  and does contain `RUNTIME_SENZING_VERSION = null;`. If either check
+  fails, the build stops with a clear, actionable error message rather
+  than letting it surface as a confusing "cannot find symbol" error
+  against the generated-sources file. (Note: if the upstream source
+  file itself is missing — e.g. the submodule renamed or moved it —
+  `maven-replacer-plugin` fails earlier in `generate-sources` with its
+  own "File ... does not exist" error.)
 
 ### Test Structure
 

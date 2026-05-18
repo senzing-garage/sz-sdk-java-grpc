@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning].
 
 ### Changes/Additions/Fixes in version 1.0.0
 
-- First stable release.
+- Promoted to first stable release.
 - Applied Java coding standards and reformatted all source files
   (Allman braces for definitions, same-line braces for control flow,
   80-character line limit, Javadoc prose and tag reflow).
@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning].
   default so Javadoc-only references count as valid usage).
 - Removed unused wildcard static imports from `SzGrpcConfig` and
   `SzGrpcEngine`.
+- Updated `sz-sdk-java` submodule pointer to the 4.3.0 release tag and
+  adjusted the `maven-replacer-plugin` configuration and `WrapperMain`
+  for the 4.3.0 `InstallUtilities` API (renamed `RUNTIME_OS_TYPE` to
+  `RUNTIME_OS_FAMILY` and replaced the nested `OSType` enum usage with
+  the new top-level `OperatingSystemFamily` enum, which is now also
+  copied and repackaged into `com.senzing.sdk.grpc.server`).
+- Added a `maven-antrun-plugin` build-time verification step
+  (`verify-install-utilities-strip`) that fails the build early if the
+  `RUNTIME_SENZING_VERSION` static-block strip in the generated
+  `InstallUtilities.java` did not match the upstream source.
 - Updated `io.netty/netty-bom` from 4.2.12.Final to 4.2.13.Final
   (addresses CVE-2026-42583, CVE-2026-42579, CVE-2026-42584,
   CVE-2026-42587).

@@ -109,6 +109,14 @@ final class WrapperMain
                     System.err.println(
                         "For example, install Java in your home directory and execute it from there.");
                     System.err.println();
+                } else if (RUNTIME_OS_FAMILY == OperatingSystemFamily.UNKNOWN) {
+                    System.err.println();
+                    System.err.println(
+                        "NOTE: The runtime operating system was not recognized (os.name=\""
+                        + System.getProperty("os.name") + "\").");
+                    System.err.println(
+                        "Senzing supports Linux, macOS, and Windows. Please verify your environment.");
+                    System.err.println();
                 }
                 // CSON
 
