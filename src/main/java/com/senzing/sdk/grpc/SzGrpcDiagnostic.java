@@ -13,7 +13,8 @@ import io.grpc.Channel;
 /**
  * The gRPC implementation of {@link SzDiagnostic}.
  */
-public class SzGrpcDiagnostic implements SzDiagnostic {
+public class SzGrpcDiagnostic implements SzDiagnostic
+{
     /**
      * The {@link SzGrpcEnvironment} that constructed this instance.
      */
@@ -29,7 +30,8 @@ public class SzGrpcDiagnostic implements SzDiagnostic {
      * 
      * @param environment the {@link SzGrpcEnvironment} with which to construct.
      */
-    SzGrpcDiagnostic(SzGrpcEnvironment environment) {
+    SzGrpcDiagnostic(SzGrpcEnvironment environment)
+    {
         this.env = environment;
         
         Channel channel = this.env.getChannel();
@@ -38,22 +40,27 @@ public class SzGrpcDiagnostic implements SzDiagnostic {
     }
 
     /**
-     * Gets the underlying {@link SzDiagnosticBlockingStub} for this instance.
-     * 
-     * @return The underlying {@link SzDiagnosticBlockingStub} for this instance.
+     * Gets the underlying {@link SzDiagnosticBlockingStub}
+     * for this instance.
+     *
+     * @return The underlying {@link SzDiagnosticBlockingStub}
+     *         for this instance.
      */
-    protected SzDiagnosticBlockingStub getBlockingStub() {
+    protected SzDiagnosticBlockingStub getBlockingStub()
+    {
         return this.blockingStub;
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String getRepositoryInfo() throws SzException {
+    public String getRepositoryInfo()
+        throws SzException
+    {
         return this.env.execute(() -> {
 
             GetRepositoryInfoRequest request
@@ -67,13 +74,15 @@ public class SzGrpcDiagnostic implements SzDiagnostic {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String checkRepositoryPerformance(int secondsToRun) throws SzException {
+    public String checkRepositoryPerformance(int secondsToRun)
+        throws SzException
+    {
         return this.env.execute(() -> {
 
             CheckRepositoryPerformanceRequest request
@@ -88,14 +97,16 @@ public class SzGrpcDiagnostic implements SzDiagnostic {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}
-     * (assuming the gRPC allows the operation).
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment} (assuming the gRPC allows
+     * the operation).
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public void purgeRepository() throws SzException {
+    public void purgeRepository()
+        throws SzException
+    {
         this.env.execute(() -> {
 
             PurgeRepositoryRequest request
@@ -108,13 +119,15 @@ public class SzGrpcDiagnostic implements SzDiagnostic {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String getFeature(long featureId) throws SzException {
+    public String getFeature(long featureId)
+        throws SzException
+    {
         return this.env.execute(() -> {
 
             GetFeatureRequest request

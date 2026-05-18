@@ -32,7 +32,8 @@ import static com.senzing.util.JsonUtilities.*;
 /**
  * Provides a gRPC implementation of {@link SzEnvironment}.
  */
-public class SzGrpcEnvironment implements SzEnvironment {
+public class SzGrpcEnvironment implements SzEnvironment
+{
     /**
      * The "error" JSON property key for the gRPC error messages.
      */
@@ -64,41 +65,54 @@ q     */
     public static final String REASON_PREFIX = "SENZ";
 
     /**
-     * The string that splits the error code from the error message
-     * in the gRPC error reason.
+     * The string that splits the error code from the error message in the gRPC
+     * error reason.
      */
     public static final String REASON_SPLITTER = "|";
 
     /**
-     * Enumerates the possible states for an instance of {@link SzGrpcEnvironment}.
+     * Enumerates the possible states for an instance
+     * of {@link SzGrpcEnvironment}.
      */
-    private enum State {
+    private enum State
+    {
         /**
-         * If an {@link SzGrpcEnvironment} instance is in the "active" state then it
-         * is initialized and ready to use.  Only one instance of {@link 
-         * SzGrpcEnvironment} can exist in the {@link #ACTIVE} or {@link #DESTROYING}
-         * state because Senzing environment cannot be initialized heterogeneously
-         * within a single process.
+         * If an {@link SzGrpcEnvironment} instance is
+         * in the "active" state then it is initialized
+         * and ready to use.  Only one instance of
+         * {@link SzGrpcEnvironment} can exist in the
+         * {@link #ACTIVE} or {@link #DESTROYING} state
+         * because Senzing environment cannot be
+         * initialized heterogeneously within a single
+         * process.
          * 
          * @see SenzingSdk#getActiveInstance()
          */
         ACTIVE,
 
         /**
-         * An instance {@link SzGrpcEnvironment} moves to the "destroying" state when
-         * the {@link #destroy()} method has been called but has not yet completed any
-         * Senzing operations that are already in-progress.  In this state, the
-         * {@link SzGrpcEnvironment} will fast-fail any newly attempted operations with
-         * an {@link IllegalStateException}, but will complete those Senzing operations
-         * that were initiated before {@link #destroy()} was called.
+         * An instance {@link SzGrpcEnvironment} moves
+         * to the "destroying" state when the {@link
+         * #destroy()} method has been called but has
+         * not yet completed any Senzing operations that
+         * are already in-progress.  In this state, the
+         * {@link SzGrpcEnvironment} will fast-fail any
+         * newly attempted operations with an {@link
+         * IllegalStateException}, but will complete
+         * those Senzing operations that were initiated
+         * before {@link #destroy()} was called.
          */
         DESTROYING,
 
         /**
-         * An instance of {@link SzGrpcEnvironment} moves to the "destroyed" state when
-         * the {@link #destroy()} method has completed and there are no more Senzing
-         * operations that are in-progress.  Once an {@link #ACTIVE} instance moves to
-         * {@link #DESTROYED} then a new active instance can be created and initialized.
+         * An instance of {@link SzGrpcEnvironment}
+         * moves to the "destroyed" state when the
+         * {@link #destroy()} method has completed and
+         * there are no more Senzing operations that are
+         * in-progress.  Once an {@link #ACTIVE}
+         * instance moves to {@link #DESTROYED} then a
+         * new active instance can be created and
+         * initialized.
          */
         DESTROYED;
     }
@@ -125,7 +139,8 @@ q     */
 
     /**
      * The underlying GRPC channel to use as provided during construction.
-     * <b>NOTE:</b> This is opened and managed (and closed) externally to this instance.
+     * <b>NOTE:</b> This is opened and managed (and
+     * closed) externally to this instance.
      */
     private Channel grpcChannel = null;
 
@@ -154,18 +169,18 @@ q     */
      * {@link SzGrpcEnvironment}.
      * 
      * <p>
-     * This interface is not needed to use {@link SzGrpcEnvironment}.
-     * It is only needed if you are extended {@link SzGrpcEnvironment}.
+     * This interface is not needed to use {@link SzGrpcEnvironment}. It is only
+     * needed if you are extended {@link SzGrpcEnvironment}.
      * </p>
      * 
      * <p>
-     * This is provided for derived classes of {@link SzGrpcEnvironment}
-     * to initialize their super class and is typically implemented by
-     * extending {@link AbstractBuilder} in creating a derived
-     * builder implementation.
+     * This is provided for derived classes of {@link SzGrpcEnvironment} to
+     * initialize their super class and is typically implemented by extending
+     * {@link AbstractBuilder} in creating a derived builder implementation.
      * </p>
      */
-    public interface Initializer {
+    public interface Initializer
+    {
         /**
          * Gets the gRPC {@link Channel} to use.
          * 
@@ -179,21 +194,21 @@ q     */
      * {@link SzGrpcEnvironment} and its derived classes.
      * 
      * <p>
-     * This class is not used in the usage of {@link SzGrpcEnvironment}.
-     * It is only needed if you are extending {@link SzGrpcEnvironment}.
+     * This class is not used in the usage of {@link SzGrpcEnvironment}. It is
+     * only needed if you are extending {@link SzGrpcEnvironment}.
      * </p>
      * 
      * <p>
-     * This class allows the derived builder to return references to its
-     * own environment class and to its own builder type rather than base 
-     * classes.  When extending {@link SzGrpcEnvironment} you should
-     * provide an implementation of this class that is specific to your
-     * derived class.
+     * This class allows the derived builder to return references to its own
+     * environment class and to its own builder type rather than base classes.
+     * When extending {@link SzGrpcEnvironment} you should provide an
+     * implementation of this class that is specific to your derived class.
      * </p>
      * 
      * @param <E> The {@link SzGrpcEnvironment}-derived class built by instances
      *            of this class.
-     * @param <B> The {@link AbstractBuilder}-derived class of the implementation.
+     * @param <B> The {@link AbstractBuilder}-derived
+     *            class of the implementation.
      */
     public abstract static class AbstractBuilder<
         E extends SzGrpcEnvironment, B extends AbstractBuilder<E, B>>
@@ -207,7 +222,8 @@ q     */
         /**
          * Default constructor.
          */
-        protected AbstractBuilder() {
+        protected AbstractBuilder()
+        {
             this.channel = null;
         }
 
@@ -216,25 +232,28 @@ q     */
          * Gets the gRPC {@link Channel} with which to initialize the 
          * {@link SzGrpcEnvironment}.
          * 
-         * @return The gRPC {@link Channel} with which to initialize the 
-         *         {@link SzGrpcEnvironment}.
+         * @return The gRPC {@link Channel} with which to initialize the {@link
+         *             SzGrpcEnvironment}.
          * 
          */
         @Override
-        public Channel getChannel() {
+        public Channel getChannel()
+        {
             return this.channel;
         }
 
         /**
-         * Provides the gRPC {@link Channel} to initialize the {@link SzGrpcEnvironment}.
+         * Provides the gRPC {@link Channel} to
+         * initialize the {@link SzGrpcEnvironment}.
          * 
-         * @param channel The gRPC {@link Channel} to initialize the
-         *                {@link SzGrpcEnvironment}.
+         * @param channel The gRPC {@link Channel} to initialize the {@link
+         *                SzGrpcEnvironment}.
          * 
          * @return A reference to this instance.
          */
         @SuppressWarnings("unchecked")
-        public B channel(Channel channel) {
+        public B channel(Channel channel)
+        {
             Objects.requireNonNull(channel, "The gRPC channel cannot be null");
             this.channel = channel;
             return ((B) this);
@@ -244,8 +263,8 @@ q     */
          * Implement this method to create a new {@link SzGrpcEnvironment}
          * instance of type <code>E</code> based on this builder instance.
          * 
-         * @return The newly created {@link SzGrpcEnvironment} instance
-         *         of type <code>E</code>.
+         * @return The newly created {@link SzGrpcEnvironment} instance of type
+         *             <code>E</code>.
          */
         public abstract E build() throws IllegalStateException;
     }
@@ -253,12 +272,15 @@ q     */
     /**
      * The builder class for creating an instance of {@link SzGrpcEnvironment}.
      */
-    public static class Builder extends AbstractBuilder<SzGrpcEnvironment, Builder>
+    public static class Builder
+        extends AbstractBuilder<SzGrpcEnvironment,
+                                Builder>
     {
         /**
          * Default constructor.
          */
-        public Builder() {
+        public Builder()
+        {
             super();
         }
 
@@ -280,27 +302,28 @@ q     */
     }
 
     /**
-     * Creates a new instance of {@link Builder} for setting up an instance
-     * of {@link SzEnvironment}.
+     * Creates a new instance of {@link Builder} for setting up an instance of
+     * {@link SzEnvironment}.
      * 
      * <p>
      * <b>Alternatively</b>, you can directly call the {@link Builder#Builder()}
      * constructor.
      * </p>
      * 
-     * @return The {@link Builder} for configuring and initializing the
-     *         {@link SzGrpcEnvironment}.
+     * @return The {@link Builder} for configuring and initializing the {@link
+     *             SzGrpcEnvironment}.
      */
-    public static Builder newBuilder() {
+    public static Builder newBuilder()
+    {
         return new Builder();
     }
 
     /**
-     * Constructs with the specified {@link Channel}.  The constructed
-     * instance will <b>not</b> shutdown the channel even upon calling
+     * Constructs with the specified {@link Channel}. The constructed instance
+     * will <b>not</b> shutdown the channel even upon calling
      * {@link #destroy()}.  However, you can be assured the constructed
-     * instance will <b>not</b> use the specified {@link Channel} once
-     * it is {@linkplain #isDestroyed() destroyed}.
+     * instance will <b>not</b> use the specified {@link Channel} once it is
+     * {@linkplain #isDestroyed() destroyed}.
      *  
      * @param initializer The {@link Initializer} with which to construct.
      */
@@ -322,9 +345,12 @@ q     */
      * 
      * @return The {@link Channel} with which this instance was constructed.
      * 
-     * @throws IllegalStateException If this instance has already been destroyed.
+     * @throws IllegalStateException If this instance
+     *                               has already been
+     *                               destroyed.
      */
-    Channel getChannel() {
+    Channel getChannel()
+    {
         synchronized (this.monitor) {
             this.ensureActive();
             return this.grpcChannel;
@@ -332,26 +358,27 @@ q     */
     }
 
     /**
-     * Executes the specified {@link Callable} task and returns the result
-     * if successful.  This will throw any exception produced by the {@link 
-     * Callable} task, wrapping it in an {@link SzException} if it is a
-     * checked exception that is not of type {@link SzException}.
+     * Executes the specified {@link Callable} task and returns the result if
+     * successful. This will throw any exception produced by the {@link
+     * Callable} task, wrapping it in an {@link SzException} if it is a checked
+     * exception that is not of type {@link SzException}.
      * 
      * <p>
-     * If overriding ths method, you should throw an {@link IllegalStateException}
-     * if this instance has already been {@linkplain #destroy() destroyed},
-     * otherwise, this method must complete execution of the specified {@link 
-     * Callable} task even if {@link #destroy()} is called after this method
-     * is called but before it completes.  Further, {@link #destroy()} should
-     * not complete until <b>all</b> in-flight tasks complete.
+     * If overriding ths method, you should throw an {@link
+     * IllegalStateException} if this instance has already been {@linkplain
+     * #destroy() destroyed}, otherwise, this method must complete execution of
+     * the specified {@link Callable} task even if {@link #destroy()} is called
+     * after this method is called but before it completes. Further, {@link
+     * #destroy()} should not complete until <b>all</b> in-flight tasks
+     * complete.
      * </p>
      * 
      * @param <T> The return type.
      * @param task The {@link Callable} task to execute.
      * @return The result from the {@link Callable} task.
      * @throws SzException If the {@link Callable} task triggers a failure.
-     * @throws IllegalStateException If this {@link SzGrpcEnvironment} instance has
-     *                               already been destroyed.
+     * @throws IllegalStateException If this {@link SzGrpcEnvironment} instance
+     *                               has already been destroyed.
      */
     protected <T> T execute(Callable<T> task)
         throws SzException, IllegalStateException
@@ -391,17 +418,17 @@ q     */
     }
 
     /**
-     * Creates an {@link SzException} from the specified {@link Status}
-     * and {@link Exception}.
+     * Creates an {@link SzException} from the specified {@link Status} and
+     * {@link Exception}.
      * 
      * @param status The gRPC {@link Status} describing the failure.
      * 
-     * @param e The original {@link Exception} describing the cause 
-     *          of the failure (typically an instance of 
-     *          {@link io.grpc.StatusException} or {@link StatusRuntimeException}).
+     * @param e The original {@link Exception} describing the cause of the
+     *          failure (typically an instance of {@link
+     *          io.grpc.StatusException} or {@link StatusRuntimeException}).
      * 
-     * @return A new {@link SzException} representing the specified
-     *         {@link StatusRuntimeException}.
+     * @return A new {@link SzException} representing the specified {@link
+     *           StatusRuntimeException}.
      */
     public static SzException createSzException(Status status, Exception e) 
     {   
@@ -474,9 +501,11 @@ q     */
                 ? reason.substring(index + 1) : "";
 
             // attempt to get additional information for the exception
+            // CSOFF: LineLength
             String          text        = getString(jsonObj, TEXT_FIELD_KEY);
             String          function    = getString(jsonObj, FUNCTION_FIELD_KEY);
             List<String>    stackTrace  = getStrings(jsonObj, STACK_TRACE_FIELD_KEY);
+            // CSON: LineLength
 
             if (text != null || function != null || stackTrace != null) {
                 StringWriter    sw = new StringWriter();
@@ -515,23 +544,27 @@ q     */
      * 
      * @return The number of currently executing operations.
      */
-    int getExecutingCount() {
+    int getExecutingCount()
+    {
         synchronized (this.monitor) {
             return this.executingCount;
         }
     }
 
     /**
-     * Ensures this instance is still active and if not will throw 
-     * an {@link IllegalStateException}.
+     * Ensures this instance is still active and if not will throw an {@link
+     * IllegalStateException}.
      *
      * @throws IllegalStateException If this instance is not active.
      */
-    void ensureActive() throws IllegalStateException {
+    void ensureActive()
+        throws IllegalStateException
+    {
         synchronized (this.monitor) {
             if (this.state != State.ACTIVE) {
                 throw new IllegalStateException(
-                    "The SzGrpcEnvironment instance has already been destroyed.");
+                    "The SzGrpcEnvironment instance"
+                        + " has already been destroyed.");
             }
         }
     }
@@ -545,7 +578,9 @@ q     */
      * {@inheritDoc}
      */
     @Override
-    public SzProduct getProduct() throws IllegalStateException, SzException {
+    public SzProduct getProduct()
+        throws IllegalStateException, SzException
+    {
         synchronized (this.monitor) {
             this.ensureActive();
             if (this.grpcProduct == null) {
@@ -565,7 +600,9 @@ q     */
      * {@inheritDoc}
      */
     @Override
-    public SzEngine getEngine() throws IllegalStateException, SzException {
+    public SzEngine getEngine()
+        throws IllegalStateException, SzException
+    {
         synchronized (this.monitor) {
             this.ensureActive();
             if (this.grpcEngine == null) {
@@ -585,7 +622,9 @@ q     */
      * {@inheritDoc}
      */
     @Override
-    public SzConfigManager getConfigManager() throws IllegalStateException, SzException {
+    public SzConfigManager getConfigManager()
+        throws IllegalStateException, SzException
+    {
         synchronized (this.monitor) {
             this.ensureActive();
             if (this.grpcConfigMgr == null) {
@@ -606,7 +645,9 @@ q     */
      * {@inheritDoc}
      */
     @Override
-    public SzDiagnostic getDiagnostic() throws IllegalStateException, SzException {
+    public SzDiagnostic getDiagnostic()
+        throws IllegalStateException, SzException
+    {
         synchronized (this.monitor) {
             this.ensureActive();
             if (this.grpcDiagnostic == null) {
@@ -618,14 +659,16 @@ q     */
     }
 
     /**
-     * Implemented to execute the operation over the gRPC protocol against
-     * the associated gRPC server and return the active configuration ID 
-     * from the gRPC server's {@link SzEnvironment}.
+     * Implemented to execute the operation over the gRPC protocol against the
+     * associated gRPC server and return the active configuration ID from the
+     * gRPC server's {@link SzEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public long getActiveConfigId() throws IllegalStateException, SzException {
+    public long getActiveConfigId()
+        throws IllegalStateException, SzException
+    {
         Lock lock = null;
         try {
             // get a read lock to ensure we remain active while
@@ -644,11 +687,16 @@ q     */
             }
 
             // get the active config ID from the gRPC server
-            GetActiveConfigIdRequest request = GetActiveConfigIdRequest.newBuilder().build();
+            GetActiveConfigIdRequest request
+                = GetActiveConfigIdRequest
+                    .newBuilder().build();
 
             // get the response
-            GetActiveConfigIdResponse response = this.execute(() -> {
-                return this.grpcEngine.getBlockingStub().getActiveConfigId(request);
+            GetActiveConfigIdResponse response
+                = this.execute(() -> {
+                return this.grpcEngine
+                    .getBlockingStub()
+                    .getActiveConfigId(request);
             });
             
             // return the config ID
@@ -660,14 +708,16 @@ q     */
     }
 
     /**
-     * Implemented to execute the operation over the gRPC protocol against
-     * the associated gRPC server and reinitialize gRPC server's
+     * Implemented to execute the operation over the gRPC protocol against the
+     * associated gRPC server and reinitialize gRPC server's
      * {@link SzEnvironment} (assuming the operation is allowed by the server).
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public void reinitialize(long configId) throws IllegalStateException, SzException {
+    public void reinitialize(long configId)
+        throws IllegalStateException, SzException
+    {
         Lock lock = null;
         try {
             // get a read lock to ensure we remain active while
@@ -700,10 +750,10 @@ q     */
     }
 
     /**
-     * Implemented to destroy this instance with <b>no</b> effect on the 
-     * the associated gRPC server's {@link SzEnvironment}.  This will block
-     * until all in-flight operations from {@link #execute(Callable)} 
-     * complete, but will prevent further tasks to be invoked via the 
+     * Implemented to destroy this instance with <b>no</b> effect on the the
+     * associated gRPC server's {@link SzEnvironment}. This will block until all
+     * in-flight operations from {@link #execute(Callable)} complete, but will
+     * prevent further tasks to be invoked via the
      * {@link #execute(Callable)} method.
      * 
      * <p>
@@ -715,7 +765,8 @@ q     */
      * {@inheritDoc}
      */
     @Override
-    public void destroy() {
+    public void destroy()
+    {
         Lock lock = null;
         try {
             synchronized (this.monitor) {
@@ -737,8 +788,10 @@ q     */
             int exeCount = this.getExecutingCount();
             if (exeCount > 0) {
                 throw new IllegalStateException(
-                    "Acquired write lock for destroying environment while tasks "
-                    + "still executing: " + exeCount);
+                    "Acquired write lock for destroying"
+                        + " environment while tasks"
+                        + " still executing: "
+                        + exeCount);
             }
             
             // once we get here we can really shut things down
@@ -764,7 +817,8 @@ q     */
      * {@inheritDoc}
      */
     @Override
-    public boolean isDestroyed() {
+    public boolean isDestroyed()
+    {
         synchronized (this.monitor) {
             return this.state != State.ACTIVE;
         }
@@ -776,7 +830,8 @@ q     */
      * 
      * @return The {@link Lock} that was acquired.
      */
-    private Lock acquireWriteLock() {
+    private Lock acquireWriteLock()
+    {
         Lock lock = this.readWriteLock.writeLock();
         lock.lock();
         return lock;
@@ -788,7 +843,8 @@ q     */
      * 
      * @return The {@link Lock} that was acquired.
      */
-    private Lock acquireReadLock() {
+    private Lock acquireReadLock()
+    {
         Lock lock = this.readWriteLock.readLock();
         lock.lock();
         return lock;
@@ -801,7 +857,8 @@ q     */
      * 
      * @return Always returns <code>null</code>.
      */
-    private Lock releaseLock(Lock lock) {
+    private Lock releaseLock(Lock lock)
+    {
         if (lock != null) {
             lock.unlock();
         }

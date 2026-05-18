@@ -31,7 +31,8 @@ import static com.senzing.util.LoggingUtilities.*;
 /**
  * Provides the gRPC server-side implementation for {@link SzEngine}.
  */
-public class SzGrpcEngineImpl extends SzEngineImplBase {
+public class SzGrpcEngineImpl extends SzEngineImplBase
+{
     /**
      * The {@link SzGrpcServices} to use.
      */
@@ -42,7 +43,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
      *
      * @param services The {@link SzGrpcServices} to use.
      */
-    protected SzGrpcEngineImpl(SzGrpcServices services) {
+    protected SzGrpcEngineImpl(SzGrpcServices services)
+    {
         Objects.requireNonNull(services, "The services cannot be null");
         if (services.isDestroyed()) {
             throw new IllegalArgumentException(
@@ -57,25 +59,28 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
      *
      * @return The {@link SzEnvironment} for the backing services.
      */
-    protected SzEnvironment getEnvironment() {
+    protected SzEnvironment getEnvironment()
+    {
         return this.services.getEnvironment();
     }
 
     /**
-     * Checks if we are required to publish INFO messages regardless
-     * of what flags are specified by the caller.
+     * Checks if we are required to publish INFO messages regardless of what
+     * flags are specified by the caller.
      *
-     * @return <code>true</code> if always publishing INFO messages
-     *         via an info message consumer, otherwise <code>false</code>.
+     * @return <code>true</code> if always publishing
+     *         INFO messages via an info message
+     *         consumer, otherwise <code>false</code>.
      */
-    protected boolean isPublishingInfo() {
+    protected boolean isPublishingInfo()
+    {
         return (this.services.getInfoMessageConsumer() != null);
     }
 
     /**
-     * If this instance {@linkplain #isPublishingInfo() is publishing
-     * INFO messages} via an info message consumer <b>and</b> the
-     * specified {@link Set} of {@link SzFlag} instances does
+     * If this instance {@linkplain #isPublishingInfo() is publishing INFO
+     * messages} via an info message consumer <b>and</b> the specified {@link
+     * Set} of {@link SzFlag} instances does
      * <b>not</b> contain {@link SzFlag#SZ_WITH_INFO} then a copy of
      * the specified {@link Set} that also includes
      * {@link SzFlag#SZ_WITH_INFO} is created and returned, otherwise
@@ -83,12 +88,12 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
      *
      * @param flagSet The original flag set.
      *
-     * @return The specified {@link Set} of {@link SzFlag} instances
-     *         if no enhancement was required, otherwise a copy of
-     *         the specified {@link Set} that includes {@link
-     *         SzFlag#SZ_WITH_INFO}.
+     * @return The specified {@link Set} of {@link SzFlag} instances if no
+     *             enhancement was required, otherwise a copy of the specified
+     *             {@link Set} that includes {@link SzFlag#SZ_WITH_INFO}.
      */
-    protected Set<SzFlag> enhanceFlags(Set<SzFlag> flagSet) {
+    protected Set<SzFlag> enhanceFlags(Set<SzFlag> flagSet)
+    {
         if (flagSet.contains(SZ_WITH_INFO) || !this.isPublishingInfo()) {
             return flagSet;
         }
@@ -98,22 +103,23 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Publishes the specified message via the configured info message
-     * consumer. This method does nothing if no info message consumer
-     * is configured.
+     * Publishes the specified message via the configured info message consumer.
+     * This method does nothing if no info message consumer is configured.
      *
      * @param message The message to publish, which may only be
-     *                <code>null</code> if no info message consumer
-     *                is configured.
+     *                <code>null</code> if no info message consumer is
+     *                configured.
      *
      * @return <code>true</code> if a message was published, otherwise
-     *         <code>false</code>.
+     *                           <code>false</code>.
      *
-     * @throws NullPointerException If the specified message is <code>null</code>
-     *                              and {@link #isPublishingInfo()} returns
+     * @throws NullPointerException If the specified message is
+     *                              <code>null</code> and {@link
+     *                              #isPublishingInfo()} returns
      *                              <code>true</code>.
      */
-    protected boolean publishInfoMessage(String message) {
+    protected boolean publishInfoMessage(String message)
+    {
         if (!this.isPublishingInfo()) {
             return false;
         }
@@ -135,8 +141,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
         }
     }
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#addRecord(SzRecordKey,String,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -152,7 +158,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
             String recordDefinition = request.getRecordDefinition();
             long   flags            = request.getFlags();
 
-            SzRecordKey recordKey   = SzRecordKey.of(dataSourceCode, recordId);
+            SzRecordKey recordKey
+                = SzRecordKey.of(dataSourceCode, recordId);
             Set<SzFlag> origFlagSet = SZ_ADD_RECORD_FLAGS.toFlagSet(flags);
             Set<SzFlag> flagSet     = this.enhanceFlags(origFlagSet);
             
@@ -193,14 +200,15 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
      */
     @Override
     public void closeExportReport(CloseExportReportRequest request,
-            StreamObserver<CloseExportReportResponse> responseObserver) {
+            StreamObserver<CloseExportReportResponse> responseObserver)
+    {
         // Leave this unimplemented since gRPC client should stream exports
         super.closeExportReport(request, responseObserver);
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#countRedoRecords()} method.
      * 
      * @param request The gRPC request for the operation.
@@ -208,14 +216,16 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
      */
     @Override
     public void countRedoRecords(CountRedoRecordsRequest request,
-            StreamObserver<CountRedoRecordsResponse> responseObserver) {
+            StreamObserver<CountRedoRecordsResponse> responseObserver)
+    {
         try {
             SzEngine engine = this.getEnvironment().getEngine();
 
             long result = engine.countRedoRecords();
 
             CountRedoRecordsResponse response
-                = CountRedoRecordsResponse.newBuilder().setResult(result).build();
+                = CountRedoRecordsResponse.newBuilder()
+                    .setResult(result).build();
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -226,21 +236,25 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#deleteRecord(SzRecordKey,Set)} method.
      * 
      * @param request The gRPC request for the operation.
      * @param responseObserver The {@link StreamObserver} for the response.
      */
     @Override
-    public void deleteRecord(DeleteRecordRequest request, StreamObserver<DeleteRecordResponse> responseObserver) {
+    public void deleteRecord(
+        DeleteRecordRequest request,
+        StreamObserver<DeleteRecordResponse> responseObserver)
+    {
         try {
             String dataSourceCode   = request.getDataSourceCode();
             String recordId         = request.getRecordId();
             long   flags            = request.getFlags();
 
-            SzRecordKey recordKey   = SzRecordKey.of(dataSourceCode, recordId);
+            SzRecordKey recordKey
+                = SzRecordKey.of(dataSourceCode, recordId);
             Set<SzFlag> origFlagSet = SZ_DELETE_RECORD_FLAGS.toFlagSet(flags);
             Set<SzFlag> flagSet     = this.enhanceFlags(origFlagSet);
 
@@ -279,7 +293,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
      */
     @Override
     public void exportCsvEntityReport(ExportCsvEntityReportRequest request,
-            StreamObserver<ExportCsvEntityReportResponse> responseObserver) {
+            StreamObserver<ExportCsvEntityReportResponse> responseObserver)
+    {
         // Leave this unimplemented since gRPC client should stream exports
         super.exportCsvEntityReport(request, responseObserver);
     }
@@ -297,7 +312,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
      */
     @Override
     public void exportJsonEntityReport(ExportJsonEntityReportRequest request,
-            StreamObserver<ExportJsonEntityReportResponse> responseObserver) {
+            StreamObserver<ExportJsonEntityReportResponse> responseObserver)
+    {
         // Leave this unimplemented since gRPC client should stream exports
         super.exportJsonEntityReport(request, responseObserver);
     }
@@ -314,30 +330,39 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
      * @param responseObserver The {@link StreamObserver} for the response.
      */
     @Override
-    public void fetchNext(FetchNextRequest request, StreamObserver<FetchNextResponse> responseObserver) {
+    public void fetchNext(
+        FetchNextRequest request,
+        StreamObserver<FetchNextResponse> responseObserver)
+    {
         // Leave this unimplemented since gRPC client should stream exports
         super.fetchNext(request, responseObserver);
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#findInterestingEntities(long,Set)} method.
      * 
      * @param request The gRPC request for the operation.
      * @param responseObserver The {@link StreamObserver} for the response.
      */
     @Override
-    public void findInterestingEntitiesByEntityId(FindInterestingEntitiesByEntityIdRequest request,
-            StreamObserver<FindInterestingEntitiesByEntityIdResponse> responseObserver) {
+    public void findInterestingEntitiesByEntityId(
+        FindInterestingEntitiesByEntityIdRequest request,
+        StreamObserver<FindInterestingEntitiesByEntityIdResponse>
+            responseObserver)
+    {
         try {
             Long        entityId    = request.getEntityId();
             long        flags       = request.getFlags();
-            Set<SzFlag> flagSet     = SZ_FIND_INTERESTING_ENTITIES_FLAGS.toFlagSet(flags);
+            Set<SzFlag> flagSet
+                = SZ_FIND_INTERESTING_ENTITIES_FLAGS
+                    .toFlagSet(flags);
 
             SzEngine engine = this.getEnvironment().getEngine();
 
-            String result = engine.findInterestingEntities(entityId, flagSet);
+            String result = engine.findInterestingEntities(
+                entityId, flagSet);
 
             FindInterestingEntitiesByEntityIdResponse response
                 = FindInterestingEntitiesByEntityIdResponse
@@ -352,27 +377,35 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#findInterestingEntities(SzRecordKey,Set)} method.
      * 
      * @param request The gRPC request for the operation.
      * @param responseObserver The {@link StreamObserver} for the response.
      */
     @Override
-    public void findInterestingEntitiesByRecordId(FindInterestingEntitiesByRecordIdRequest request,
-            StreamObserver<FindInterestingEntitiesByRecordIdResponse> responseObserver) {
+    public void findInterestingEntitiesByRecordId(
+        FindInterestingEntitiesByRecordIdRequest request,
+        StreamObserver<FindInterestingEntitiesByRecordIdResponse>
+            responseObserver)
+    {
         try {
             String dataSourceCode   = request.getDataSourceCode();
             String recordId         = request.getRecordId();
             long   flags            = request.getFlags();
 
-            SzRecordKey recordKey   = SzRecordKey.of(dataSourceCode, recordId);
-            Set<SzFlag> flagSet     = SZ_FIND_INTERESTING_ENTITIES_FLAGS.toFlagSet(flags);
+            SzRecordKey recordKey
+                = SzRecordKey.of(dataSourceCode, recordId);
+            Set<SzFlag> flagSet
+                = SZ_FIND_INTERESTING_ENTITIES_FLAGS
+                    .toFlagSet(flags);
 
             SzEngine engine = this.getEnvironment().getEngine();
 
-            String result = engine.findInterestingEntities(recordKey, flagSet);
+            String result
+                = engine.findInterestingEntities(
+                    recordKey, flagSet);
 
             FindInterestingEntitiesByRecordIdResponse response
                 = FindInterestingEntitiesByRecordIdResponse
@@ -393,7 +426,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
      * 
      * @return The {@link Set} of {@link Long} entity ID's.
      */
-    private static Set<Long> parseEntityIds(String entityIdsJson) {
+    private static Set<Long> parseEntityIds(String entityIdsJson)
+    {
         if (entityIdsJson == null || entityIdsJson.trim().length() == 0) 
         {
             return null;
@@ -416,7 +450,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
      * 
      * @return The {@link Set} of {@link SzRecordKey} instances.
      */
-    private static Set<SzRecordKey> parseRecordKeys(String recordKeysJson) {
+    private static Set<SzRecordKey> parseRecordKeys(String recordKeysJson)
+    {
         if (recordKeysJson == null || recordKeysJson.trim().length() == 0)
         {
             return null;
@@ -443,7 +478,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
      * 
      * @return The {@link Set} of {@link String} data source codes.
      */
-    private static Set<String> parseDataSources(String dataSourcesJson) {
+    private static Set<String> parseDataSources(String dataSourcesJson)
+    {
         if (dataSourcesJson == null || dataSourcesJson.trim().length() == 0)
         {
             return null;
@@ -460,8 +496,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#findNetwork(SzEntityIds,int,int,int,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -475,7 +511,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
             String  entityIdsJson       = request.getEntityIds();
             int     maxDegrees          = (int) request.getMaxDegrees();
             int     buildOutDegrees     = (int) request.getBuildOutDegrees();
-            int     buildOutMaxEntities = (int) request.getBuildOutMaxEntities();
+            int     buildOutMaxEntities
+                = (int) request.getBuildOutMaxEntities();
             long    flags               = request.getFlags();
 
             Set<Long> entityIds = parseEntityIds(entityIdsJson);
@@ -504,8 +541,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#findNetwork(SzRecordKeys,int,int,int,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -519,7 +556,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
             String  recordKeysJson      = request.getRecordKeys();
             int     maxDegrees          = (int) request.getMaxDegrees();
             int     buildOutDegrees     = (int) request.getBuildOutDegrees();
-            int     buildOutMaxEntities = (int) request.getBuildOutMaxEntities();
+            int     buildOutMaxEntities
+                = (int) request.getBuildOutMaxEntities();
             long    flags               = request.getFlags();
 
             Set<SzRecordKey> recordKeys = parseRecordKeys(recordKeysJson);
@@ -548,8 +586,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#findPath(long,long,int,SzEntityIds,Set,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -595,10 +633,10 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
-     * {@link SzEngine#findPath(SzRecordKey,SzRecordKey,int,SzRecordKeys,Set,Set)}
-     * method.
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
+     * {@link SzEngine#findPath(SzRecordKey,SzRecordKey,
+     * int,SzRecordKeys,Set,Set)} method.
      * 
      * @param request The gRPC request for the operation.
      * @param responseObserver The {@link StreamObserver} for the response.
@@ -617,11 +655,17 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
             String  dataSourcesJson     = request.getRequiredDataSources();
             long    flags               = request.getFlags();
 
-            Set<SzRecordKey>    avoidRecordKeys = parseRecordKeys(avoidanceJson);
-            Set<String>         requiredSources = parseDataSources(dataSourcesJson);
+            Set<SzRecordKey> avoidRecordKeys
+                = parseRecordKeys(avoidanceJson);
+            Set<String> requiredSources
+                = parseDataSources(dataSourcesJson);
 
-            SzRecordKey startRecordKey  = SzRecordKey.of(startDataSource, startRecordId);
-            SzRecordKey endRecordKey    = SzRecordKey.of(endDataSource, endRecordId);
+            SzRecordKey startRecordKey
+                = SzRecordKey.of(startDataSource,
+                                 startRecordId);
+            SzRecordKey endRecordKey
+                = SzRecordKey.of(endDataSource,
+                                 endRecordId);
             Set<SzFlag> flagSet         = SZ_FIND_PATH_FLAGS.toFlagSet(flags);
 
             SzEngine engine = this.getEnvironment().getEngine();
@@ -647,8 +691,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEnvironment#getActiveConfigId()} method.
      * 
      * @param request The gRPC request for the operation.
@@ -674,8 +718,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#getEntity(long,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -707,8 +751,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#getEntity(SzRecordKey,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -742,8 +786,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#getRecord(SzRecordKey,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -776,8 +820,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#getRecordPreview(String,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -790,14 +834,17 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
         try {
             String      recordDef   = request.getRecordDefinition();
             long        flags       = request.getFlags();
-            Set<SzFlag> flagSet     = SZ_RECORD_PREVIEW_FLAGS.toFlagSet(flags);
-            
+            Set<SzFlag> flagSet
+                = SZ_RECORD_PREVIEW_FLAGS.toFlagSet(flags);
+
             SzEngine engine = this.getEnvironment().getEngine();
-            
-            String result = engine.getRecordPreview(recordDef, flagSet);
-                
+
+            String result
+                = engine.getRecordPreview(recordDef, flagSet);
+
             GetRecordPreviewResponse response
-                = GetRecordPreviewResponse.newBuilder().setResult(result).build();
+                = GetRecordPreviewResponse.newBuilder()
+                    .setResult(result).build();
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -808,8 +855,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#getRedoRecord()} method.
      * 
      * @param request The gRPC request for the operation.
@@ -840,8 +887,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#getStats()} method.
      * 
      * @param request The gRPC request for the operation.
@@ -868,16 +915,18 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#getVirtualEntity(Set,Set)} method.
      * 
      * @param request The gRPC request for the operation.
      * @param responseObserver The {@link StreamObserver} for the response.
      */
     @Override
-    public void getVirtualEntityByRecordId(GetVirtualEntityByRecordIdRequest request,
-            StreamObserver<GetVirtualEntityByRecordIdResponse> responseObserver) 
+    public void getVirtualEntityByRecordId(
+        GetVirtualEntityByRecordIdRequest request,
+        StreamObserver<GetVirtualEntityByRecordIdResponse>
+            responseObserver)
     {
         try {
             String  recordKeysJson      = request.getRecordKeys();
@@ -905,8 +954,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#howEntity(long,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -938,8 +987,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#primeEngine()} method.
      * 
      * @param request The gRPC request for the operation.
@@ -954,7 +1003,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
             
             engine.primeEngine();
                 
-            PrimeEngineResponse response = PrimeEngineResponse.newBuilder().build();
+            PrimeEngineResponse response
+                = PrimeEngineResponse.newBuilder().build();
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -965,8 +1015,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#processRedoRecord(String,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -1005,8 +1055,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#reevaluateEntity(long,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -1019,7 +1069,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
         try {
             long        entityId    = request.getEntityId();
             long        flags       = request.getFlags();
-            Set<SzFlag> origFlagSet = SZ_REEVALUATE_ENTITY_FLAGS.toFlagSet(flags);
+            Set<SzFlag> origFlagSet
+                = SZ_REEVALUATE_ENTITY_FLAGS.toFlagSet(flags);
             Set<SzFlag> flagSet     = this.enhanceFlags(origFlagSet);
 
             SzEngine engine = this.getEnvironment().getEngine();
@@ -1045,8 +1096,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#reevaluateRecord(SzRecordKey,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -1061,7 +1112,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
             String      recordId    = request.getRecordId();
             long        flags       = request.getFlags();
             SzRecordKey recordKey   = SzRecordKey.of(dataSource, recordId);
-            Set<SzFlag> origFlagSet = SZ_REEVALUATE_RECORD_FLAGS.toFlagSet(flags);
+            Set<SzFlag> origFlagSet
+                = SZ_REEVALUATE_RECORD_FLAGS.toFlagSet(flags);
             Set<SzFlag> flagSet     = this.enhanceFlags(origFlagSet);
 
             SzEngine engine = this.getEnvironment().getEngine();
@@ -1088,8 +1140,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEnvironment#reinitialize(long)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -1116,8 +1168,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#searchByAttributes(String,String,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -1131,11 +1183,13 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
             String      attributes  = request.getAttributes();
             String      profile     = request.getSearchProfile();
             long        flags       = request.getFlags();
-            Set<SzFlag> flagSet     = SZ_REEVALUATE_RECORD_FLAGS.toFlagSet(flags);
+            Set<SzFlag> flagSet
+                = SZ_REEVALUATE_RECORD_FLAGS.toFlagSet(flags);
 
             SzEngine engine = this.getEnvironment().getEngine();
 
-            String result = engine.searchByAttributes(attributes, profile, flagSet);
+            String result = engine.searchByAttributes(
+                attributes, profile, flagSet);
                 
             SearchByAttributesResponse response
                 = SearchByAttributesResponse
@@ -1150,18 +1204,20 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#exportCsvEntityReport(String,Set)},
-     * {@link SzEngine#fetchNext(long)} and {@link SzEngine#closeExportReport(long)}
-     * methods.
+     * {@link SzEngine#fetchNext(long)} and
+     * {@link SzEngine#closeExportReport(long)} methods.
      * 
      * @param request The gRPC request for the operation.
      * @param responseObserver The {@link StreamObserver} for the response.
      */
     @Override
-    public void streamExportCsvEntityReport(StreamExportCsvEntityReportRequest request,
-            StreamObserver<StreamExportCsvEntityReportResponse> responseObserver)
+    public void streamExportCsvEntityReport(
+        StreamExportCsvEntityReportRequest request,
+        StreamObserver<StreamExportCsvEntityReportResponse>
+            responseObserver)
     {
         try {
             String      csvColumnList   = request.getCsvColumnList();
@@ -1170,7 +1226,9 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
 
             SzEngine engine = this.getEnvironment().getEngine();
 
-            long exportHandle = engine.exportCsvEntityReport(csvColumnList, flagSet);
+            long exportHandle
+                = engine.exportCsvEntityReport(
+                    csvColumnList, flagSet);
 
             try {
                 for (String line = engine.fetchNext(exportHandle); 
@@ -1197,18 +1255,20 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#exportJsonEntityReport(Set)},
-     * {@link SzEngine#fetchNext(long)} and {@link SzEngine#closeExportReport(long)}
-     * methods.
+     * {@link SzEngine#fetchNext(long)} and
+     * {@link SzEngine#closeExportReport(long)} methods.
      * 
      * @param request The gRPC request for the operation.
      * @param responseObserver The {@link StreamObserver} for the response.
      */
     @Override
-    public void streamExportJsonEntityReport(StreamExportJsonEntityReportRequest request,
-            StreamObserver<StreamExportJsonEntityReportResponse> responseObserver)
+    public void streamExportJsonEntityReport(
+        StreamExportJsonEntityReportRequest request,
+        StreamObserver<StreamExportJsonEntityReportResponse>
+            responseObserver)
     {
         try {
             long        flags   = request.getFlags();
@@ -1243,8 +1303,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#whyEntities(long,long,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -1276,8 +1336,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#whyRecordInEntity(SzRecordKey,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -1292,7 +1352,9 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
             String      recordId    = request.getRecordId();
             long        flags       = request.getFlags();
             SzRecordKey recordKey   = SzRecordKey.of(dataSource, recordId);
-            Set<SzFlag> flagSet     = SZ_WHY_RECORD_IN_ENTITY_FLAGS.toFlagSet(flags);
+            Set<SzFlag> flagSet
+                = SZ_WHY_RECORD_IN_ENTITY_FLAGS
+                    .toFlagSet(flags);
 
             SzEngine engine = this.getEnvironment().getEngine();
 
@@ -1311,8 +1373,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#whyRecords(SzRecordKey,SzRecordKey,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -1348,8 +1410,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEngine#whySearch(String,long,String,Set)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -1368,7 +1430,8 @@ public class SzGrpcEngineImpl extends SzEngineImplBase {
 
             SzEngine engine = this.getEnvironment().getEngine();
 
-            String result = engine.whySearch(attributes, entityId, profile, flagSet);
+            String result = engine.whySearch(
+                attributes, entityId, profile, flagSet);
                 
             WhySearchResponse response
                 = WhySearchResponse.newBuilder().setResult(result).build();

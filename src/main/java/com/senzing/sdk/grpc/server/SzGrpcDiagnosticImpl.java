@@ -14,7 +14,8 @@ import static com.senzing.sdk.grpc.server.SzGrpcServices.*;
 /**
  * Provides the gRPC server-side implementation for {@link SzDiagnostic}.
  */
-public class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
+public class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase
+{
     /**
      * The {@link SzGrpcServices} to use.
      */
@@ -25,7 +26,8 @@ public class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
      *
      * @param services The {@link SzGrpcServices}.
      */
-    protected SzGrpcDiagnosticImpl(SzGrpcServices services) {
+    protected SzGrpcDiagnosticImpl(SzGrpcServices services)
+    {
         Objects.requireNonNull(services, "The services cannot be null");
         if (services.isDestroyed()) {
             throw new IllegalArgumentException(
@@ -40,13 +42,14 @@ public class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
      *
      * @return The {@link SzEnvironment} for the backing services.
      */
-    protected SzEnvironment getEnvironment() {
+    protected SzEnvironment getEnvironment()
+    {
         return this.services.getEnvironment();
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzDiagnostic#checkRepositoryPerformance(int)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -54,8 +57,9 @@ public class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
      */
     @Override
     public void checkRepositoryPerformance(
-            CheckRepositoryPerformanceRequest                   request,
-            StreamObserver<CheckRepositoryPerformanceResponse>  responseObserver) 
+            CheckRepositoryPerformanceRequest        request,
+            StreamObserver<
+                CheckRepositoryPerformanceResponse> responseObserver)
     {
         try {
             int secondsToRun = request.getSecondsToRun();
@@ -77,8 +81,8 @@ public class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzDiagnostic#getFeature(long)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -109,8 +113,8 @@ public class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzDiagnostic#getRepositoryInfo()} method.
      * 
      * @param request The gRPC request for the operation.
@@ -139,8 +143,8 @@ public class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzDiagnostic#purgeRepository()} method.
      * 
      * @param request The gRPC request for the operation.
@@ -168,8 +172,8 @@ public class SzGrpcDiagnosticImpl extends SzDiagnosticImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzEnvironment#reinitialize(long)} method.
      * 
      * @param request The gRPC request for the operation.

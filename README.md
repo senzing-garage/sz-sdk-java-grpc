@@ -75,6 +75,24 @@ mvn clean install -Pcheckstyle,spotbugs,jacoco
 Tests require `SENZING_PATH` and `SENZING_DEV_LIBRARY_PATH` environment
 variables pointing to a Senzing installation.
 
+### Private submodule dependency
+
+> **Note:** Although this repository is public, it depends on the
+> `sz-sdk-java` Git submodule which is hosted as a **private** GitHub
+> repository (used to obtain shared test classes and the
+> `InstallUtilities` source that this project repackages). As a result,
+> recursive clones and `mvn clean install` builds will fail for anyone
+> without read access to the `senzing-garage/sz-sdk-java` repository.
+>
+> If you do not have access, contact Senzing for credentials. The
+> recursive clone is typically performed via:
+>
+> ```bash
+> git clone --recurse-submodules <repo-url>
+> # or, after a non-recursive clone:
+> git submodule update --init --recursive
+> ```
+
 ## Artifacts
 
 The build produces two JARs:

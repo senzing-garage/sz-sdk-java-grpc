@@ -15,7 +15,8 @@ import static com.senzing.sdk.grpc.server.SzGrpcServices.*;
 /**
  * Provides the gRPC server-side implementation for {@link SzConfigManager}.
  */
-public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
+public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase
+{
     /**
      * The {@link SzGrpcServices} to use.
      */
@@ -26,7 +27,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
      *
      * @param services The {@link SzGrpcServices}.
      */
-    protected SzGrpcConfigManagerImpl(SzGrpcServices services) {
+    protected SzGrpcConfigManagerImpl(SzGrpcServices services)
+    {
         Objects.requireNonNull(services, "The services cannot be null");
         if (services.isDestroyed()) {
             throw new IllegalArgumentException(
@@ -41,13 +43,14 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
      *
      * @return The {@link SzEnvironment} for the backing services.
      */
-    protected SzEnvironment getEnvironment() {
+    protected SzEnvironment getEnvironment()
+    {
         return this.services.getEnvironment();
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzConfigManager#createConfig(long)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -60,7 +63,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
         try {
             long configId = request.getConfigId();
 
-            SzConfigManager configMgr = this.getEnvironment().getConfigManager();
+            SzConfigManager configMgr
+                = this.getEnvironment().getConfigManager();
 
             SzConfig config = configMgr.createConfig(configId);
 
@@ -79,8 +83,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzConfigManager#getConfigRegistry()} method.
      * 
      * @param request The gRPC request for the operation.
@@ -92,7 +96,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
         StreamObserver<GetConfigRegistryResponse>   responseObserver) 
     {
         try {
-            SzConfigManager configMgr = this.getEnvironment().getConfigManager();
+            SzConfigManager configMgr
+                = this.getEnvironment().getConfigManager();
 
             String result = configMgr.getConfigRegistry();
 
@@ -109,8 +114,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzConfigManager#getDefaultConfigId()} method.
      * 
      * @param request The gRPC request for the operation.
@@ -122,7 +127,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
             StreamObserver<GetDefaultConfigIdResponse>  responseObserver) 
     {
         try {
-            SzConfigManager configMgr = this.getEnvironment().getConfigManager();
+            SzConfigManager configMgr
+                = this.getEnvironment().getConfigManager();
 
             long result = configMgr.getDefaultConfigId();
 
@@ -139,8 +145,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzConfigManager#createConfig()} method.
      * 
      * @param request The gRPC request for the operation.
@@ -152,7 +158,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
             StreamObserver<GetTemplateConfigResponse>   responseObserver) 
     {
         try {
-            SzConfigManager configMgr = this.getEnvironment().getConfigManager();
+            SzConfigManager configMgr
+                = this.getEnvironment().getConfigManager();
 
             SzConfig config = configMgr.createConfig();
 
@@ -171,8 +178,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzConfigManager#registerConfig(String,String)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -187,7 +194,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
             String configDef        = request.getConfigDefinition();
             String configComment    = request.getConfigComment();
 
-            SzConfigManager configMgr = this.getEnvironment().getConfigManager();
+            SzConfigManager configMgr
+                = this.getEnvironment().getConfigManager();
 
             long result = configMgr.registerConfig(configDef, configComment);
             
@@ -204,8 +212,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzConfigManager#replaceDefaultConfigId(long,long)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -220,7 +228,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
             long currentConfigId    = request.getCurrentDefaultConfigId();
             long newConfigId        = request.getNewDefaultConfigId();
             
-            SzConfigManager configMgr = this.getEnvironment().getConfigManager();
+            SzConfigManager configMgr
+                = this.getEnvironment().getConfigManager();
 
             configMgr.replaceDefaultConfigId(currentConfigId, newConfigId);
             
@@ -236,8 +245,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzConfigManager#setDefaultConfig(String,String)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -252,7 +261,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
             String configDef        = request.getConfigDefinition();
             String configComment    = request.getConfigComment();
 
-            SzConfigManager configMgr = this.getEnvironment().getConfigManager();
+            SzConfigManager configMgr
+                = this.getEnvironment().getConfigManager();
 
             long result = configMgr.registerConfig(configDef, configComment);
             
@@ -271,8 +281,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
     }
 
     /**
-     * Implemented to execute the operation using the {@link SzEnvironment}
-     * from the associated {@link SzGrpcServer} leveraging the 
+     * Implemented to execute the operation using the {@link SzEnvironment} from
+     * the associated {@link SzGrpcServer} leveraging the
      * {@link SzConfigManager#setDefaultConfigId(long)} method.
      * 
      * @param request The gRPC request for the operation.
@@ -286,7 +296,8 @@ public class SzGrpcConfigManagerImpl extends SzConfigManagerImplBase {
         try {
             long configId = request.getConfigId();
 
-            SzConfigManager configMgr = this.getEnvironment().getConfigManager();
+            SzConfigManager configMgr
+                = this.getEnvironment().getConfigManager();
 
             configMgr.setDefaultConfigId(configId);
             

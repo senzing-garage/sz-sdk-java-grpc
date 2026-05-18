@@ -10,10 +10,12 @@ import java.util.concurrent.TimeoutException;
 import static com.senzing.sdk.grpc.server.InstallUtilities.*;
 
 /**
- * Provides a wrapper main function entry point that ensures the <code>sz-sdk.jar</code>
- * is on the class path and if not, launches a sub-process to handle it.  
+ * Provides a wrapper main function entry point that
+ * ensures the <code>sz-sdk.jar</code> is on the class
+ * path and if not, launches a sub-process to handle it.
  */
-final class WrapperMain {
+final class WrapperMain
+{
     /**
      * The package name for this class.
      */
@@ -27,12 +29,14 @@ final class WrapperMain {
     /**
      * The fully-qualified class name of an SDK-specific class.
      */
-    static final String SDK_CLASS_NAME = "com.senzing.sdk.core.SzCoreEnvironment";
+    static final String SDK_CLASS_NAME
+        = "com.senzing.sdk.core.SzCoreEnvironment";
 
     /**
      * Private default constructor.
      */
-    private WrapperMain() {
+    private WrapperMain()
+    {
         // do nothing
     }
 
@@ -41,7 +45,8 @@ final class WrapperMain {
      * 
      * @param args The command-line arguments.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args)
+    {
         boolean foundSenzingSdk = false;
         try {
             Class.forName(SDK_CLASS_NAME);
@@ -61,7 +66,10 @@ final class WrapperMain {
 
                 mainMethod.invoke(null, ((Object) args));
 
-            } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            } catch (ClassNotFoundException
+                     | NoSuchMethodException
+                     | InvocationTargetException
+                     | IllegalAccessException e) {
                 System.err.println("Failed to execute " + SERVER_CLASS_NAME 
                                    + ".main(): " + e.getMessage());
                 System.exit(1);
@@ -79,10 +87,13 @@ final class WrapperMain {
                     + " environment variable.");
                 System.err.println();
                 System.err.println(
-                    "Please check your " + LIBRARY_PATH_ENV_VARIABLE + " environment setting and "
+                    "Please check your "
+                    + LIBRARY_PATH_ENV_VARIABLE
+                    + " environment setting and "
                     + "try again.");
                 
-                if (RUNTIME_OS_TYPE == OSType.MACOS) {
+                // CSOFF
+                if (RUNTIME_OS_FAMILY == OperatingSystemFamily.MAC_OS) {
                     System.err.println();
                     System.err.println(
                         "NOTE: System Integrity Protection (SIP) on macOS will prevent the Java process from");
@@ -98,13 +109,23 @@ final class WrapperMain {
                     System.err.println(
                         "For example, install Java in your home directory and execute it from there.");
                     System.err.println();
+                } else if (RUNTIME_OS_FAMILY == OperatingSystemFamily.UNKNOWN) {
+                    System.err.println();
+                    System.err.println(
+                        "NOTE: The runtime operating system was not recognized (os.name=\""
+                        + System.getProperty("os.name") + "\").");
+                    System.err.println(
+                        "Senzing supports Linux, macOS, and Windows. Please verify your environment.");
+                    System.err.println();
                 }
+                // CSON
 
                 System.exit(1);
             }
 
             // get the java executable
-            String java = ProcessHandle.current().info().command().orElse("java");
+            String java = ProcessHandle.current()
+                    .info().command().orElse("java");
 
             // create the class path
             String mainJarPath  = findJarForClass(WrapperMain.class).getPath();
@@ -136,13 +157,17 @@ final class WrapperMain {
                         handle.destroy();
                         try {
                             // wait up to 30 seconds for graceful shutdown
-                            if (!handle.onExit().get(30, TimeUnit.SECONDS).isAlive()) 
+                            if (!handle.onExit()
+                                .get(30, TimeUnit.SECONDS)
+                                .isAlive())
                             {
                                 return; // exit gracefully
                             }
                         } catch (TimeoutException e) {
                             System.err.println(
-                                "Process did not exit gracefully, forcing shutdown...");
+                                "Process did not exit "
+                                + "gracefully, forcing "
+                                + "shutdown...");
                         } catch (Exception e) {
                             // Interrupted or execution exception
                         }
@@ -157,7 +182,9 @@ final class WrapperMain {
                 System.exit(process.waitFor());
 
             } catch (Exception e) {
-                System.err.println("Failed to launch server process: " + e.getMessage());
+                System.err.println(
+                    "Failed to launch server process: "
+                    + e.getMessage());
                 System.exit(1);
             }
         }

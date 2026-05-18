@@ -64,26 +64,26 @@ import static com.senzing.util.JsonUtilities.toJsonText;
 import static com.senzing.util.LoggingUtilities.*;
 
 /**
- * Provides composable Senzing gRPC services that can be added to any
- * Armeria {@link ServerBuilder}. This allows Senzing gRPC functionality
- * to be embedded into an existing Armeria server alongside other services.
+ * Provides composable Senzing gRPC services that can be added to any Armeria
+ * {@link ServerBuilder}. This allows Senzing gRPC functionality to be embedded
+ * into an existing Armeria server alongside other services.
  *
  * <p>For standalone usage, see {@link SzGrpcServer} which pairs this
- * class with an Armeria {@link com.linecorp.armeria.server.Server} and
- * manages the full lifecycle.</p>
+ * class with an Armeria {@link com.linecorp.armeria.server.Server} and manages
+ * the full lifecycle.</p>
  *
  * <p><b>NOTE:</b> The {@link GrpcService} built by this class is
- * configured with {@code useBlockingTaskExecutor(true)}, so the caller
- * should configure an appropriate
+ * configured with {@code useBlockingTaskExecutor(true)}, so the caller should
+ * configure an appropriate
  * {@link ServerBuilder#blockingTaskExecutor(int)} on their
  * {@link ServerBuilder}.</p>
  *
  * <p><b>NOTE:</b> When using this class outside of {@link SzGrpcServer}
- * (e.g. embedding into an existing Armeria server), ensure that the
- * Armeria transport is configured appropriately for your environment.
- * If Netty native transports (Epoll, io_uring) are not on the classpath,
- * you must set {@code com.linecorp.armeria.transportType} to {@code "nio"}
- * in a static initializer <b>before</b> any Armeria class is loaded.
+ * (e.g. embedding into an existing Armeria server), ensure that the Armeria
+ * transport is configured appropriately for your environment. If Netty native
+ * transports (Epoll, io_uring) are not on the classpath, you must set {@code
+ * com.linecorp.armeria.transportType} to {@code "nio"} in a static initializer
+ * <b>before</b> any Armeria class is loaded.
  * {@link SzGrpcServer} handles this automatically.</p>
  *
  * <p><b>NOTE:</b> The data mart path prefix is not defined on this
@@ -92,7 +92,8 @@ import static com.senzing.util.LoggingUtilities.*;
  * {@link SzGrpcServer#DATA_MART_PREFIX} for the default used by the
  * standalone server.</p>
  */
-public class SzGrpcServices {
+public class SzGrpcServices
+{
 
     /**
      * A constant for the {@link SzEnvironment#destroy()} method.
@@ -109,8 +110,7 @@ public class SzGrpcServices {
     }
 
     /**
-     * Provides a mapping of exception class types to {@link Status}
-     * values.
+     * Provides a mapping of exception class types to {@link Status} values.
      */
     private static final Map<Class<?>, Status> STATUS_MAP;
 
@@ -126,7 +126,8 @@ public class SzGrpcServices {
         map.put(SzConfigurationException.class, Status.FAILED_PRECONDITION);
         map.put(SzReplaceConflictException.class, Status.FAILED_PRECONDITION);
         map.put(SzNotInitializedException.class, Status.FAILED_PRECONDITION);
-        map.put(SzRetryTimeoutExceededException.class, Status.DEADLINE_EXCEEDED);
+        map.put(SzRetryTimeoutExceededException.class,
+                Status.DEADLINE_EXCEEDED);
         map.put(SzLicenseException.class, Status.RESOURCE_EXHAUSTED);
         map.put(SzRetryableException.class, Status.OUT_OF_RANGE);
         map.put(SzException.class, Status.INTERNAL);
@@ -138,11 +139,12 @@ public class SzGrpcServices {
      * The number of milliseconds to provide advance warning of an expiring
      * license.
      */
-    private static final long EXPIRATION_WARNING_MILLIS = Duration.ofDays(30).toMillis();
+    private static final long EXPIRATION_WARNING_MILLIS
+        = Duration.ofDays(30).toMillis();
 
     /**
-     * The {@link DateTimeFormatter} to use for parsing the license
-     * expiration date.
+     * The {@link DateTimeFormatter} to use for parsing the license expiration
+     * date.
      */
     static final DateTimeFormatter DATE_FORMAT
         = new DateTimeFormatterBuilder()
@@ -168,7 +170,8 @@ public class SzGrpcServices {
     private SzEnvironment proxyEnvironment = null;
 
     /**
-     * The built {@link GrpcService} containing all Senzing service implementations.
+     * The built {@link GrpcService} containing all Senzing
+     * service implementations.
      */
     private GrpcService grpcService = null;
 
@@ -178,20 +181,21 @@ public class SzGrpcServices {
     private SzReplicator replicator = null;
 
     /**
-     * The {@link Consumer} for publishing INFO messages. This may
-     * wrap the data mart message queue, an externally provided
-     * consumer, or a composite of both.
+     * The {@link Consumer} for publishing INFO messages. This may wrap the data
+     * mart message queue, an externally provided consumer, or a composite of
+     * both.
      */
     private Consumer<String> infoMsgConsumer = null;
 
     /**
-     * The {@link ObjectMapper} for converting the response objects
-     * for HTTP to JSON text.
+     * The {@link ObjectMapper} for converting the response objects for HTTP to
+     * JSON text.
      */
     private ObjectMapper objectMapper = null;
 
     /**
-     * Tracks if {@link #configureServer(ServerBuilder, String)} has been called.
+     * Tracks if {@link #configureServer(ServerBuilder,
+     * String)} has been called.
      */
     private boolean configured = false;
 
@@ -206,23 +210,23 @@ public class SzGrpcServices {
     private boolean destroyed = false;
 
     /**
-     * Constructs with the specified {@link SzEnvironment} and no
-     * data mart replication or info message consumer.
+     * Constructs with the specified {@link SzEnvironment} and no data mart
+     * replication or info message consumer.
      *
      * @param env The {@link SzEnvironment} to use.
      */
-    public SzGrpcServices(SzEnvironment env) {
+    public SzGrpcServices(SzEnvironment env)
+    {
         this(env, null, null, null);
     }
 
     /**
-     * Constructs with the specified {@link SzEnvironment} and an
-     * info message consumer for receiving INFO messages produced
-     * by the Senzing engine.
+     * Constructs with the specified {@link SzEnvironment} and an info message
+     * consumer for receiving INFO messages produced by the Senzing engine.
      *
      * @param env               The {@link SzEnvironment} to use.
-     * @param infoMsgConsumer   The {@link Consumer} to receive INFO
-     *                          messages, or {@code null} if not needed.
+     * @param infoMsgConsumer   The {@link Consumer} to receive INFO messages,
+     *                          or {@code null} if not needed.
      */
     public SzGrpcServices(SzEnvironment      env,
                           Consumer<String>   infoMsgConsumer)
@@ -231,13 +235,13 @@ public class SzGrpcServices {
     }
 
     /**
-     * Constructs with the specified {@link SzEnvironment} and optional
-     * data mart replication.
+     * Constructs with the specified {@link SzEnvironment} and optional data
+     * mart replication.
      *
      * @param env               The {@link SzEnvironment} to use.
-     * @param dataMartUri       The resolved {@link ConnectionUri} for the
-     *                          data mart database, or {@code null} if data
-     *                          mart replication is not desired.
+     * @param dataMartUri       The resolved {@link ConnectionUri} for the data
+     *                          mart database, or {@code null} if data mart
+     *                          replication is not desired.
      * @param processingRate    The {@link ProcessingRate} for data mart
      *                          replication, or {@code null} for the default.
      */
@@ -249,19 +253,19 @@ public class SzGrpcServices {
     }
 
     /**
-     * Constructs with the specified {@link SzEnvironment}, optional data
-     * mart replication, and optional info message consumer.  If both a
-     * data mart URI and an info message consumer are provided, both will
-     * receive INFO messages.
+     * Constructs with the specified {@link SzEnvironment}, optional data mart
+     * replication, and optional info message consumer. If both a data mart URI
+     * and an info message consumer are provided, both will receive INFO
+     * messages.
      *
      * @param env               The {@link SzEnvironment} to use.
-     * @param dataMartUri       The resolved {@link ConnectionUri} for the
-     *                          data mart database, or {@code null} if data
-     *                          mart replication is not desired.
+     * @param dataMartUri       The resolved {@link ConnectionUri} for the data
+     *                          mart database, or {@code null} if data mart
+     *                          replication is not desired.
      * @param processingRate    The {@link ProcessingRate} for data mart
      *                          replication, or {@code null} for the default.
-     * @param infoMsgConsumer   An additional {@link Consumer} to receive
-     *                          INFO messages, or {@code null} if not needed.
+     * @param infoMsgConsumer   An additional {@link Consumer} to receive INFO
+     *                          messages, or {@code null} if not needed.
      */
     protected SzGrpcServices(SzEnvironment      env,
                              ConnectionUri      dataMartUri,
@@ -271,7 +275,9 @@ public class SzGrpcServices {
         Objects.requireNonNull(env, "The environment cannot be null");
 
         // proxy the environment to prevent destroy() calls
-        this.proxyEnvironment = (SzEnvironment) restrictedProxy(env, DESTROY_METHOD);
+        this.proxyEnvironment
+            = (SzEnvironment) restrictedProxy(
+                env, DESTROY_METHOD);
 
         // build the replicator if data mart is configured
         Consumer<String> dataMartConsumer = null;
@@ -287,12 +293,20 @@ public class SzGrpcServices {
                         false);
 
             } catch (RuntimeException e) {
-                logError(e, "Failed to initialize replicator with URI: " + dataMartUri);
+                logError(e,
+                    "Failed to initialize replicator"
+                    + " with URI: "
+                    + dataMartUri);
                 throw e;
 
             } catch (Exception e) {
-                logError(e, "Failed to initialize replicator with URI: " + dataMartUri);
-                throw new RuntimeException("Failed to initialize data mart", e);
+                logError(e,
+                    "Failed to initialize replicator"
+                    + " with URI: "
+                    + dataMartUri);
+                throw new RuntimeException(
+                    "Failed to initialize data mart",
+                    e);
             }
 
             SQLConsumer.MessageQueue queue
@@ -326,25 +340,26 @@ public class SzGrpcServices {
     /**
      * Configures all Senzing services onto the provided
      * {@link ServerBuilder}. This adds the gRPC service and, if data
-     * mart replication is configured, the data mart report endpoints
-     * under the specified path prefix.
+     * mart replication is configured, the data mart report endpoints under the
+     * specified path prefix.
      *
      * <p>This method does <b>not</b> configure port, bind address,
-     * concurrency, or CORS &mdash; those concerns belong to the owner of
-     * the {@link ServerBuilder}.</p>
+     * concurrency, or CORS &mdash; those concerns belong to the owner of the
+     * {@link ServerBuilder}.</p>
      *
      * @param builder The {@link ServerBuilder} to configure.
-     * @param dataMartPathPrefix The path prefix for data mart report
-     *        endpoints (e.g. {@code "/data-mart"}).  If data mart
-     *        replication is configured and this is {@code null}, an
-     *        {@link IllegalArgumentException} is thrown.  If data mart
-     *        replication is <b>not</b> configured, this parameter is
-     *        ignored.
+     * @param dataMartPathPrefix The path prefix for data mart report endpoints
+     *                           (e.g. {@code "/data-mart"}). If data mart
+     *                           replication is configured and this is {@code
+     *                           null}, an {@link IllegalArgumentException} is
+     *                           thrown. If data mart replication is <b>not</b>
+     *                           configured, this parameter is ignored.
      *
-     * @throws IllegalArgumentException If data mart replication is
-     *         configured and {@code dataMartPathPrefix} is {@code null}.
-     * @throws IllegalStateException If this instance has already been
-     *         destroyed or has already configured a server.
+     * @throws IllegalArgumentException If data mart replication is configured
+     *                                  and {@code dataMartPathPrefix} is {@code
+     *                                  null}.
+     * @throws IllegalStateException If this instance has already been destroyed
+     *                               or has already configured a server.
      */
     public synchronized void configureServer(ServerBuilder builder,
                                              String dataMartPathPrefix)
@@ -377,20 +392,25 @@ public class SzGrpcServices {
 
         // add data mart report services if configured
         if (this.replicator != null) {
-            SzReplicationProvider provider = this.replicator.getReplicationProvider();
+            SzReplicationProvider provider
+                = this.replicator.getReplicationProvider();
 
-            DataMartReportsServices dataMartReports = new DataMartReportsServices(
+            DataMartReportsServices dataMartReports
+                = new DataMartReportsServices(
                     this.proxyEnvironment,
                     provider.getConnectionProvider());
 
             this.objectMapper = new ObjectMapper();
 
-            AnnotatedServiceBindingBuilder serviceBuilder = builder.annotatedService()
+            AnnotatedServiceBindingBuilder serviceBuilder
+                = builder.annotatedService()
                     .pathPrefix(dataMartPathPrefix)
                     .requestConverters(
-                            new JacksonRequestConverterFunction(this.objectMapper))
+                        new JacksonRequestConverterFunction(
+                            this.objectMapper))
                     .responseConverters(
-                            new JacksonResponseConverterFunction(this.objectMapper));
+                        new JacksonResponseConverterFunction(
+                            this.objectMapper));
 
             serviceBuilder.build(dataMartReports);
         }
@@ -399,49 +419,51 @@ public class SzGrpcServices {
     /**
      * Gets the {@link SzEnvironment} used by this instance.
      *
-     * The returned instance is a {@link java.lang.reflect.Proxy} that
-     * will not allow the caller to invoke {@link SzEnvironment#destroy()}.
+     * The returned instance is a {@link java.lang.reflect.Proxy} that will not
+     * allow the caller to invoke {@link SzEnvironment#destroy()}.
      *
      * @return The {@link SzEnvironment} used by this instance.
      */
-    public SzEnvironment getEnvironment() {
+    public SzEnvironment getEnvironment()
+    {
         return this.proxyEnvironment;
     }
 
     /**
-     * Gets the {@link SzReplicationProvider} for this instance
-     * if the data mart has been enabled. This returns
+     * Gets the {@link SzReplicationProvider} for this instance if the data mart
+     * has been enabled. This returns
      * {@code null} if the data mart is not enabled.
      *
-     * @return The {@link SzReplicationProvider} for this instance,
-     *         or {@code null} if data mart replication is not
-     *         enabled.
+     * @return The {@link SzReplicationProvider} for this instance, or {@code
+     *             null} if data mart replication is not enabled.
      */
-    public SzReplicationProvider getReplicationProvider() {
+    public SzReplicationProvider getReplicationProvider()
+    {
         return (this.replicator == null) ? null
                 : this.replicator.getReplicationProvider();
     }
 
     /**
-     * Gets the {@link Consumer} for publishing INFO messages. This
-     * returns {@code null} if no info message consumer has been
-     * configured (neither via data mart replication nor via an
-     * externally provided consumer).
+     * Gets the {@link Consumer} for publishing INFO messages. This returns
+     * {@code null} if no info message consumer has been configured (neither via
+     * data mart replication nor via an externally provided consumer).
      *
-     * @return The {@link Consumer} for publishing INFO messages,
-     *         or {@code null} if none is configured.
+     * @return The {@link Consumer} for publishing INFO messages, or {@code
+     *             null} if none is configured.
      */
-    public Consumer<String> getInfoMessageConsumer() {
+    public Consumer<String> getInfoMessageConsumer()
+    {
         return this.infoMsgConsumer;
     }
 
     /**
      * Checks if this instance has been destroyed.
      *
-     * @return {@code true} if this instance has been destroyed,
-     *         otherwise {@code false}.
+     * @return {@code true} if this instance has been destroyed, otherwise
+     *                {@code false}.
      */
-    public synchronized boolean isDestroyed() {
+    public synchronized boolean isDestroyed()
+    {
         return this.destroyed;
     }
 
@@ -453,13 +475,14 @@ public class SzGrpcServices {
      *
      * <p><b>NOTE:</b> This method may be called without
      * {@link #configureServer(ServerBuilder, String)} having been called
-     * if the caller only needs the replicator and license monitoring
-     * without gRPC services registered on a server.</p>
+     * if the caller only needs the replicator and license monitoring without
+     * gRPC services registered on a server.</p>
      *
      * @throws IllegalStateException If this instance has already been
      *                               destroyed.
      */
-    public synchronized void start() {
+    public synchronized void start()
+    {
         if (this.destroyed) {
             throw new IllegalStateException(
                     "This instance has already been destroyed");
@@ -538,10 +561,11 @@ public class SzGrpcServices {
     }
 
     /**
-     * Destroys this instance, shutting down the data mart replicator
-     * (if configured) and the license expiration monitoring thread.
+     * Destroys this instance, shutting down the data mart replicator (if
+     * configured) and the license expiration monitoring thread.
      */
-    public synchronized void destroy() {
+    public synchronized void destroy()
+    {
         if (this.destroyed) {
             return;
         }
@@ -556,11 +580,11 @@ public class SzGrpcServices {
     }
 
     /**
-     * Chains two {@link Consumer} instances into a single composite
-     * consumer that calls both.  If either is {@code null}, the other
-     * is returned (or {@code null} if both are {@code null}).  When
-     * both are non-null, both are always attempted even if the first
-     * throws; if both throw, the second exception is added as
+     * Chains two {@link Consumer} instances into a single composite consumer
+     * that calls both. If either is {@code null}, the other is returned (or
+     * {@code null} if both are {@code null}). When both are non-null, both are
+     * always attempted even if the first throws; if both throw, the second
+     * exception is added as
      * {@linkplain Throwable#addSuppressed(Throwable) suppressed} on
      * the first.
      *
@@ -600,13 +624,14 @@ public class SzGrpcServices {
     }
 
     /**
-     * Attempt to infer the {@link Status} from the {@link Throwable}.
-     * If it cannot be inferred then {@link Status#UNKNOWN} is returned.
+     * Attempt to infer the {@link Status} from the {@link Throwable}. If it
+     * cannot be inferred then {@link Status#UNKNOWN} is returned.
      *
      * @param t The {@link Throwable} from which to infer the {@link Status}.
      * @return The inferred {@link Status}.
      */
-    protected static io.grpc.Status inferStatus(Throwable t) {
+    protected static io.grpc.Status inferStatus(Throwable t)
+    {
         if (t == null) {
             return Status.UNKNOWN;
         }
@@ -626,7 +651,9 @@ public class SzGrpcServices {
      *
      * @return The {@link StatusRuntimeException} that was created.
      */
-    protected static StatusRuntimeException toStatusRuntimeException(Throwable t) {
+    protected static StatusRuntimeException
+        toStatusRuntimeException(Throwable t)
+    {
         return toStatusRuntimeException(inferStatus(t), t);
     }
 
@@ -635,14 +662,17 @@ public class SzGrpcServices {
      * {@link Status} and the specified {@link Throwable}.
      *
      * @param status The explicit {@link Status} or <code>null</code> if the
-     *               {@link Status} should be inferred from the {@link Throwable}.
+     *               {@link Status} should be inferred from the {@link
+     *               Throwable}.
      *
      * @param t      The {@link Throwable} instance to use as a basis.
      *
      * @return The {@link StatusRuntimeException} that was created.
      */
-    protected static StatusRuntimeException toStatusRuntimeException(Status status,
-            Throwable t) {
+    protected static StatusRuntimeException
+        toStatusRuntimeException(Status    status,
+                                 Throwable t)
+    {
         // check if the throwable is null
         if (t == null) {
             status = (status == null) ? Status.UNKNOWN : status;
@@ -742,18 +772,19 @@ public class SzGrpcServices {
     }
 
     /**
-     * Gets a {@link String} field value from a message that may be
-     * absent. If the field value is absent then <code>null</code>
-     * is returned, otherwise the field value is returned.
+     * Gets a {@link String} field value from a message that may be absent. If
+     * the field value is absent then <code>null</code> is returned, otherwise
+     * the field value is returned.
      *
-     * @param message   The {@link GeneratedMessage} from which the
-     *                  value is being extracted.
-     * @param fieldName The name of the field for which the value
-     *                  is being extracted.
-     * @return The value of the field or <code>null</code> if the value
-     *         has not been explicitly set.
+     * @param message   The {@link GeneratedMessage} from which the value is
+     *                  being extracted.
+     * @param fieldName The name of the field for which the value is being
+     *                  extracted.
+     * @return The value of the field or <code>null</code> if the value has not
+     *             been explicitly set.
      */
-    public static String getString(GeneratedMessage message, String fieldName) {
+    public static String getString(GeneratedMessage message, String fieldName)
+    {
         Descriptor descriptor = message.getDescriptorForType();
         FieldDescriptor fieldDesc = descriptor.findFieldByName(fieldName);
         if (fieldDesc == null) {

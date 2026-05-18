@@ -13,7 +13,8 @@ import io.grpc.Channel;
 /**
  * The gRPC implementation of {@link SzProduct}.
  */
-public class SzGrpcProduct implements SzProduct {
+public class SzGrpcProduct implements SzProduct
+{
     /**
      * The {@link SzGrpcEnvironment} that constructed this instance.
      */
@@ -29,7 +30,8 @@ public class SzGrpcProduct implements SzProduct {
      * 
      * @param environment the {@link SzGrpcEnvironment} with which to construct.
      */
-    protected SzGrpcProduct(SzGrpcEnvironment environment) {
+    protected SzGrpcProduct(SzGrpcEnvironment environment)
+    {
         this.env = environment;
         
         Channel channel = this.env.getChannel();
@@ -42,18 +44,21 @@ public class SzGrpcProduct implements SzProduct {
      * 
      * @return The underlying {@link SzProductBlockingStub} for this instance.
      */
-    SzProductBlockingStub getBlockingStub() {
+    SzProductBlockingStub getBlockingStub()
+    {
         return this.blockingStub;
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String getLicense() throws SzException {
+    public String getLicense()
+        throws SzException
+    {
         return this.env.execute(() -> {
 
             GetLicenseRequest request
@@ -67,13 +72,15 @@ public class SzGrpcProduct implements SzProduct {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String getVersion() throws SzException {
+    public String getVersion()
+        throws SzException
+    {
         return this.env.execute(() -> {
 
             GetVersionRequest request

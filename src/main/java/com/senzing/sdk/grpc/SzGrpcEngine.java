@@ -81,13 +81,11 @@ import com.senzing.sdk.grpc.proto.SzEngineProto.WhyRecordsResponse;
 import com.senzing.sdk.grpc.proto.SzEngineProto.WhySearchRequest;
 import com.senzing.sdk.grpc.proto.SzEngineProto.WhySearchResponse;
 
-import static com.senzing.sdk.grpc.proto.SzEngineGrpc.*;
-import static com.senzing.sdk.grpc.proto.SzEngineProto.*;
-
 /**
  * The gRPC implementation of {@link SzEngine}.
  */
-public class SzGrpcEngine implements SzEngine {
+public class SzGrpcEngine implements SzEngine
+{
     /**
      * The error code for an invalid export handle.
      */
@@ -126,10 +124,11 @@ public class SzGrpcEngine implements SzEngine {
     private long nextExportHandle = 1L;
 
     /**
-     * Provide an {@link Iterator} over {@linK String} values that uses
-     * the {@link StreamExportCsvEntityReportResponse}.
+     * Provide an {@link Iterator} over {@linK String} values that uses the
+     * {@link StreamExportCsvEntityReportResponse}.
      */
-    private static final class CsvExportIterator implements Iterator<String> {
+    private static final class CsvExportIterator implements Iterator<String>
+    {
         /**
          * The streaming response iterator.
          */
@@ -140,7 +139,9 @@ public class SzGrpcEngine implements SzEngine {
          * 
          * @param iter The response iterator.
          */
-        private CsvExportIterator(Iterator<StreamExportCsvEntityReportResponse> iter) {
+        private CsvExportIterator(
+            Iterator<StreamExportCsvEntityReportResponse> iter)
+        {
             this.iter = iter;
             
             // check if we have a next element to force blocking for first
@@ -151,10 +152,11 @@ public class SzGrpcEngine implements SzEngine {
          * Checks if we have further export content.
          * 
          * @return <code>true</code> if there is additional export content,
-         *         otherwise <code>false</code>.
+         *                           otherwise <code>false</code>.
          */
         @Override
-        public boolean hasNext() {
+        public boolean hasNext()
+        {
             return this.iter.hasNext();
         }
 
@@ -164,17 +166,19 @@ public class SzGrpcEngine implements SzEngine {
          * @return The next line of export content.
          */
         @Override
-        public String next() {
+        public String next()
+        {
             StreamExportCsvEntityReportResponse response = this.iter.next();
             return response.getResult();
         }
     }
 
     /**
-     * Provide an {@link Iterator} over {@linK String} values that uses
-     * the {@link StreamExportJsonEntityReportResponse}.
+     * Provide an {@link Iterator} over {@linK String} values that uses the
+     * {@link StreamExportJsonEntityReportResponse}.
      */
-    private static final class JsonExportIterator implements Iterator<String> {
+    private static final class JsonExportIterator implements Iterator<String>
+    {
         /**
          * The streaming response iterator.
          */
@@ -185,7 +189,9 @@ public class SzGrpcEngine implements SzEngine {
          * 
          * @param iter The response iterator.
          */
-        private JsonExportIterator(Iterator<StreamExportJsonEntityReportResponse> iter) {
+        private JsonExportIterator(
+            Iterator<StreamExportJsonEntityReportResponse> iter)
+        {
             this.iter = iter;
 
             // check if we have a next element to force blocking for first
@@ -196,10 +202,11 @@ public class SzGrpcEngine implements SzEngine {
          * Checks if we have further export content.
          * 
          * @return <code>true</code> if there is additional export content,
-         *         otherwise <code>false</code>.
+         *                           otherwise <code>false</code>.
          */
         @Override
-        public boolean hasNext() {
+        public boolean hasNext()
+        {
             return this.iter.hasNext();
         }
 
@@ -209,7 +216,8 @@ public class SzGrpcEngine implements SzEngine {
          * @return The next line of export content.
          */
         @Override
-        public String next() {
+        public String next()
+        {
             StreamExportJsonEntityReportResponse response = this.iter.next();
             return response.getResult();
         }
@@ -218,9 +226,11 @@ public class SzGrpcEngine implements SzEngine {
     /**
      * Package-access constructor.
      * 
-     * @param environment the {@link SzGrpcEnvironment} with which to construct.
+     * @param environment the {@link SzGrpcEnvironment}
+     *                     with which to construct.
      */
-    protected SzGrpcEngine(SzGrpcEnvironment environment) {
+    protected SzGrpcEngine(SzGrpcEnvironment environment)
+    {
         this.env = environment;
         
         Channel channel = this.env.getChannel();
@@ -235,7 +245,8 @@ public class SzGrpcEngine implements SzEngine {
      * 
      * @return The next export handle to use.
      */
-    private long getNextExportHandle() {
+    private long getNextExportHandle()
+    {
         // use a fibonacci sequence just so they are not sequential
         synchronized (this.exportReportMaps) {
             long result = this.nextExportHandle + this.prevExportHandle;
@@ -246,8 +257,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Encodes the {@link Set} of {@link Long} entity ID's as JSON.
-     * The JSON is formatted as:
+     * Encodes the {@link Set} of {@link Long} entity ID's as JSON. The JSON is
+     * formatted as:
      * <pre>
      *   {
      *     "ENTITIES": [
@@ -258,12 +269,13 @@ public class SzGrpcEngine implements SzEngine {
      *     ]
      *   }
      * </pre>
-     * @param entityIds The non-null {@link Set} of non-null {@link Long}
-     *                  entity ID's.
+     * @param entityIds The non-null {@link Set} of non-null {@link Long} entity
+     *                  ID's.
      * 
      * @return The encoded JSON string of entity ID's.
      */
-    protected static String encodeEntityIds(Set<Long> entityIds) {
+    protected static String encodeEntityIds(Set<Long> entityIds)
+    {
         JsonObjectBuilder   job = Json.createObjectBuilder();
         JsonArrayBuilder    jab = Json.createArrayBuilder();
 
@@ -281,8 +293,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Encodes the {@link Set} of {@link SzRecordKey} instances as JSON.
-     * The JSON is formatted as:
+     * Encodes the {@link Set} of {@link SzRecordKey} instances as JSON. The
+     * JSON is formatted as:
      * <pre>
      *   {
      *     "RECORDS": [
@@ -302,12 +314,13 @@ public class SzGrpcEngine implements SzEngine {
      *     ]
      *   }
      * </pre>
-     * @param recordKeys The non-null {@link Set} of non-null
-     *                   {@link SzRecordKey} instances.
+     * @param recordKeys The non-null {@link Set} of non-null {@link
+     *                   SzRecordKey} instances.
      * 
      * @return The encoded JSON string of record keys.
      */
-    protected static String encodeRecordKeys(Set<SzRecordKey> recordKeys) {
+    protected static String encodeRecordKeys(Set<SzRecordKey> recordKeys)
+    {
         JsonObjectBuilder   job = Json.createObjectBuilder();
         JsonArrayBuilder    jab = Json.createArrayBuilder();
 
@@ -327,8 +340,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Encodes the {@link Set} of {@link String} data source codes
-     * as JSON.  The JSON is formatted as:
+     * Encodes the {@link Set} of {@link String} data source codes as JSON. The
+     * JSON is formatted as:
      * <pre>
      *    { "DATA_SOURCES": [
      *        "&lt;data_source_code1&gt;",
@@ -342,7 +355,8 @@ public class SzGrpcEngine implements SzEngine {
      * 
      * @return The encoded JSON string of record keys.
      */
-    protected static String encodeDataSources(Set<String> dataSources) {
+    protected static String encodeDataSources(Set<String> dataSources)
+    {
         JsonObjectBuilder   job = Json.createObjectBuilder();
         JsonArrayBuilder    jab = Json.createArrayBuilder();
 
@@ -362,18 +376,21 @@ public class SzGrpcEngine implements SzEngine {
      * 
      * @return The underlying {@link SzEngineBlockingStub} for this instance.
      */
-    protected SzEngineBlockingStub getBlockingStub() {
+    protected SzEngineBlockingStub getBlockingStub()
+    {
         return this.blockingStub;
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public void primeEngine() throws SzException {
+    public void primeEngine()
+        throws SzException
+    {
         this.env.execute(() -> {
             PrimeEngineRequest request 
                 = PrimeEngineRequest.newBuilder().build();
@@ -383,32 +400,38 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String getStats() throws SzException {
+    public String getStats()
+        throws SzException
+    {
         return this.env.execute(() -> {
             GetStatsRequest request 
                 = GetStatsRequest.newBuilder().build();
             
-            GetStatsResponse response = this.getBlockingStub().getStats(request);
+            GetStatsResponse response
+                = this.getBlockingStub().getStats(request);
 
             return response.getResult();
         });
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String addRecord(SzRecordKey recordKey, String recordDefinition, Set<SzFlag> flags)
-            throws SzUnknownDataSourceException, SzBadInputException, SzException 
+    public String addRecord(SzRecordKey recordKey,
+                             String recordDefinition,
+                             Set<SzFlag> flags)
+        throws SzUnknownDataSourceException,
+               SzBadInputException, SzException
     {
         return this.env.execute(() -> {
             AddRecordRequest request 
@@ -418,7 +441,8 @@ public class SzGrpcEngine implements SzEngine {
                     .setRecordDefinition(recordDefinition)
                     .setFlags(SzFlag.toLong(flags)).build();
             
-            AddRecordResponse response = this.getBlockingStub().addRecord(request);
+            AddRecordResponse response
+                = this.getBlockingStub().addRecord(request);
 
             String result = response.getResult();
             return (result.length() == 0) ? null : result;
@@ -426,13 +450,15 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String getRecordPreview(String recordDefinition, Set<SzFlag> flags) throws SzException {
+    public String getRecordPreview(String recordDefinition, Set<SzFlag> flags)
+        throws SzException
+    {
         return this.env.execute(() -> {
             GetRecordPreviewRequest request 
                 = GetRecordPreviewRequest.newBuilder()
@@ -447,8 +473,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -472,8 +498,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -497,8 +523,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -521,8 +547,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -552,8 +578,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -585,8 +611,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -608,14 +634,16 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String getEntity(SzRecordKey recordKey, Set<SzFlag> flags)
-            throws SzUnknownDataSourceException, SzNotFoundException, SzException 
+    public String getEntity(SzRecordKey recordKey,
+                             Set<SzFlag> flags)
+        throws SzUnknownDataSourceException,
+               SzNotFoundException, SzException
     {
         return this.env.execute(() -> {
             GetEntityByRecordIdRequest request
@@ -632,8 +660,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -648,21 +676,24 @@ public class SzGrpcEngine implements SzEngine {
                     .setFlags(SzFlag.toLong(flags)).build();
 
             FindInterestingEntitiesByEntityIdResponse response
-                = this.getBlockingStub().findInterestingEntitiesByEntityId(request);
+                = this.getBlockingStub()
+                    .findInterestingEntitiesByEntityId(request);
             
             return response.getResult();
         });
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String findInterestingEntities(SzRecordKey recordKey, Set<SzFlag> flags)
-            throws SzUnknownDataSourceException, SzNotFoundException, SzException 
+    public String findInterestingEntities(
+        SzRecordKey recordKey, Set<SzFlag> flags)
+        throws SzUnknownDataSourceException,
+               SzNotFoundException, SzException
     {
         return this.env.execute(() -> {
             FindInterestingEntitiesByRecordIdRequest request
@@ -672,15 +703,16 @@ public class SzGrpcEngine implements SzEngine {
                     .setFlags(SzFlag.toLong(flags)).build();
 
             FindInterestingEntitiesByRecordIdResponse response
-                = this.getBlockingStub().findInterestingEntitiesByRecordId(request);
+                = this.getBlockingStub()
+                    .findInterestingEntitiesByRecordId(request);
             
             return response.getResult();
         });
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -717,8 +749,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -729,7 +761,8 @@ public class SzGrpcEngine implements SzEngine {
                            SzRecordKeys avoidRecordKeys,
                            Set<String>  requiredDataSources,
                            Set<SzFlag>  flags)
-            throws SzNotFoundException, SzUnknownDataSourceException, SzException 
+        throws SzNotFoundException,
+               SzUnknownDataSourceException, SzException
     {
         return this.env.execute(() -> {
             FindPathByRecordIdRequest.Builder builder 
@@ -758,8 +791,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -788,8 +821,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -818,8 +851,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -842,8 +875,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -851,7 +884,8 @@ public class SzGrpcEngine implements SzEngine {
     public String whyRecords(SzRecordKey recordKey1, 
                              SzRecordKey recordKey2, 
                              Set<SzFlag> flags)
-            throws SzUnknownDataSourceException, SzNotFoundException, SzException 
+        throws SzUnknownDataSourceException,
+               SzNotFoundException, SzException
     {
         return this.env.execute(() -> {
             WhyRecordsRequest request 
@@ -862,15 +896,16 @@ public class SzGrpcEngine implements SzEngine {
                     .setRecordId2(recordKey2.recordId())
                     .setFlags(SzFlag.toLong(flags)).build();
             
-            WhyRecordsResponse response = this.getBlockingStub().whyRecords(request);
+            WhyRecordsResponse response
+                = this.getBlockingStub().whyRecords(request);
 
             return response.getResult();
         });
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -885,15 +920,16 @@ public class SzGrpcEngine implements SzEngine {
                     .setEntityId2(entityId2)
                     .setFlags(SzFlag.toLong(flags)).build();
             
-            WhyEntitiesResponse response = this.getBlockingStub().whyEntities(request);
+            WhyEntitiesResponse response
+                = this.getBlockingStub().whyEntities(request);
 
             return response.getResult();
         });
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -915,14 +951,15 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String getVirtualEntity(Set<SzRecordKey> recordKeys, Set<SzFlag> flags)
-            throws SzNotFoundException, SzException 
+    public String getVirtualEntity(
+        Set<SzRecordKey> recordKeys, Set<SzFlag> flags)
+        throws SzNotFoundException, SzException
     {
         return this.env.execute(() -> {
             GetVirtualEntityByRecordIdRequest request
@@ -938,14 +975,16 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String getRecord(SzRecordKey recordKey, Set<SzFlag> flags)
-            throws SzUnknownDataSourceException, SzNotFoundException, SzException 
+    public String getRecord(SzRecordKey recordKey,
+                             Set<SzFlag> flags)
+        throws SzUnknownDataSourceException,
+               SzNotFoundException, SzException
     {
         return this.env.execute(() -> {
             GetRecordRequest request
@@ -954,21 +993,24 @@ public class SzGrpcEngine implements SzEngine {
                     .setRecordId(recordKey.recordId())
                     .setFlags(SzFlag.toLong(flags)).build();
 
-            GetRecordResponse response = this.getBlockingStub().getRecord(request);
+            GetRecordResponse response
+                = this.getBlockingStub().getRecord(request);
             
             return response.getResult();
         });
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}
-     * using the streaming functionality.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment} using the streaming
+     * functionality.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public long exportJsonEntityReport(Set<SzFlag> flags) throws SzException {
+    public long exportJsonEntityReport(Set<SzFlag> flags)
+        throws SzException
+    {
         return this.env.execute(() -> {
             StreamExportJsonEntityReportRequest request
                 = StreamExportJsonEntityReportRequest.newBuilder()
@@ -977,7 +1019,8 @@ public class SzGrpcEngine implements SzEngine {
             Iterator<StreamExportJsonEntityReportResponse> responseIter
                 = this.getBlockingStub().streamExportJsonEntityReport(request);
 
-            JsonExportIterator exportIter = new JsonExportIterator(responseIter);
+            JsonExportIterator exportIter
+                = new JsonExportIterator(responseIter);
             
             long exportHandle = 0L;
             synchronized (this.exportReportMaps) {
@@ -990,9 +1033,9 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}
-     * using the streaming functionality.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment} using the streaming
+     * functionality.
      * <p>
      * {@inheritDoc}
      */
@@ -1022,14 +1065,16 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}
-     * using the streaming response.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment} using the streaming
+     * response.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public String fetchNext(long exportHandle) throws SzException {
+    public String fetchNext(long exportHandle)
+        throws SzException
+    {
         return this.env.execute(() -> {
             Iterator<String> exportIter = null;
             synchronized (this.exportReportMaps) {
@@ -1055,14 +1100,16 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation by closing the the 
-     * streaming response iterator previously obtained from the 
-     * gRPC server using the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation by closing the the streaming
+     * response iterator previously obtained from the gRPC server using the
+     * associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
     @Override
-    public void closeExportReport(long exportHandle) throws SzException {
+    public void closeExportReport(long exportHandle)
+        throws SzException
+    {
         this.env.execute(() -> {
             Iterator<String> exportIter = null;
             synchronized (this.exportReportMaps) {
@@ -1079,8 +1126,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -1103,8 +1150,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
@@ -1124,8 +1171,8 @@ public class SzGrpcEngine implements SzEngine {
     }
 
     /**
-     * Implemented to execute the operation over gRPC against the 
-     * gRPC server from the associated {@link SzGrpcEnvironment}.
+     * Implemented to execute the operation over gRPC against the gRPC server
+     * from the associated {@link SzGrpcEnvironment}.
      * <p>
      * {@inheritDoc}
      */
