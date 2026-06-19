@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Generate token for private submodules
         id: app-token
-        uses: actions/create-github-app-token@v3.1.1
+        uses: actions/create-github-app-token@v3.2.0
         with:
           client-id: ${{ secrets.SENZING_GITHUB_SUBMODULE_READ_APP_ID }}
           owner: ${{ github.repository_owner }} # zizmor: ignore[github-app]
@@ -26,7 +26,7 @@ jobs:
           permission-contents: read
 
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
@@ -52,7 +52,7 @@ jobs:
           mvn javadoc:javadoc -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@v4.1.0
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
