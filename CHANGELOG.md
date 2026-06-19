@@ -26,14 +26,31 @@ and this project adheres to [Semantic Versioning].
 #### Test-scope dependency updates
 
 - Updated `org.junit.jupiter/junit-jupiter` from 6.0.3 to 6.1.0.
+- Updated `org.apache.commons/commons-configuration2` from 2.14.0 to
+  2.15.0.
 
 #### Build-only updates
 
 - Updated `com.google.protobuf/protoc` (Maven plugin protocol compiler)
   from 4.34.1 to 4.35.0 to match the `protobuf.version` property.
+- Updated `org.apache.maven.plugins/maven-enforcer-plugin` from 3.6.2 to
+  3.6.3.
+- Updated `org.apache.maven.plugins/maven-antrun-plugin` from 3.1.0 to
+  3.2.0.
 - Updated `actions/setup-java` GitHub Action from `v5` to `v5.2.0` in
   the `maven-darwin`, `maven-linux`, `maven-windows`,
   `trivy-dependency-scan`, and `create-javadoc-documentation` workflows.
+- Updated `actions/checkout` GitHub Action from `v6` to `v6.0.2` across
+  all workflows.
+- Updated `actions/create-github-app-token` GitHub Action from `v3.1.1`
+  to `v3.2.0` across all workflows.
+- Updated `peaceiris/actions-gh-pages` GitHub Action from `v4` to
+  `v4.1.0` in `create-javadoc-documentation`.
+- Removed the `Code Change Policy` section from `.claude/CLAUDE.md`
+  (which previously forbade direct file edits and commits by Claude)
+  and added a new `Git Workflow Policy` section that prohibits
+  force-push and mandates basing feature branches off the latest
+  `origin/main`.
 
 ## [1.0.0] - 2026-05-16
 

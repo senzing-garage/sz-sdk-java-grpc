@@ -2,15 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## **IMPORTANT: Code Change Policy**
+## **IMPORTANT: Git Workflow Policy**
 
-**DO NOT make direct code changes.** Instead, analyze the code, identify issues, and provide suggestions for changes. The user will review and make the changes themselves. This applies to:
+**Never force-push.** Use only regular `git push`. Force-push (including
+`--force` and `--force-with-lease`) rewrites remote history and is
+prohibited in this repository's workflow.
 
-- Source code modifications
-- Configuration file changes
-- Documentation updates (except CLAUDE.md itself when explicitly requested)
+To avoid the need for a force-push, always base feature branches off
+the **latest `origin/main`**:
 
-Always present recommendations clearly with explanations and let the user decide how to proceed.
+1. `git fetch origin`
+2. `git checkout main && git pull --ff-only origin main`
+3. `git checkout -b <feature-branch>`
+4. Make commits, then `git push`, then create the PR.
+
+If `origin/main` has moved forward while you were working, **merge**
+`origin/main` into the feature branch (or rebase locally before the
+first push) — do **not** amend or rebase commits that have already
+been pushed.
 
 ### Editing CLAUDE.md
 
