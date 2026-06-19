@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], [markdownlint],
 and this project adheres to [Semantic Versioning].
 
+## [1.0.1] - 2026-06-19
+
+### Changes/Additions/Fixes in version 1.0.1
+
+#### Consumer-facing dependency updates (compile/runtime scope)
+
+- Updated `com.senzing/data-mart-replicator` from 2.0.0 to 2.0.1.
+- Updated `com.senzing/sz-sdk-auto` from 1.0.0 to 1.0.1.
+- Updated `com.senzing/senzing-commons` from 4.0.0 to 4.0.1.
+- Updated `io.netty/netty-bom` from 4.2.13.Final to 4.2.15.Final
+  (aligns with `data-mart-replicator` 2.0.1 to avoid enforcer
+  `requireUpperBoundDeps` conflicts on transitive netty).
+- Updated `com.google.protobuf/protobuf-java-util` from 4.34.1 to
+  4.35.0.
+- Updated `org.xerial/sqlite-jdbc` from 3.53.0.0 to 3.53.1.0.
+- Updated `org.slf4j/slf4j-api` from 2.0.17 to 2.0.18.
+- Updated `org.slf4j/slf4j-simple` from 2.0.17 to 2.0.18.
+
+#### Test-scope dependency updates
+
+- Updated `org.junit.jupiter/junit-jupiter` from 6.0.3 to 6.1.0.
+
+#### Build-only updates
+
+- Updated `com.google.protobuf/protoc` (Maven plugin protocol compiler)
+  from 4.34.1 to 4.35.0 to match the `protobuf.version` property.
+- Updated `actions/setup-java` GitHub Action from `v5` to `v5.2.0` in
+  the `maven-darwin`, `maven-linux`, `maven-windows`,
+  `trivy-dependency-scan`, and `create-javadoc-documentation` workflows.
+
 ## [1.0.0] - 2026-05-16
 
 ### Changes/Additions/Fixes in version 1.0.0
