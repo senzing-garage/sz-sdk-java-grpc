@@ -46,7 +46,7 @@ jobs:
           permission-contents: read
 
       - name: checkout repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6.0.3
         with:
           persist-credentials: false
           submodules: recursive
@@ -90,7 +90,7 @@ jobs:
 
       - name: Jacoco Report to PR
         id: jacoco
-        uses: madrapps/jacoco-report@v1.7.2
+        uses: madrapps/jacoco-report@v1.8.0
         with:
           fail-emoji: ":red_circle:"
           min-coverage-changed-files: 80
