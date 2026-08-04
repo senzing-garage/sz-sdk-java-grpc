@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], [markdownlint],
 and this project adheres to [Semantic Versioning].
 
+## [1.0.2] - 2026-08-04
+
+### Changes/Additions/Fixes in version 1.0.2
+
+Security patch release: addresses 10 HIGH-severity CVEs flagged by
+Trivy on the 1.0.1 baseline (6 in `netty-codec-*` and 3 in
+`jackson-core`/`jackson-databind`, plus 1 additional jackson advisory).
+Also rolls up the currently-open Maven dependency dependabot PRs into
+a single change.
+
+#### Consumer-facing dependency updates (compile/runtime scope)
+
+- Updated `com.fasterxml.jackson/jackson-bom` from 2.21.3 to 2.22.0
+  (addresses GHSA-r7wm-3cxj-wff9 in `jackson-core`, and CVE-2026-54512
+  and CVE-2026-54513 in `jackson-databind`).
+- Updated `io.netty/netty-bom` from 4.2.15.Final to 4.2.16.Final
+  (addresses CVE-2026-59901 in `netty-codec-compression`,
+  CVE-2026-55851 in `netty-codec-haproxy`, CVE-2026-55831,
+  CVE-2026-55833, and CVE-2026-56745 in `netty-codec-http`, and
+  CVE-2026-56819 in `netty-codec-http2`).
+- Updated `com.linecorp.armeria/armeria-bom` from 1.39.0 to 1.39.1.
+- Updated `org.xerial/sqlite-jdbc` from 3.53.1.0 to 3.53.2.0.
+
+#### Build-only updates
+
+- Updated `org.jacoco/jacoco-maven-plugin` from 0.8.14 to 0.8.15.
+- Updated `com.github.spotbugs/spotbugs-maven-plugin` from 4.9.8.3 to
+  4.9.8.4.
+
 ## [1.0.1] - 2026-06-19
 
 ### Changes/Additions/Fixes in version 1.0.1
