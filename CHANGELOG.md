@@ -5,15 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], [markdownlint],
 and this project adheres to [Semantic Versioning].
 
-## [1.0.2] - 2026-08-04
+## [Unreleased]
 
-### Changes/Additions/Fixes in version 1.0.2
+### Unreleased Changes/Additions/Fixes
 
-Security patch release: addresses 10 HIGH-severity CVEs flagged by
-Trivy on the 1.0.1 baseline (6 in `netty-codec-*` and 3 in
-`jackson-core`/`jackson-databind`, plus 1 additional jackson advisory).
-Also rolls up the currently-open Maven dependency dependabot PRs into
-a single change.
+Maintenance changes on `main` to clear the dependency-related
+dependabot backlog and address Trivy CVE findings. Not tagged to a
+release; the version bump will happen when Senzing SDK 4.4.0 ships
+and this can be released as 1.0.2.
 
 #### Consumer-facing dependency updates (compile/runtime scope)
 
