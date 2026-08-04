@@ -27,6 +27,34 @@ a single change.
   CVE-2026-56819 in `netty-codec-http2`).
 - Updated `com.linecorp.armeria/armeria-bom` from 1.39.0 to 1.39.1.
 - Updated `org.xerial/sqlite-jdbc` from 3.53.1.0 to 3.53.2.0.
+- Added a `dependencyManagement` override for
+  `org.postgresql/postgresql` to 42.7.12 to address CVE-2026-54291
+  (SCRAM authentication denial-of-service in pgjdbc). This dependency
+  is brought in transitively by `data-mart-replicator`; the override
+  can be removed once `data-mart-replicator` upgrades postgresql past
+  42.7.11.
+- Updated `com.senzing/sz-sdk` minimum version from 4.4.0 (was
+  4.3.0). Note: this transitional bump anticipates the imminent
+  Senzing SDK 4.4.0 release. Until 4.4.0 is published to Maven
+  Central, builds against `production-v4` will fail to resolve the
+  dependency. `staging-v4` builds resolve correctly against the
+  pre-release SDK.
+
+#### sz-sdk-java submodule
+
+- Advanced the `sz-sdk-java` submodule pointer from the 4.3.0 release
+  tag to the current `main` branch (commit `b8c0f7a`) to pick up the
+  modernized JNI layer (`Modernize JNI layer (native error-mapping
+  cutover) (#356)` and `feat(core): move exception code→class mapping
+  into the native layer (#361)`). The prior 4.3.0 test code no longer
+  compiles against the `staging-v4` native library after the JNI
+  modernization.
+- Loosened the `RUNTIME_SENZING_VERSION` static-block strip regex in
+  the `copy-install-utilities` maven-replacer-plugin execution
+  (`static \{` → `static\s*\{`) to match the reformatted `static\n{`
+  form now present upstream. The
+  `verify-install-utilities-strip` antrun guardrail flagged the
+  mismatch on the initial build attempt.
 
 #### Build-only updates
 

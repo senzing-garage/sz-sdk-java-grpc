@@ -83,6 +83,14 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency> <!-- Override transitive from data-mart-replicator
+                        to address CVE-2026-54291 (SCRAM auth DoS in
+                        pgjdbc). Remove when data-mart-replicator
+                        upgrades postgresql past 42.7.11. -->
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>42.7.12</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -171,7 +179,7 @@
     <dependency>
         <groupId>com.senzing</groupId>
         <artifactId>sz-sdk</artifactId>
-        <version>[4.3.0,4.9999999.9999999]</version>
+        <version>[4.4.0,4.9999999.9999999]</version>
     </dependency>
     <dependency>
         <groupId>com.senzing</groupId>
@@ -418,7 +426,7 @@
                          below detects this and fails the build early with
                          a clearer message. -->
                     <replacement>
-                        <token>static \{\s+String runtimeVersion = null;.*?RUNTIME_SENZING_VERSION = runtimeVersion;\s+\}</token>
+                        <token>static\s*\{\s+String runtimeVersion = null;.*?RUNTIME_SENZING_VERSION = runtimeVersion;\s+\}</token>
                         <value>static { RUNTIME_SENZING_VERSION = null; }</value>
                     </replacement>
                 </replacements>
