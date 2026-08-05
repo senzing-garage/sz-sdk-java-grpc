@@ -65,23 +65,31 @@
       <dependency>
           <groupId>com.linecorp.armeria</groupId>
           <artifactId>armeria-bom</artifactId>
-          <version>1.39.0</version>
+          <version>1.39.1</version>
           <type>pom</type>
           <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-bom</artifactId>
-        <version>4.2.15.Final</version>
+        <version>4.2.16.Final</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson</groupId>
         <artifactId>jackson-bom</artifactId>
-        <version>2.21.3</version>
+        <version>2.22.0</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency> <!-- Override transitive from data-mart-replicator
+                        to address CVE-2026-54291 (SCRAM auth DoS in
+                        pgjdbc). Remove when data-mart-replicator
+                        upgrades postgresql past 42.7.11. -->
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>42.7.12</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -171,7 +179,7 @@
     <dependency>
         <groupId>com.senzing</groupId>
         <artifactId>sz-sdk</artifactId>
-        <version>[4.3.0,4.9999999.9999999]</version>
+        <version>[4.4.0,4.9999999.9999999]</version>
     </dependency>
     <dependency>
         <groupId>com.senzing</groupId>
@@ -196,7 +204,7 @@
     <dependency>
       <groupId>org.xerial</groupId>
       <artifactId>sqlite-jdbc</artifactId>
-      <version>3.53.1.0</version>
+      <version>3.53.2.0</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -418,7 +426,7 @@
                          below detects this and fails the build early with
                          a clearer message. -->
                     <replacement>
-                        <token>static \{\s+String runtimeVersion = null;.*?RUNTIME_SENZING_VERSION = runtimeVersion;\s+\}</token>
+                        <token>static\s*\{\s+String runtimeVersion = null;.*?RUNTIME_SENZING_VERSION = runtimeVersion;\s+\}</token>
                         <value>static { RUNTIME_SENZING_VERSION = null; }</value>
                     </replacement>
                 </replacements>
@@ -864,7 +872,7 @@ public final class Sz$1Grpc {]]></value>
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.8.14</version>
+            <version>0.8.15</version>
             <executions>
               <execution>
                 <goals>
@@ -918,7 +926,7 @@ public final class Sz$1Grpc {]]></value>
           <plugin>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-maven-plugin</artifactId>
-            <version>4.9.8.3</version>
+            <version>4.9.8.4</version>
             <configuration>
               <plugins>
                 <plugin>
