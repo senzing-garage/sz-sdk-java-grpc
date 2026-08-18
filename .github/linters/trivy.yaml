@@ -1,1 +1,14 @@
+# The Java dependency scan lives in .github/workflows/trivy-dependency-scan.yaml,
+# which primes ~/.m2 with `mvn dependency:resolve` before running Trivy so every
+# transitive dependency resolves locally.
+#
+# Super-linter runs `trivy filesystem` over the whole workspace with a cold Maven
+# cache (it ignores FILTER_REGEX_INCLUDE), so scanning pom.xml here makes Trivy
+# fetch parent/BOM POMs from Maven Central. From shared runner IPs that returns
+# HTTP 429 and Trivy treats it as FATAL, failing the lint for reasons unrelated
+# to the change under review. Skip pom.xml: it is already covered, and better,
+# by the dedicated workflow. Secret scanning still covers the whole tree.
 ignorefile: ".github/linters/.trivyignore"
+scan:
+  skip-files:
+    - "pom.xml"
