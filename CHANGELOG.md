@@ -5,6 +5,62 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], [markdownlint],
 and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Unreleased Changes/Additions/Fixes
+
+Maintenance changes on `main` to clear the dependency-related
+dependabot backlog and address Trivy CVE findings. Not tagged to a
+release; the version bump will happen when Senzing SDK 4.4.0 ships
+and this can be released as 1.0.2.
+
+#### Consumer-facing dependency updates (compile/runtime scope)
+
+- Updated `com.fasterxml.jackson/jackson-bom` from 2.21.3 to 2.22.0
+  (addresses GHSA-r7wm-3cxj-wff9 in `jackson-core`, and CVE-2026-54512
+  and CVE-2026-54513 in `jackson-databind`).
+- Updated `io.netty/netty-bom` from 4.2.15.Final to 4.2.16.Final
+  (addresses CVE-2026-59901 in `netty-codec-compression`,
+  CVE-2026-55851 in `netty-codec-haproxy`, CVE-2026-55831,
+  CVE-2026-55833, and CVE-2026-56745 in `netty-codec-http`, and
+  CVE-2026-56819 in `netty-codec-http2`).
+- Updated `com.linecorp.armeria/armeria-bom` from 1.39.0 to 1.39.1.
+- Updated `org.xerial/sqlite-jdbc` from 3.53.1.0 to 3.53.2.0.
+- Added a `dependencyManagement` override for
+  `org.postgresql/postgresql` to 42.7.12 to address CVE-2026-54291
+  (SCRAM authentication denial-of-service in pgjdbc). This dependency
+  is brought in transitively by `data-mart-replicator`; the override
+  can be removed once `data-mart-replicator` upgrades postgresql past
+  42.7.11.
+- Updated `com.senzing/sz-sdk` minimum version from 4.4.0 (was
+  4.3.0). Note: this transitional bump anticipates the imminent
+  Senzing SDK 4.4.0 release. Until 4.4.0 is published to Maven
+  Central, builds against `production-v4` will fail to resolve the
+  dependency. `staging-v4` builds resolve correctly against the
+  pre-release SDK.
+
+#### sz-sdk-java submodule
+
+- Advanced the `sz-sdk-java` submodule pointer from the 4.3.0 release
+  tag to the current `main` branch (commit `b8c0f7a`) to pick up the
+  modernized JNI layer (`Modernize JNI layer (native error-mapping
+  cutover) (#356)` and `feat(core): move exception code→class mapping
+  into the native layer (#361)`). The prior 4.3.0 test code no longer
+  compiles against the `staging-v4` native library after the JNI
+  modernization.
+- Loosened the `RUNTIME_SENZING_VERSION` static-block strip regex in
+  the `copy-install-utilities` maven-replacer-plugin execution
+  (`static \{` → `static\s*\{`) to match the reformatted `static\n{`
+  form now present upstream. The
+  `verify-install-utilities-strip` antrun guardrail flagged the
+  mismatch on the initial build attempt.
+
+#### Build-only updates
+
+- Updated `org.jacoco/jacoco-maven-plugin` from 0.8.14 to 0.8.15.
+- Updated `com.github.spotbugs/spotbugs-maven-plugin` from 4.9.8.3 to
+  4.9.8.4.
+
 ## [1.0.1] - 2026-06-19
 
 ### Changes/Additions/Fixes in version 1.0.1
