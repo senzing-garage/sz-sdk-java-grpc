@@ -10,8 +10,8 @@
   "packageRules": [
     {
       "matchUpdateTypes": ["major", "minor", "patch"],
-      "matchPackagePrefixes": ["!senzing/"],
-      "minimumReleaseAge": "21 days"
+      "minimumReleaseAge": "21 days",
+      "matchPackageNames": ["!senzing/{/,}**"]
     }
   ]
 }
