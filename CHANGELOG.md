@@ -69,6 +69,13 @@ and this can be released as 1.0.2.
   into the native layer (#361)`). The prior 4.3.0 test code no longer
   compiles against the `staging-v4` native library after the JNI
   modernization.
+- Further advanced the `sz-sdk-java` submodule pointer from `b8c0f7a`
+  to `ed1df66` to pick up `macOS test-JVM libzip fix + GDEV-4364
+  redo-test compat (#375)`. GDEV-4364 makes the engine enqueue a
+  `REPAIR_ENTITY` redo when `deleteRecord()` removes an entity's last
+  observation, which broke the `testCountRedoRecordsZero` and
+  `testGetRedoRecordZero` empty-queue assertions against
+  `staging-v4`; the shared tests now drain those redos first.
 - Loosened the `RUNTIME_SENZING_VERSION` static-block strip regex in
   the `copy-install-utilities` maven-replacer-plugin execution
   (`static \{` → `static\s*\{`) to match the reformatted `static\n{`
