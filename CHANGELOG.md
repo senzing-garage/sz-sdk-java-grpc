@@ -38,6 +38,27 @@ and this can be released as 1.0.2.
   Central, builds against `production-v4` will fail to resolve the
   dependency. `staging-v4` builds resolve correctly against the
   pre-release SDK.
+- Further updated `com.fasterxml.jackson/jackson-bom` from 2.22.0 to
+  2.22.4 (addresses CVE-2026-89407 and CVE-2026-89425 in
+  `jackson-core`, and CVE-2026-68497, CVE-2026-91776, and
+  CVE-2026-91777 in `jackson-databind`).
+- Further updated `io.netty/netty-bom` from 4.2.16.Final to
+  4.2.20.Final (addresses CVE-2026-75595, an SNI routing bypass in
+  `netty-handler`).
+- Further updated `com.linecorp.armeria/armeria-bom` from 1.39.1 to
+  1.40.0.
+- Added a `dependencyManagement` override for `com.google.guava/guava`
+  to 33.8.0-jre to address CVE-2026-102554. This dependency is brought
+  in transitively by `grpc-services`. The override also pins
+  `com.google.errorprone/error_prone_annotations` to 2.52.0 and
+  `org.jspecify/jspecify` to 1.0.1 to satisfy the enforcer
+  `requireUpperBoundDeps` rule; all three can be removed once
+  `grpc-services` brings in guava 33.7.2 or later.
+- Added a `dependencyManagement` override for
+  `com.rabbitmq/amqp-client` to 5.37.0 to address CVE-2026-63337,
+  CVE-2026-69219, and CVE-2026-75516. This dependency is brought in
+  transitively by `data-mart-replicator`; the override can be removed
+  once `data-mart-replicator` upgrades amqp-client past 5.33.1.
 
 #### sz-sdk-java submodule
 
@@ -48,6 +69,13 @@ and this can be released as 1.0.2.
   into the native layer (#361)`). The prior 4.3.0 test code no longer
   compiles against the `staging-v4` native library after the JNI
   modernization.
+- Further advanced the `sz-sdk-java` submodule pointer from `b8c0f7a`
+  to `ed1df66` to pick up `macOS test-JVM libzip fix + GDEV-4364
+  redo-test compat (#375)`. GDEV-4364 makes the engine enqueue a
+  `REPAIR_ENTITY` redo when `deleteRecord()` removes an entity's last
+  observation, which broke the `testCountRedoRecordsZero` and
+  `testGetRedoRecordZero` empty-queue assertions against
+  `staging-v4`; the shared tests now drain those redos first.
 - Loosened the `RUNTIME_SENZING_VERSION` static-block strip regex in
   the `copy-install-utilities` maven-replacer-plugin execution
   (`static \{` → `static\s*\{`) to match the reformatted `static\n{`
@@ -59,7 +87,9 @@ and this can be released as 1.0.2.
 
 - Updated `org.jacoco/jacoco-maven-plugin` from 0.8.14 to 0.8.15.
 - Updated `com.github.spotbugs/spotbugs-maven-plugin` from 4.9.8.3 to
-  4.9.8.4.
+  4.9.8.4, and then to 4.10.3.0.
+- Updated `org.sonatype.central/central-publishing-maven-plugin` from
+  0.10.0 to 0.11.0.
 
 ## [1.0.1] - 2026-06-19
 
