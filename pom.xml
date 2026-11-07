@@ -118,6 +118,15 @@
         <artifactId>amqp-client</artifactId>
         <version>5.37.0</version>
       </dependency>
+      <dependency> <!-- Align commons-io versions pulled in transitively
+                        by senzing-commons (commons-csv vs.
+                        commons-configuration2) to satisfy
+                        requireUpperBoundDeps. Remove when
+                        senzing-commons aligns them itself. -->
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>2.22.0</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -221,7 +230,7 @@
     <dependency>
       <groupId>com.senzing</groupId>
       <artifactId>senzing-commons</artifactId>
-      <version>4.0.1</version>
+      <version>4.0.2</version>
     </dependency>
     <dependency>
       <groupId>org.glassfish</groupId>
