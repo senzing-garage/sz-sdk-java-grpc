@@ -76,6 +76,13 @@ and this can be released as 1.0.2.
   observation, which broke the `testCountRedoRecordsZero` and
   `testGetRedoRecordZero` empty-queue assertions against
   `staging-v4`; the shared tests now drain those redos first.
+- Further advanced the `sz-sdk-java` submodule pointer from `ed1df66`
+  to `c22225b` to pick up `Update test install check for Senzing
+  4.5.0 config files (#400)`. Senzing 4.5.0 compiles `cfgVariant.json`
+  into `libSz` and no longer installs it, so the shared test
+  harness's `InstallLocations` check failed every test class with
+  `InvalidInstallationException` against `staging-v4`; it now checks
+  for the config files 4.5.0 still installs.
 - Loosened the `RUNTIME_SENZING_VERSION` static-block strip regex in
   the `copy-install-utilities` maven-replacer-plugin execution
   (`static \{` → `static\s*\{`) to match the reformatted `static\n{`
