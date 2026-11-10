@@ -23,5 +23,9 @@ updates:
       exclude:
         - "com.senzing:*"
     directory: "/"
+    groups:
+      slf4j:
+        patterns:
+          - "org.slf4j:*"
     schedule:
       interval: "daily"
